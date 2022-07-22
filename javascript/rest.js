@@ -128,6 +128,7 @@ const Rest = module.exports = class Rest {
             });
 
             req.write(post_data);
+            console.log(req)
             req.end();
         });
     }
@@ -151,7 +152,6 @@ const Rest = module.exports = class Rest {
                     ...request_headers,
                 }
             };
-
             const req = https.request(options, (res) => {
                 this.handle_cookies(res.headers["set-cookie"]);
                 let data = "";
@@ -177,6 +177,7 @@ const Rest = module.exports = class Rest {
             req.on("error", (err) => {
                 reject(new RestError(this.hostname, path, err));
             });
+            
 
             req.end();
         });

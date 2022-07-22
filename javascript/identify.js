@@ -29,9 +29,11 @@ function identify(identify_key) {
 
     if (new Date().getTime() >= identify_timeout) {
         return new Promise(async (resolve, reject) => {
+            console.log(identify_rest)
             let res = await identify_rest.post("/v1/accounts:signUp?key=" + identify_key, {
                 key: identify_key
             });
+            console.log(res)
             identify_cache = res.idToken;
             identify_timeout = new Date().getTime() + 1000 * +res.expiresIn - 30000;
             resolve(identify_cache);
@@ -44,3 +46,4 @@ function identify(identify_key) {
 }
 
 module.exports = identify;
+identify()
