@@ -45,7 +45,7 @@ module.exports = async function task(prompt, style, update_fn = () => {}, settin
         id,
         task,
     });
-
+    //TODO: Rest of stuff
     try {
         task = await paint_rest.options(task_path, "PUT")
             .then(() => paint_rest.put(task_path, {

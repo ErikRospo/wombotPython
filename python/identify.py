@@ -1,6 +1,7 @@
 import requests
 import time
-identify_hostname = "identitytoolkit.googleapis.com"
+identify_url = "https://identitytoolkit.googleapis.com/v1/accounts:signUp"
+
 identify_secret_key = "AIzaSyDCvp5MTJLUdtBYEKYWXJrlLzu1zuKM6Xw"
 
 identify_cache=""
@@ -15,12 +16,17 @@ def identify(key=""):
         else:
             raise Exception("No identify key provided and no secret.json found!")
     if time.time_ns()>identify_timeout:
-        url="https://"+identify_hostname+"/v1/accounts/signup?key="+key
-        print(url)
-        res=requests.post("https://"+identify_hostname+"/v1/accounts:signup?key="+key,{key:key})
-        print(res)
-        # identify_cache=res.idToken
-        # identify_timeout=time.time_ns()+1000*res.expiresIn-30000
+        
+        querystring = {"key":identify_secret_key}
+
+        payload = "{key:'"+identify_secret_key+"'}"
+        headers = {"Content-Type": "application/json"}
+        response = requests.request("POST", identify_url, data=payload, headers=headers, params=querystring)
+        # print(response)
+        res=response.json()
+        identify_cache=res["idToken"]
+        identify_timeout=time.time_ns()+1000*int(res["expiresIn"])-30000
+        return identify_cache
     else:
         return identify_cache
 if __name__=="__main__":
