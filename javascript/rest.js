@@ -128,7 +128,6 @@ const Rest = module.exports = class Rest {
             });
 
             req.write(post_data);
-            console.log(req)
             req.end();
         });
     }

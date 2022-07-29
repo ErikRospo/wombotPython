@@ -110,6 +110,7 @@ module.exports = async function task(prompt, style, update_fn = () => {}, settin
     let download_path = path.join(download_dir, `${task.id}-final.jpg`);
 
     try {
+        console.log(task)
         if (final) await download(task.result.final, download_path);
         if (inter) await Promise.all(inter_downloads);
     } catch (err) {
