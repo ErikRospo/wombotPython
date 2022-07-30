@@ -1,7 +1,0 @@
-{
-    "python.analysis.extraPaths": [
-        "./**/*.py",
-        "./python"
-    ],
-    "python.formatting.provider": "yapf"
-}
