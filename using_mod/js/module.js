@@ -4,11 +4,11 @@
 const task = require("./index");
 const styles = require("./styles");
 const steps = require("./steps");
-const { Image } = require("image-js");
+// const { Image } = require("image-js");
+const sharp = require("sharp");
 const fs = require("fs");
 const path = require("path");
 const { promisify } = require("util");
-const { createImageData } = require("canvas");
 const md5 = require("crypto").createHash("sha256");
 const True = true;
 const False = false;
@@ -132,38 +132,81 @@ function generate_image_array(prompts, styles, width, height) {
         console.log(value);
         let responses = value;
         let i = 0;
-        GIMARRAY(responses).then(image_array => {
-          let total_width = image_array.flat().reduce((pvalue, currvalue) => {
-            // console.log(pvalue,currvalue)
-            return pvalue + parseInt(currvalue.width);
-          }, 0);
-          let total_height = image_array.flat().reduce((pvalue, currvalue) => {
-            return pvalue + currvalue.height;
-          }, 0);
-          let image_width = total_width / width;
-          let image_height = total_height / height;
-          let CIM = new Image(image_width,image_height);
-          let h5canv = CIM.getCanvas();
-          let ctx = h5canv.getContext("2d") || new CanvasRenderingContext2D();
-          for (let n = 0; n < width; n++) {
-            for (let m = 0; m < height; m++) {
-              let x = n * image_width;
-              let y = m * image_height;
-              let dataobj = image_array[m][n]["data"];
-              // console.log(dataobj);
-              const imgd = createImageData(new Uint8ClampedArray(dataobj), image_width, image_height);
-              ctx.putImageData(imgd,x, y);
-            }
-          }
+        GIMARRAY(responses).then(async image_array => {
+          const image_height=1568;
+          const image_width=960;
+          // console.log(image_array)
+          // let total_width = image_array.flat().reduce((pvalue, currvalue) => {
+          //   // console.log(pvalue,currvalue)
+          //   return pvalue + parseInt(currvalue.width);
+          // }, 0);
+          // let total_height = image_array.flat().reduce((pvalue, currvalue) => {
+          //   return pvalue + currvalue.height;
+          // }, 0);
+          
+          // let CIM = new Image(image_width,image_height);
+          let total_pixel_value_count=image_array[1][0].length+image_array[0][1].length+image_array[1][1].length+image_array[0][0].length
+          let img_buffer = new Int8Array(total_pixel_value_count);
+          img_buffer.set(image_array[0][1]);
+          img_buffer.set(image_array[1][1],image_array[0][1].length);
+          img_buffer.set(image_array[0][0],image_array[0][1].length+image_array[1][1].length);
+          img_buffer.set(image_array[1][0],image_array[0][1].length+image_array[1][1].length+image_array[0][0].length);
+          
+          //fs.writeFileSync("./image.raw", img_buffer);
+          // img_buffer.fill(255);
+          let CIM = sharp(img_buffer, {raw: {width: image_array.length*image_width, height: image_array.length[0]*image_height, channels: 4}});
+          // CIM.png().toFile("./image.png");
+          CIM.png().toBuffer().then(buffer => {
+            fs.writeFileSync("./image.png", buffer);
+          }, err => {
+            console.log(err);
+          });
+          // toFile("./image.png", (err, info) => {
+          //   if (err) throw err;
+          //   console.log(info);
+          // }
+          // );
+          // // console.log("img_buffer")
+          // let CIM = sharp(img_buffer);
+          // console.log("converting to png")
+          // CIM=CIM.toFormat("png")
+          // console.log("buffer")
+          // let s=CIM['options']['input']['buffer']
+          // let buffer=sharp(s).toBuffer();
+          // console.log("buffer")
+          // console.log("writing to file")
+          
+          // fs.writeFileSync("./image.png", buffer);
+          // let CIM_buffer = await CIM.toBuffer();
+          // console.log(CIM_buffer)          
+          
+          
+          // console.log(CIM)
+
+          
+          // let h5canv = CIM.getCanvas();
+          // let ctx = h5canv.getContext("2d") || new CanvasRenderingContext2D();
+          // for (let n = 0; n < width; n++) {
+          //   for (let m = 0; m < height; m++) {
+          //     let dataobj = image_array[m][n]["data"];
+          //     // console.log(dataobj);
+          //     // const imgd = createImageData(new Uint8ClampedArray(dataobj), image_width, image_height);
+          //     // ctx.putImageData(imgd,x, y);
+          //     CIM.toBuffer().then(buffer => {
+          //       console.log(buffer);
+          //     }
+          //     );
+          //   }
+          // }
           // console.log(ctx.getImageData(0, 0, total_width, total_height));
-          const LIM=Image.fromCanvas(h5canv)
-          LIM.save(
-            path.resolve(
-              "./results/image" +
-                md5.update(Date.now().toString(2)).digest("hex") +
-                ".png"
-            )
-          );
+          // const LIM=Image.fromCanvas(h5canv)
+          // LIM.save(
+          //   path.resolve(
+          //     "./results/image" +
+          //       md5.update(Date.now().toString(2)).digest("hex") +
+          //       ".png"
+          //   )
+          // );
         });
       },
       err => {
@@ -220,30 +263,14 @@ function generate_image_array(prompts, styles, width, height) {
           "./generated",
           responses[height * n + m].task.id + "-final.jpg"
         );
-        await Image.load(path_str).then(value => {
-          xarray.push(value);
-        });
+
+        xarray.push(await sharp(path_str).raw().toBuffer());
       }
       image_array.push(xarray);
     }
     return image_array;
   }
 }
-/**
- * 
- * @param {string} path 
- * @param {string} endpath 
- * @returns 
- */
-async function execute(path, endpath) {
-  let image = await Image.load(path);
-  let grey = image
-    .grey() // convert the image to greyscale.
-    .resize({ width: 200 }) // resize the image, forcing a width of 200 pixels. The height is computed automatically to preserve the aspect ratio.
-    .rotate(30); // rotate the image clockwise by 30 degrees.
-  return grey.save(endpath);
-}
-// execute().catch(console.error);
 
 // generate("Hello, this is a test", 13, "htiats ").then(
 //   response_object => {
