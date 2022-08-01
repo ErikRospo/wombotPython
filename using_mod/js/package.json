@@ -13,7 +13,7 @@
   "keywords": [
     "unofficial-api"
   ],
-  "author": "Adrien Burgun (Shad Amethyst)",
+  "author": "Erik Rospo",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/adri326/wombot/issues"
@@ -21,9 +21,24 @@
   "homepage": "https://github.com/adri326/wombot#readme",
   "dependencies": {
     "image-js": "^0.35.0",
-    "mkdirp": "^1.0.4"
+    "mkdirp": "^1.0.4",
+    "node": "^18.7.0",
+    "canvas": "^2.9.3",
+    "npm": "^8.15.1"
+    
   },
   "devDependencies": {
     "yargs": "^17.3.0"
+  },
+  "prettier": {
+    "trailingComma": "es5",
+    "tabWidth": 4,
+    "semi": true,
+    "singleQuote": false,
+    "bracketSpacing": true,
+    "arrowParens": "always",
+    "plugins": [
+      "optionalChaining"
+    ]
   }
 }
