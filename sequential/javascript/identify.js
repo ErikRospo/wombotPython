@@ -44,3 +44,10 @@ function identify(identify_key) {
 }
 
 module.exports = identify;
+
+if (require.main === module) {
+    identify().then((value)=>{
+        console.log(value)
+    })
+}
+  

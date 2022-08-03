@@ -109,7 +109,7 @@ const Rest = module.exports = class Rest {
                     data += chunk;
                 });
                 res.on("end", () => {
-                    if (res.statusCode !== 200) reject(new RestError(this.hostname, path, data));
+                    if (res.statusCode !== 200) reject(new RestError(this.hostname, path, res,data));
                     else {
                         try {
                             resolve(JSON.parse(data));
@@ -159,7 +159,7 @@ const Rest = module.exports = class Rest {
                     data += chunk;
                 });
                 res.on("end", () => {
-                    if (res.statusCode !== 200) reject(new RestError(this.hostname, path, data));
+                    if (res.statusCode !== 200) reject(new RestError(this.hostname, path,res, data));
                     else {
                         try {
                             resolve(JSON.parse(data));
@@ -239,11 +239,11 @@ module.exports.post = function(hostname, path, data) {
 }
 
 const RestError = module.exports.RestError = class RestError extends Error {
-    constructor(hostname, path, ...args) {
+    constructor(hostname, path,res, ...args) {
         super(...args);
         this.hostname = hostname;
         this.path = path;
-
+        this.statusCode = res.statusCode;
         if (Error.captureStackTrace) {
            Error.captureStackTrace(this, RestError)
         }
@@ -252,6 +252,6 @@ const RestError = module.exports.RestError = class RestError extends Error {
     }
 
     toFriendly() {
-        return `RestError(hostname = "${this.hostname}", path = "${this.path}"): "${this.message}"`;
+        return `RestError(hostname = "${this.hostname}", path = "${this.path}",status_code="${this.statusCode}"): "${this.message}"`;
     }
 }
