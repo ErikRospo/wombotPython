@@ -25,22 +25,29 @@ module.exports = async function task(prompt, style, update_fn = () => {}, settin
             "Authorization": "bearer " + id,
             "Origin": "https://app.wombo.art",
             "Referer": "https://app.wombo.art/",
-            "cache-control": "no-cache",
-            "sec-fetch-mode": "cors",
+            "Cache-control": "no-cache",
+            "Sec-fetch-mode": "cors",
             "sec-fetch-site": "same-origin",
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36",
-            "pragma": "no-cache",
-            "accept":"*/*",
-            "accept-encoding":"gzip, deflate, br",
-            "accept-language":"en-US,en;q=0.9",
+            "Pragma": "no-cache",
+            "Accept":"*/*",
+            "Accept-encoding":"gzip, deflate, br",
+            "Accept-language":"en-US,en;q=0.9",
+            "Aontent-type":"text/plain;charset=UTF-8"
         };
-        let res=await image_paint_rest.post("/api/mediastore",{
-            image:input_image,
-            media_suffix:media_suffix,
-            num_uploads:1
-        })
-        mediastoreid=res.mediastore_uid
+        let created=Date.now();
+        let expire=Date.now()+960000;
         
+        // image_paint_rest.handle_cookies(`_dd_s=rum=1;id=323368bd-45a7-4b9d-acf2-89cd59a16777;created=${created};expire=${expire}`)
+        image_paint_rest.cookies["_dd_s"]=`rum=1&id=323368bd-45a7-4b9d-acf2-89cd59a16777&created=${created}&expire=${expire}`;
+        // image_paint_rest.cookies['expires']=String(expire);
+        // image_paint_rest.cookies['created']=String(created);
+        // image_paint_rest.cookies['id']='323368bd-45a7-4b9d-acf2-89cd59a16777';
+        let paint_rest_payload=`{"image":"${input_image}","media_suffix":"${media_suffix}","num_uploads":1}`
+        //task = await paint_rest.options("/api/tasks/", "POST")
+        //.then(() => paint_rest.post("/api/tasks/", {premium: false}));
+        let res=await image_paint_rest.post("/api/mediastore",paint_rest_payload)
+        mediastoreid=res.mediastore_uid    
     }
     paint_rest.custom_headers = {
         "Authorization": "bearer " + id,
