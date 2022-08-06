@@ -71,7 +71,7 @@ async function generate_sequential(prompt, style, times,directory=Date.now()) {
   let last_image = {};
   const download_dir=`./generated/${directory}/`
   for (let n = 0; n < times; n++) {
-    console.log(`${n+1}/${times}S`)
+    console.log(`${n+1}/${times} Started`)
     let res = await generate(prompt, style, `${n + 1}: `, last_image,download_dir,n);
     let limage = fs.readFileSync(res.path).toString("base64");
     last_image = {
@@ -79,7 +79,7 @@ async function generate_sequential(prompt, style, times,directory=Date.now()) {
       media_suffix: "jpeg",
       input_image: limage
     };
-    console.log(`${n+1}/${times}D`)
+    console.log(`${n+1}/${times} Finished`)
     
   }
 }
