@@ -29,7 +29,7 @@ if return_code==0:
         csv_object=[ row for row in csv_reader ]
         csv_file.close()
         json_file.close()
-        csv_object.append([str(json_data['iterations']), str(round(timing,3)), str(round(timing1,3))])
+        csv_object.append([str(json_data['iterations']), str(round(timing,3)), str(round(timing1,3)),str(round(timing1+timing,3))])
         csv_header=csv_object[0]
         csv_object=csv_object[1:]
         csv_object.sort(key=lambda x: float(x[0]))
