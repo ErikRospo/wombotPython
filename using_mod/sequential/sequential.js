@@ -66,18 +66,7 @@ async function generate(prompt, style, prefix, input_image = false,download_dir=
   return res;
 }
 
-// (async () => {
-//     let prompt = argc._[0];
-//     let style = +argc._[1] || 3;
-//     if (!quiet)
-//         console.log(`Prompt: \`${prompt}\`, Style: \`${styles.get(style)}\``);
 
-//     for (let n = 0; n < +argc.times; n++) {
-//         const prefix = argc.times == 1 ? `` : `${n+1}: `;
-//         if (argc.noasync) await generate(prompt, style, prefix);
-//         else generate(prompt, style, prefix);
-//     }
-// })();
 async function generate_sequential(prompt, style, times,directory=Date.now()) {
   let last_image = {};
   const download_dir=`./generated/${directory}/`
@@ -94,4 +83,8 @@ async function generate_sequential(prompt, style, times,directory=Date.now()) {
     
   }
 }
-generate_sequential(settings.prompt,settings.style, settings.iterations,settings.file_folder);
+if (require.main === module) {
+  generate_sequential(settings.prompt,settings.style, settings.iterations,settings.file_folder);
+}
+module.exports.generate = generate;
+module.exports.generate_sequential = generate_sequential;

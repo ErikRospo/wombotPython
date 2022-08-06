@@ -33,7 +33,7 @@ module.exports = async function task(prompt, style, update_fn = () => {}, settin
             "Accept":"*/*",
             "Accept-encoding":"gzip, deflate, br",
             "Accept-language":"en-US,en;q=0.9",
-            "Content-type":"text/plain;charset=UTF-8"
+            "Aontent-type":"text/plain;charset=UTF-8"
         };
         let created=Date.now();
         let expire=Date.now()+960000;
