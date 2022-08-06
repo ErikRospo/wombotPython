@@ -6,14 +6,14 @@ const path = require("path");
 
 let paint_rest = new Rest("paint.api.wombo.ai", 100);
 let image_paint_rest=new Rest("app.wombo.art",100)
-module.exports = async function task(prompt, style, update_fn = () => {}, settings = {},inputImage={}) {
-    let {final = true, inter = false, identify_key, download_dir = "./generated/"} = settings;
+module.exports = async function task(prompt, style, update_fn = () => {}, settings = {},inputImage={},photo_downloads="") {
+    let {final = true, inter = false, download_dir = "./generated/"} = settings;
     let {input_image=false,media_suffix=null,image_weight="HIGH"}=inputImage;
     if (final || inter) mkdirp(download_dir);
     
     let id;
     try {
-        id = await identify(identify_key);
+        id = await identify();
     } catch (err) {
         console.error(err);
         throw new Error(`Error while sending prompt:\n${err.toFriendly ? err.toFriendly() : err.toString()}`);
@@ -115,15 +115,17 @@ module.exports = async function task(prompt, style, update_fn = () => {}, settin
             console.error(err);
             throw new Error(`Error while fetching update:\n${err.toFriendly ? err.toFriendly() : err.toString()}`);
         }
-        if (task.state === "pending") console.warn("Warning: task is pending");
+        // if (task.state === "pending") console.warn("Warning: task is pending");
 
         if (inter) {
+            await mkdirp(`${download_dir}/${photo_downloads}/`)
             for (let n = 0; n < task.photo_url_list.length; n++) {
                 if (inter_downloads[n] || /\/final\.je?pg/i.exec(task.photo_url_list[n])) continue;
-                inter_paths[n] = path.join(download_dir, `${task.id}-${n}.jpg`);
+                
+                inter_paths[n] = path.join(download_dir, `${photo_downloads}/${n}.jpg`);
 
                 inter_downloads[n] = download(task.photo_url_list[n], inter_paths[n]).then(() => {
-                    return inter_finished[n] = inter_paths[n];
+                    return inter_finished[n] = inter_paths[n]
                 });
             }
         }
@@ -144,9 +146,10 @@ module.exports = async function task(prompt, style, update_fn = () => {}, settin
         url: task.result.final,
         inter: inter_finished,
     });
-
-    let download_path = path.join(download_dir, `${task.id}-final.jpg`);
-
+    let download_path
+    if (inter){
+         download_path = path.join(download_dir, `${photo_downloads}/final.jpg`);
+    }
     try {
         if (final) await download(task.result.final, download_path);
         if (inter) await Promise.all(inter_downloads);
