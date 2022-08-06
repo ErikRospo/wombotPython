@@ -3,10 +3,14 @@ const Rest = require("./rest.js");
 const styles = require("./styles.js");
 const download = require("./download.js");
 const fs = require("fs");
-const quiet = true;
-const inter = true;
-const final = true;
+
 let settings=JSON.parse(fs.readFileSync("./settings.json"))
+let quiet = settings.quiet;
+let inter = settings.inter;
+let final = settings.final;
+if (typeof quiet==="undefined"){quiet=true}
+if (typeof inter==="undefined"){inter=false}
+if (typeof final==="undefined"){final=true}
 async function generate(prompt, style, prefix, input_image = false,download_dir="./generated",iteration_=0) {
   function handler(data, prefix) {
     switch (data.state) {

@@ -1,8 +1,8 @@
-<<<<<<< Updated upstream
 //@ts-check
 const task = require("./index");
 const styles = require("./styles");
 const steps=require("./steps");
+//@ts-ignore
 const { Image } = require("image-js");
 const fs = require("fs");
 const path = require("path");
@@ -13,11 +13,7 @@ const False = false;
 const final = True;
 const inter = False;
 const quiet = False;
-=======
-const task = require("./index.js");
-const styles = require("./styles.js");
 
->>>>>>> Stashed changes
 async function generate(prompt, style, prefix) {
   function handler(data, prefix) {
     switch (data.state) {
@@ -33,11 +29,7 @@ async function generate(prompt, style, prefix) {
         break;
       case "progress":
         let current = data.task.photo_url_list.length;
-<<<<<<< Updated upstream
         let max = steps.get(style) + 1;
-=======
-        let max = styles.steps.get(style) + 1;
->>>>>>> Stashed changes
         if (!quiet)
           console.log(
             `${prefix}Submitted! Waiting on results... (${current}/${max})`
@@ -57,7 +49,6 @@ async function generate(prompt, style, prefix) {
 
   let res = await task(prompt, style, data => handler(data, prefix), {
     final,
-<<<<<<< Updated upstream
     inter,
   });
   // if (!quiet && final)
@@ -221,78 +212,3 @@ generate_image_array(
   2,
   2
 );
-=======
-    inter
-  });
-  if (!quiet && final)
-    console.log(
-      `${prefix}Your results have been downloaded to the following files:`
-    );
-  else if (!quiet)
-    console.log(
-      `${prefix}Task finished, the results are available at the following addresses:`
-    );
-
-  for (let inter of res.inter) console.log(inter);
-
-  if (final) console.log(res.path);
-  else console.log(res.url);
-  return res;
-}
-function generate_from_array_sync(prompts, style) {
-    let i=0;
-    for (let prompt of prompts) {
-        i++
-        await generate(prompt, style, i+1+"/"+prompts.length+" ");
-  }
-  
-}
-function generate_from_array_async(prompts, style) {
-    let i=0;
-    if (length(prompts)>5){
-        console.warn("Too many prompts, user may be rate limited");
-    }
-    for (let prompt of prompts) {
-        i++
-        generate(prompt, style, i+1+"/"+prompts.length+" ");
-    }
-}
-
-function generate_with_responses(prompts,style){
-    let responses = [];
-    let i=0;
-    for (let prompt of prompts) {
-        i++
-        responses.push(generate(prompt, style, i+1+"/"+prompts.length+" "));
-    }
-    return responses;
-}
-function generate_with_responses_async(prompts,style){
-    let responses = [];
-    let i=0;
-    for (let prompt of prompts) {
-        i++
-        responses.push(await generate(prompt, style, i+1+"/"+prompts.length+" "));
-    }
-    return responses;
-}
-//   (async () => {
-//     let prompt = argc._[0];
-//     let style = +argc._[1]
-//     if (!quiet)
-//       console.log(`Prompt: \`${prompt}\`, Style: \`${styles.get(style)}\``);
-
-//     for (let n = 0; n < +argc.times; n++) {
-//       const prefix = argc.times == 1 ? `` : `${n + 1}: `;
-//       if (argc.noasync) await generate(prompt, style, prefix);
-//       else generate(prompt, style, prefix);
-//     }
-//   })();
-module.exports = {
-    generate,
-    generate_from_array_sync,   
-    generate_from_array_async,
-    generate_with_responses,
-    generate_with_responses_async
-}
->>>>>>> Stashed changes
