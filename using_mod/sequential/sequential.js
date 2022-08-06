@@ -86,7 +86,7 @@ async function generate_sequential(prompt, style, times,directory=Date.now()) {
     let res = await generate(prompt, style, `${n + 1}: `, last_image,download_dir,n);
     let limage = fs.readFileSync(res.path).toString("base64");
     last_image = {
-      image_weight: "HIGH",
+      image_weight: "MEDIUM",
       media_suffix: "jpeg",
       input_image: limage
     };
