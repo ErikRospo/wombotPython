@@ -1,23 +1,23 @@
 const https = require("https");
 
-const Rest = module.exports = class Rest {
-    constructor(hostname, delay = 250, cookies_enabled = true) {
+const Rest = (module.exports = class Rest {
+    constructor(hostname, delay = 250, cookiesEnabled = true) {
         this.hostname = hostname;
 
         this.agent = new https.Agent({
             keepAlive: true,
-            maxsockets: 1,
+            maxsockets: 1
         });
 
         this.queue = [];
 
         this._delay = delay; // milliseconds
-        this.delay_handle = null;
+        this.delayHandle = null;
 
         this.cookies = {};
-        this.cookies_enabled = cookies_enabled;
+        this.cookiesEnabled = cookiesEnabled;
 
-        this.custom_headers = {};
+        this.customHeaders = {};
     }
 
     /**
@@ -27,8 +27,8 @@ const Rest = module.exports = class Rest {
         if (this.queue.length) {
             this.queue.shift()();
         } else {
-            if (this.delay_handle !== null) clearInterval(this.delay_handle);
-            this.delay_handle = null;
+            if (this.delayHandle !== null) clearInterval(this.delayHandle);
+            this.delayHandle = null;
         }
     }
 
@@ -38,10 +38,14 @@ const Rest = module.exports = class Rest {
 
         A Promise is returned, whose `resolve` and `reject` closures will be passed on to `f` once it is processed.
     **/
-    enter_queue(f) {
+    enterQueue(f) {
         return new Promise((resolve, reject) => {
             if (this._delay > 0) {
-                if (this.delay_handle === null) this.delay_handle = setInterval(this.scheduler.bind(this), this._delay);
+                if (this.delayHandle === null)
+                    this.delayHandle = setInterval(
+                        this.scheduler.bind(this),
+                        this._delay
+                    );
 
                 this.queue.push(() => {
                     f(resolve, reject);
@@ -57,13 +61,13 @@ const Rest = module.exports = class Rest {
         If `cookies_enabled` is set to false, does nothing.
         Writes the cookie to `cookies`.
     **/
-    handle_cookies(setters) {
+    handleCookies(setters) {
         if (!setters) return;
-        if (!this.cookies_enabled) return;
+        if (!this.cookiesEnabled) return;
 
-        for (let cookie_setter of setters) {
-            let [name, value_setter] = cookie_setter.split("=");
-            let [value] = value_setter.split(";");
+        for (let cookieSetter of setters) {
+            let [name, valueSetter] = cookieSetter.split("=");
+            let [value] = valueSetter.split(";");
             this.cookies[name] = value;
         }
     }
@@ -72,9 +76,11 @@ const Rest = module.exports = class Rest {
         Returns the list of cookies in HTTP header format.
         If `cookies_enabled` is set to false, returns `""`.
     **/
-    get_cookies() {
-        if (!this.cookies_enabled) return "";
-        return Object.entries(this.cookies).map(([name, value]) => `${name}=${value}`).join("; ");
+    getCookies() {
+        if (!this.cookiesEnabled) return "";
+        return Object.entries(this.cookies)
+            .map(([name, value]) => `${name}=${value}`)
+            .join("; ");
     }
 
     /**
@@ -82,9 +88,9 @@ const Rest = module.exports = class Rest {
         Returns a Promise that is resolved once the server has answered.
         The resolve value will containg the answer in JSON format.
     **/
-    post(path, data, method = "POST", request_headers) {
-        return this.enter_queue((resolve, reject) => {
-            let post_data = JSON.stringify(data);
+    post(path, data, method = "POST", requestHeaders) {
+        return this.enterQueue((resolve, reject) => {
+            let postData = JSON.stringify(data);
 
             let options = {
                 agent: this.agent,
@@ -93,23 +99,24 @@ const Rest = module.exports = class Rest {
                 path,
                 method,
                 headers: {
-                    Cookie: this.get_cookies(),
+                    "Cookie": this.getCookies(),
                     "Content-Type": "application/json; charset=utf-8",
-                    "Content-Length": Buffer.byteLength(post_data),
-                    ...this.custom_headers,
-                    ...request_headers,
+                    "Content-Length": Buffer.byteLength(postData),
+                    ...this.customHeaders,
+                    ...requestHeaders
                 }
             };
 
             const req = https.request(options, (res) => {
-                this.handle_cookies(res.headers["set-cookie"]);
+                this.handleCookies(res.headers["set-cookie"]);
                 let data = "";
                 res.setEncoding("utf8");
                 res.on("data", (chunk) => {
                     data += chunk;
                 });
                 res.on("end", () => {
-                    if (res.statusCode !== 200) reject(new RestError(this.hostname, path, data));
+                    if (res.statusCode !== 200)
+                        reject(new RestError(this.hostname, path, data));
                     else {
                         try {
                             resolve(JSON.parse(data));
@@ -127,7 +134,7 @@ const Rest = module.exports = class Rest {
                 reject(new RestError(this.hostname, path, err));
             });
 
-            req.write(post_data);
+            req.write(postData);
             req.end();
         });
     }
@@ -137,8 +144,8 @@ const Rest = module.exports = class Rest {
         Returns a Promise that is resolved once the server has answered.
         The resolve value will containg the answer in JSON format.
     **/
-    get(path, method = "GET", request_headers = {}) {
-        return this.enter_queue((resolve, reject) => {
+    get(path, method = "GET", requestHeaders = {}) {
+        return this.enterQueue((resolve, reject) => {
             let options = {
                 agent: this.agent,
                 hostname: this.hostname,
@@ -146,21 +153,22 @@ const Rest = module.exports = class Rest {
                 path,
                 method,
                 headers: {
-                    Cookie: this.get_cookies(),
-                    ...this.custom_headers,
-                    ...request_headers,
+                    Cookie: this.getCookies(),
+                    ...this.customHeaders,
+                    ...requestHeaders
                 }
             };
 
             const req = https.request(options, (res) => {
-                this.handle_cookies(res.headers["set-cookie"]);
+                this.handleCookies(res.headers["set-cookie"]);
                 let data = "";
                 res.setEncoding("utf8");
                 res.on("data", (chunk) => {
                     data += chunk;
                 });
                 res.on("end", () => {
-                    if (res.statusCode !== 200) reject(new RestError(this.hostname, path, data));
+                    if (res.statusCode !== 200)
+                        reject(new RestError(this.hostname, path, data));
                     else {
                         try {
                             resolve(JSON.parse(data));
@@ -186,20 +194,20 @@ const Rest = module.exports = class Rest {
         return this.post(path, data, "PUT");
     }
 
-    options(path, request_method) {
-        let request_headers;
+    options(path, requestMethod) {
+        let requestHeaders;
 
-        if (typeof request_method === "string") {
-            request_headers = {
-                "Access-Control-Request-Method": request_method
-            }
-        } else if (typeof request_method === "object") {
-            request_headers = request_method;
+        if (typeof requestMethod === "string") {
+            requestHeaders = {
+                "Access-Control-Request-Method": requestMethod
+            };
+        } else if (typeof requestMethod === "object") {
+            requestHeaders = requestMethod;
         } else {
-            request_headers = {};
+            requestHeaders = {};
         }
 
-        return this.get(path, "OPTIONS", request_headers);
+        return this.get(path, "OPTIONS", requestHeaders);
     }
 
     /**
@@ -214,38 +222,41 @@ const Rest = module.exports = class Rest {
 
     set delay(value) {
         this._delay = value;
-        if (this.delay_handle !== null) {
+        if (this.delayHandle !== null) {
             if (value > 0) {
-                clearInterval(this.delay_handle);
-                this.delay_handle = setInterval(scheduler.bind(this), this._delay);
+                clearInterval(this.delayHandle);
+                this.delayHandle = setInterval(
+                    this.scheduler.bind(this),
+                    this._delay
+                );
             } else {
-                this.delay_handle = null;
-                while (queue.length) scheduler();
+                this.delayHandle = null;
+                while (this.queue.length) this.scheduler();
             }
         }
     }
-}
+});
 
-module.exports.get = function(hostname, path) {
+module.exports.get = function (hostname, path) {
     let rest = new Rest(hostname);
 
     return rest.get(path);
-}
+};
 
-module.exports.post = function(hostname, path, data) {
+module.exports.post = function (hostname, path, data) {
     let rest = new Rest(hostname);
 
     return rest.post(path, data);
-}
+};
 
-const RestError = module.exports.RestError = class RestError extends Error {
-    constructor(hostname, path,method, ...args) {
+const RestError = (module.exports.RestError = class RestError extends Error {
+    constructor(hostname, path, method, ...args) {
         super(...args);
         this.hostname = hostname;
         this.path = path;
 
         if (Error.captureStackTrace) {
-           Error.captureStackTrace(this, RestError)
+            Error.captureStackTrace(this, RestError);
         }
 
         this.name = "RestError";
@@ -254,4 +265,4 @@ const RestError = module.exports.RestError = class RestError extends Error {
     toFriendly() {
         return `RestError(hostname = "${this.hostname}", path = "${this.path}"): "${this.message}"`;
     }
-}
+});
