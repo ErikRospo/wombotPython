@@ -6,6 +6,14 @@ const path = require("path");
 
 let paint_rest = new Rest("paint.api.wombo.ai", 100);
 let image_paint_rest = new Rest("app.wombo.art", 100);
+/**
+ * @param {string} prompt
+ * @param {number} style
+ * @param {function} handler
+ * @param {object} settings
+ * @param {object} inputImage
+ * @param {string} photo_downloads
+ */
 module.exports = async function task(
   prompt,
   style,
@@ -88,24 +96,18 @@ module.exports = async function task(
   } catch (err) {
     if (err.detail == "User has been rate-limited") {
       console.log("User has been rate-limited, retrying in 2 seconds");
-      try {
-        setTimeout(async () => {
+      while (true) {
+        try {
           task = await paint_rest
             .options("/api/tasks/", "POST")
             .then(() => paint_rest.post("/api/tasks/", { premium: false }));
-        }, 2000);
-      } catch (err) {
-        if (err.detail == "User has been rate-limited") {
-          console.log("User has been rate-limited, retrying in 8");
-          try {
-            setTimeout(async () => {
-              task = await paint_rest
-                .options("/api/tasks/", "POST")
-                .then(() => paint_rest.post("/api/tasks/", { premium: false }));
-            }, 8000);
-          } catch (err) {
-            console.error(err);
-            // throw new Error(`Error while sending prompt:\n${err.toFriendly ? err.toFriendly() : err.toString()}`);
+          break;
+        } catch (err) {
+          if (err.detail == "User has been rate-limited") {
+            console.log("User has been rate-limited, retrying in 2 seconds");
+            await new Promise(resolve => setTimeout(resolve, 2000));
+          } else {
+            throw err;
           }
         }
       }
@@ -114,23 +116,22 @@ module.exports = async function task(
       // throw new Error(`Error while allocating a new task:\n${err.toFriendly ? err.toFriendly() : err.toString()}`);
     }
   }
-  let task_path
-  if (!task) {
-    async () => {
-      task = await paint_rest
-        .options("/api/tasks/", "POST")
-        .then(() => paint_rest.post("/api/tasks/", { premium: false })).then(() => {
-          return task;
-        }).catch(err => {
-          console.error(err);
-          // throw new Error(`Error while allocating a new task:\n${err.toFriendly ? err.toFriendly() : err.toString()}`);
-        }
-        );
-    };
-  }
-  
-  task_path = "/api/tasks/" + task.id;
+  let task_path;
 
+  try {
+    task_path = "/api/tasks/" + task.id;
+  } catch (err) {
+    if (typeof err == TypeError) {
+      return await task(
+        prompt,
+        style,
+        update_fn,
+        settings,
+        inputImage,
+        photo_downloads
+      );
+    }
+  }
   update_fn({
     state: "allocated",
     id,
@@ -157,11 +158,21 @@ module.exports = async function task(
   } catch (err) {
     if (err.detail == "User has been rate-limited") {
       console.log("Rate limited, retrying in 2 seconds");
-      setTimeout(async () => {
-        task = await paint_rest
-          .options(task_path, "PUT")
-          .then(() => paint_rest.put(task_path, input_object));
-      }, 2000);
+      while (true) {
+        try {
+          task = await paint_rest
+            .options(task_path, "PUT")
+            .then(() => paint_rest.put(task_path, input_object));
+          break;
+        } catch (err) {
+          if (err.detail == "User has been rate-limited") {
+            console.log("Rate limited, retrying in 2 seconds");
+            await new Promise(resolve => setTimeout(resolve, 2000));
+          } else {
+            throw err;
+          }
+        }
+      }
     } else if (err.detail == "") {
       console.log("Error while sending prompt. No response from server");
     } else {
@@ -190,9 +201,19 @@ module.exports = async function task(
     } catch (err) {
       if (err.detail == "User has been rate-limited") {
         console.log("Rate limited, retrying");
-        setTimeout(async () => {
-          task = await paint_rest.get(task_path, "GET");
-        }, 2000);
+        while (true) {
+          try {
+            task = await paint_rest.get(task_path, "GET");
+            break;
+          } catch (err) {
+            if (err.detail == "User has been rate-limited") {
+              console.log("Rate limited, retrying in 2 seconds");
+              await new Promise(resolve => setTimeout(resolve, 2000));
+            } else {
+              throw err;
+            }
+          }
+        }
       } else {
         console.error(err);
         throw new Error(

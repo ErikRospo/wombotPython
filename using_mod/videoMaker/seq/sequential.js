@@ -148,27 +148,22 @@ async function generate_from_array(prompts, style) {
     }
   } else {
     for (let n = 0; n < prompts.length; n++) {
-      generate(prompts[n], style, `${n + 1}/${prompts.length}: `)
-        .then(e => {
-          images.push(e);
-        })
-        .catch(e => {
+      while (true){
+        try{
+          let res = await generate(prompts[n], style, `${n + 1}/${prompts.length}: `);
+          images.push(res);
+          break;
+        } catch (e){
           console.log(e);
-          generate(prompts[n], style, `${n + 1}/${prompts.length}: `)
-            .then(e => {
-              images.push(e);
-            })
-            .catch(e => {
-              console.log(e);
-              generate(prompts[n], style, `${n + 1}/${prompts.length}: `)
-                .then(e => {
-                  images.push(e);
-                })
-                .catch(e => {
-                  console.log(e);
-                });
-            });
-        });
+        }
+      }
+      // generate(prompts[n], style, `${n + 1}/${prompts.length}: `)
+      //   .then(e => {
+      //     images.push(e);
+      //   })
+      //   .catch(e => {
+      //     console.log(e);          
+      //   });
     }
   }
   return images;
