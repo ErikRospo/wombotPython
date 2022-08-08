@@ -177,11 +177,6 @@ module.exports = async function task(
       console.log("Error while sending prompt. No response from server");
     } else {
       console.error(err);
-      throw new Error(
-        `Error while sending prompt:\n${err.toFriendly
-          ? err.toFriendly()
-          : err.toString()}`
-      );
     }
   }
 
@@ -194,37 +189,28 @@ module.exports = async function task(
   let inter_downloads = [];
   let inter_paths = [];
   let inter_finished = [];
-
-  while (!task.result) {
+  while (!task && (task.result!==undefined)&&(task['result']!==null)) {
     try {
       task = await paint_rest.get(task_path, "GET");
     } catch (err) {
-      if (err.detail == "User has been rate-limited") {
-        console.log("Rate limited, retrying");
-        while (true) {
-          try {
-            task = await paint_rest.get(task_path, "GET");
-            break;
-          } catch (err) {
-            if (err.detail == "User has been rate-limited") {
-              console.log("Rate limited, retrying in 2 seconds");
-              await new Promise(resolve => setTimeout(resolve, 2000));
-            } else {
-              throw err;
-            }
+      console.log("Rate limited, retrying");
+      while (true) {
+        try {
+          task = await paint_rest.get(task_path, "GET");
+          break;
+        } catch (err) {
+          if (err.detail == "User has been rate-limited") {
+            console.log("Rate limited, retrying in 2 seconds");
+            await new Promise(resolve => setTimeout(resolve, 2000));
+          } else {
+            throw err;
           }
         }
-      } else {
-        console.error(err);
-        throw new Error(
-          `Error while fetching update:\n${err.toFriendly
-            ? err.toFriendly()
-            : err.toString()}`
-        );
       }
+      break;
     }
-    // if (task.state === "pending") console.warn("Warning: task is pending");
 
+    // if (task.state === "pending") console.warn("Warning: task is pending");
     if (inter) {
       await mkdirp(`${download_dir}/${photo_downloads}/`);
       for (let n = 0; n < task.photo_url_list.length; n++) {
@@ -253,6 +239,10 @@ module.exports = async function task(
     });
     await new Promise(res => setTimeout(res, 1000));
   }
+  console.assert(task.result !== undefined, "Task result is undefined");
+  console.assert(task.result !== null, "Task result is null");
+  console.assert(task.result.final!==undefined, "Task result final is undefined");
+  console.assert(task.result.final!==null, "Task result final is null");
 
   update_fn({
     state: "generated",

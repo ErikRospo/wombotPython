@@ -148,12 +148,16 @@ async function generate_from_array(prompts, style) {
     }
   } else {
     for (let n = 0; n < prompts.length; n++) {
-      while (true){
-        try{
-          let res = await generate(prompts[n], style, `${n + 1}/${prompts.length}: `);
+      while (true) {
+        try {
+          let res = await generate(
+            prompts[n],
+            style,
+            `${n + 1}/${prompts.length}: `
+          );
           images.push(res);
           break;
-        } catch (e){
+        } catch (e) {
           console.log(e);
         }
       }
@@ -162,7 +166,7 @@ async function generate_from_array(prompts, style) {
       //     images.push(e);
       //   })
       //   .catch(e => {
-      //     console.log(e);          
+      //     console.log(e);
       //   });
     }
   }
