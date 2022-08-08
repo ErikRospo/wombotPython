@@ -23,7 +23,7 @@
     "mkdirp": "^1.0.4"
   },
   "devDependencies": {
-    "eris": "^0.16.1",
+    "eris": "^0.17.1",
     "yargs": "^17.3.0"
   }
 }
