@@ -88,9 +88,14 @@ async function generate_sequential(
   prompt,
   style,
   times,
-  directory = Date.now()
+  directory = Date.now(),
+  input_image = false
 ) {
   let last_image = {};
+  if (input_image) {
+    last_image = input_image;
+  }
+
   const download_dir = `./generated/${directory}/`;
   for (let n = 0; n < times; n++) {
     console.log(`${n + 1}/${times} Started`);
@@ -116,22 +121,21 @@ async function generate_from_array(prompts, style) {
   let limit = 4;
   if (prompts.length > limit) {
     for (let i = 0; i < Math.floor(prompts.length / limit); i++) {
-      for (let j = 0; j < limit - 1; j++) {
+      let promises = [];
+      for (let j = 0; j < limit; j++) {
         let n = i * limit + j;
-        generate(prompts[n], style, `${n + 1}/${prompts.length}: `)
-          .then(e => {
-            images.push(e);
-          })
-          .catch(e => {
-            console.log(e);
-          });
+        promises.push(
+          generate(prompts[n], style, `${n + 1}/${prompts.length}: `)
+            .then(e => {
+              images.push(e);
+            })
+            .catch(e => {
+              console.log(e);
+            })
+        );
       }
-      let res = await generate(
-        prompts[i * limit + (limit - 1)],
-        style,
-        `${i * limit + (limit - 1)}/${prompts.length}: `
-      );
-      images.push(res);
+
+      await Promise.all(promises);
     }
     for (let i = 0; i < prompts.length % limit; i++) {
       let n = prompts.length - i - 1;
@@ -150,6 +154,20 @@ async function generate_from_array(prompts, style) {
         })
         .catch(e => {
           console.log(e);
+          generate(prompts[n], style, `${n + 1}/${prompts.length}: `)
+            .then(e => {
+              images.push(e);
+            })
+            .catch(e => {
+              console.log(e);
+              generate(prompts[n], style, `${n + 1}/${prompts.length}: `)
+                .then(e => {
+                  images.push(e);
+                })
+                .catch(e => {
+                  console.log(e);
+                });
+            });
         });
     }
   }

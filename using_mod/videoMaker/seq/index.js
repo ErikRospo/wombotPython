@@ -114,8 +114,22 @@ module.exports = async function task(
       // throw new Error(`Error while allocating a new task:\n${err.toFriendly ? err.toFriendly() : err.toString()}`);
     }
   }
-
-  let task_path = "/api/tasks/" + task.id;
+  let task_path
+  if (!task) {
+    async () => {
+      task = await paint_rest
+        .options("/api/tasks/", "POST")
+        .then(() => paint_rest.post("/api/tasks/", { premium: false })).then(() => {
+          return task;
+        }).catch(err => {
+          console.error(err);
+          // throw new Error(`Error while allocating a new task:\n${err.toFriendly ? err.toFriendly() : err.toString()}`);
+        }
+        );
+    };
+  }
+  
+  task_path = "/api/tasks/" + task.id;
 
   update_fn({
     state: "allocated",
@@ -142,12 +156,14 @@ module.exports = async function task(
       .then(() => paint_rest.put(task_path, input_object));
   } catch (err) {
     if (err.detail == "User has been rate-limited") {
+      console.log("Rate limited, retrying in 2 seconds");
       setTimeout(async () => {
-        console.log("Rate limited, retrying in 2 seconds");
         task = await paint_rest
           .options(task_path, "PUT")
           .then(() => paint_rest.put(task_path, input_object));
       }, 2000);
+    } else if (err.detail == "") {
+      console.log("Error while sending prompt. No response from server");
     } else {
       console.error(err);
       throw new Error(

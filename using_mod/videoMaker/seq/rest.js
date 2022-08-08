@@ -239,7 +239,7 @@ module.exports.post = function(hostname, path, data) {
 }
 
 const RestError = module.exports.RestError = class RestError extends Error {
-    constructor(hostname, path, ...args) {
+    constructor(hostname, path,method, ...args) {
         super(...args);
         this.hostname = hostname;
         this.path = path;
