@@ -12,9 +12,7 @@ let samplesArray = fs
     .split("\n");
 const style = 15;
 (async function () {
-    // eslint-disable-next-line no-unused-vars
-    const sarl = samplesArray.length;
-    sequential.generate_from_array(samplesArray, style, 15).then(async (ff) => {
+    sequential.generateFromArray(samplesArray, style, 15).then(async (ff) => {
         let res = ff;
         let dir = path.resolve("./generated/result" + Date.now());
         mkdirp(dir);

@@ -1,4 +1,21 @@
 const https = require("https");
+const RestError = (module.exports.RestError = class RestError extends Error {
+    constructor(hostname, path, method, ...args) {
+        super(...args);
+        this.hostname = hostname;
+        this.path = path;
+
+        if (Error.captureStackTrace) {
+            Error.captureStackTrace(this, RestError);
+        }
+
+        this.name = "RestError";
+    }
+
+    toFriendly() {
+        return `RestError(hostname = "${this.hostname}", path = "${this.path}"): "${this.message}"`;
+    }
+});
 
 const Rest = (module.exports = class Rest {
     constructor(hostname, delay = 250, cookiesEnabled = true) {
@@ -248,21 +265,3 @@ module.exports.post = function (hostname, path, data) {
 
     return rest.post(path, data);
 };
-
-const RestError = (module.exports.RestError = class RestError extends Error {
-    constructor(hostname, path, method, ...args) {
-        super(...args);
-        this.hostname = hostname;
-        this.path = path;
-
-        if (Error.captureStackTrace) {
-            Error.captureStackTrace(this, RestError);
-        }
-
-        this.name = "RestError";
-    }
-
-    toFriendly() {
-        return `RestError(hostname = "${this.hostname}", path = "${this.path}"): "${this.message}"`;
-    }
-});

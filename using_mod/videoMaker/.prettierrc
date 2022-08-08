@@ -1,0 +1,8 @@
+{
+    "endOfLine": "lf",
+    "arrowParens": "always",
+    "quoteProps": "consistent",
+    "semi": true,
+    "tabWidth": 4,
+    "useTabs": false
+}

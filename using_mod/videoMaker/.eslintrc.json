@@ -1,0 +1,57 @@
+{
+    "env": {
+        "commonjs": true,
+        "es2021": true,
+        "node": true
+    },
+    "extends": "eslint:recommended",
+    "parserOptions": {
+        "ecmaVersion": "latest"
+    },
+    "rules": {
+        "indent": [
+            "error",
+            4
+        ],
+        "linebreak-style": [
+            "warn",
+            "unix"
+        ],
+        "quotes": [
+            "warn",
+            "double"
+        ],
+        "semi": [
+            "error",
+            "always"
+        ],
+        "arrow-spacing":2,
+        "camelcase":2,
+        "yoda":2,
+        "brace-style":1,
+        "comma-style":2,
+        "comma-dangle":2,
+        "callback-return":1,
+        "no-duplicate-imports":2,
+        "no-catch-shadow":1,
+        "spaced-comment":2,
+        "no-fallthrough":2,
+        "no-floating-decimal":2,
+        "no-empty-function":2,
+        "sort-vars":1,
+        "sort-imports":1,
+        "no-useless-return":2,
+        "no-self-assign":2,
+        "no-self-compare":2,
+        "no-unreachable":2,
+        "no-use-before-define":2,
+        "no-undefined":2,
+        "no-unexpected-multiline":2,
+        "no-unused-labels":2,
+        "no-unused-expressions":2,
+        "no-unused-vars":2,
+        "no-useless-call":2,
+        "no-useless-constructor":2,
+        "use-isnan":2
+    }
+}

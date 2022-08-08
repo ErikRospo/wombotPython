@@ -186,4 +186,4 @@ if (require.main === module) {
 
 module.exports.generate = generate;
 module.exports.generateSequential = generateSequential;
-module.exports.generategromArray = generateFromArray;
+module.exports.generateFromArray = generateFromArray;

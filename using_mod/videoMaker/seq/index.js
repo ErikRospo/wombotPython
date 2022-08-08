@@ -19,6 +19,7 @@ let imagePaintRest = new Rest("app.wombo.art", 100);
 module.exports = async function task(
     prompt,
     style,
+    // eslint-disable-next-line no-empty-function
     updateFn = () => {},
     settings = {},
     inputImageArg = {},
@@ -313,6 +314,6 @@ module.exports.styles = require("./styles.js");
 module.exports.download = require("./download.js");
 
 // Make `node .` a shorthand for `node cli.js`
-if (require.main === module) {
-    require("./sequential.jstial.js");
-}
+// if (require.main === module) {
+// require("./sequential.js");
+// }
