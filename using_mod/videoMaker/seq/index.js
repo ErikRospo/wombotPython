@@ -239,10 +239,6 @@ module.exports = async function task(
     });
     await new Promise(res => setTimeout(res, 1000));
   }
-  console.assert(task.result !== undefined, "Task result is undefined");
-  console.assert(task.result !== null, "Task result is null");
-  console.assert(task.result.final!==undefined, "Task result final is undefined");
-  console.assert(task.result.final!==null, "Task result final is null");
 
   update_fn({
     state: "generated",
