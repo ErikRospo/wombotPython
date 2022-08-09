@@ -29,17 +29,16 @@ module.exports.task = async function runTask(
     let {
         final = true,
         inter = false,
-        downloadDir = "./generated/",
+        downloadDir = "./generated/"
     } = settings;
     let {
         inputImage = false,
         mediaSuffix = null,
-        imageWeight = "HIGH",
+        imageWeight = "HIGH"
     } = inputImageArg;
     if (final || inter) mkdirp(downloadDir);
     let id;
     let prefix = _prefix;
-    console.log(`${prefix} Started`);
     try {
         id = await identify();
     } catch (err) {
@@ -65,7 +64,7 @@ module.exports.task = async function runTask(
             "Accept": "*/*",
             "Accept-encoding": "gzip, deflate, br",
             "Accept-language": "en-US,en;q=0.9",
-            "Aontent-type": "text/plain;charset=UTF-8",
+            "Aontent-type": "text/plain;charset=UTF-8"
         };
         let created = Date.now();
         let expire = Date.now() + 960000;
@@ -89,48 +88,18 @@ module.exports.task = async function runTask(
     paintRest.customHeaders = {
         Authorization: "bearer " + id,
         Origin: "https://app.wombo.art",
-        Referer: "https://app.wombo.art/",
+        Referer: "https://app.wombo.art/"
     };
 
     updateFn({
         state: "authenticated",
-        id,
+        id
     });
 
     let task;
-    try {
-        task = await paintRest
-            .options("/api/tasks/", "POST")
-            .then(() => paintRest.post("/api/tasks/", { premium: false }));
-    } catch (errorVal) {
-        if (errorVal.detail == "User has been rate-limited") {
-            console.log("User has been rate-limited, retrying in 2 seconds");
-            while (true) {
-                try {
-                    task = await paintRest
-                        .options("/api/tasks/", "POST")
-                        .then(() =>
-                            paintRest.post("/api/tasks/", { premium: false })
-                        );
-                    break;
-                } catch (err) {
-                    if (err.detail == "User has been rate-limited") {
-                        console.log(
-                            "User has been rate-limited, retrying in 2 seconds"
-                        );
-                        await new Promise((resolve) =>
-                            setTimeout(resolve, 2000)
-                        );
-                    } else {
-                        throw err;
-                    }
-                }
-            }
-        } else {
-            console.error(errorVal);
-            // throw new Error(`Error while allocating a new task:\n${err.toFriendly ? err.toFriendly() : err.toString()}`);
-        }
-    }
+    task = await paintRest
+        .options("/api/tasks/", "POST")
+        .then(() => paintRest.post("/api/tasks/", { premium: false }));
     let taskPath;
 
     try {
@@ -150,7 +119,7 @@ module.exports.task = async function runTask(
     updateFn({
         state: "allocated",
         id,
-        task,
+        task
     });
     let inputObject = {
         // eslint-disable-next-line camelcase
@@ -158,8 +127,8 @@ module.exports.task = async function runTask(
             // eslint-disable-next-line camelcase
             display_freq: 10,
             prompt,
-            style: +style,
-        },
+            style: +style
+        }
     };
     if (inputImage) {
         // eslint-disable-next-line camelcase
@@ -167,124 +136,74 @@ module.exports.task = async function runTask(
             // eslint-disable-next-line camelcase
             weight: imageWeight,
             // eslint-disable-next-line camelcase
-            mediastore_id: mediastoreid,
+            mediastore_id: mediastoreid
         };
     }
 
-    try {
-        task = await paintRest
-            .options(taskPath, "PUT")
-            .then(() => paintRest.put(taskPath, inputObject));
-    } catch (err) {
-        console.log("Retrying in 2 seconds");
-        while (true) {
-            try {
-                task = await paintRest
-                    .options(taskPath, "PUT")
-                    .then(() => paintRest.put(taskPath, inputObject));
-                break;
-            } catch (errorValue) {
-                if (errorValue.detail == "User has been rate-limited") {
-                    console.log("Rate limited, retrying in 2 seconds");
-                    await new Promise((resolve) => setTimeout(resolve, 2000));
-                } else {
-                    throw errorValue;
-                }
-            }
-        }
-    }
-
+    task = await paintRest
+        .options(taskPath, "PUT")
+        .then(() => paintRest.put(taskPath, inputObject));
     updateFn({
         state: "submitted",
         id,
-        task,
+        task
     });
 
     let interDownloads = [];
     let interPaths = [];
     let interFinished = [];
-    try {
-        while (!task && task["result"] != null) {
-            try {
-                task = await paintRest.get(taskPath, "GET");
-            } catch (err) {
-                console.log("Rate limited, retrying");
-                try {
-                    task = await paintRest.get(taskPath, "GET");
-                } catch (errorValue) {
-                    console.log("Rate limited, retrying in 2 seconds");
-                    await new Promise((resolve) => setTimeout(resolve, 2000));
-                }
-            }
-
-            // if (task.state === "pending") console.warn("Warning: task is pending");
-            if (inter) {
-                await mkdirp(`${downloadDir}/${photoDownloads}/`);
-                for (let n = 0; n < task.photo_url_list.length; n++) {
-                    if (
-                        interDownloads[n] ||
-                        /\/final\.je?pg/i.exec(task.photo_url_list[n])
-                    )
-                        continue;
-
-                    interPaths[n] = path.join(
-                        downloadDir,
-                        `${photoDownloads}/${n}.jpg`
-                    );
-
-                    interDownloads[n] = download(
-                        task.photo_url_list[n],
-                        interPaths[n]
-                    ).then(() => {
-                        return (interFinished[n] = interPaths[n]);
-                    });
-                }
-            }
-
-            updateFn({
-                state: "progress",
-                id,
-                task,
-                inter: interFinished,
-            });
-            await new Promise((res) => setTimeout(res, 1000));
+    while (!task.result) {
+        try {
+            task = await paintRest.get(taskPath, "GET");
+        } catch (err) {
+            console.log("Error while getting task");
+            // try {
+            //     task = await paintRest.get(taskPath, "GET");
+            // } catch (errorValue) {
+            //     console.log("Rate limited, retrying in 2 seconds");
+            //     await new Promise((resolve) => setTimeout(resolve, 2000));
+            // }
         }
-    } catch (e) {
-        console.log(prefix);
-        console.log(e);
-        return await runTask(
-            prompt,
-            style,
-            updateFn,
-            settings,
-            inputImage,
-            photoDownloads
-        );
-        
-    }
-    if (task["result"] == null) {
-        console.log(task);
-        return await runTask(
-            prompt,
-            style,
-            updateFn,
-            settings,
-            inputImage,
-            photoDownloads
-        );
-    }
-    console.log(task);
-    try {
+
+        // if (task.state === "pending") console.warn("Warning: task is pending");
+        if (inter) {
+            await mkdirp(`${downloadDir}/${photoDownloads}/`);
+            for (let n = 0; n < task.photo_url_list.length; n++) {
+                if (
+                    interDownloads[n] ||
+                        /\/final\.je?pg/i.exec(task.photo_url_list[n])
+                )
+                    continue;
+
+                interPaths[n] = path.join(
+                    downloadDir,
+                    `${photoDownloads}/${n}.jpg`
+                );
+
+                interDownloads[n] = download(
+                    task.photo_url_list[n],
+                    interPaths[n]
+                ).then(() => {
+                    return (interFinished[n] = interPaths[n]);
+                });
+            }
+        }
+
         updateFn({
-            state: "generated",
+            state: "progress",
             id,
             task,
-            url: task.result.final,
-            inter: interFinished,
+            inter: interFinished
         });
-    } catch (e) {
-        console.log(prefix + " Error:" + e);
+        await new Promise((res) => setTimeout(res, 1000));
     }
+    updateFn({
+        state: "generated",
+        id,
+        task,
+        url: task.result.final,
+        inter: interFinished
+    });
     let downloadPath;
     if (inter) {
         downloadPath = path.join(downloadDir, `${photoDownloads}/final.jpg`);
@@ -308,7 +227,7 @@ module.exports.task = async function runTask(
         task,
         url: task.result.final,
         path: final ? downloadPath : null,
-        inter: interFinished,
+        inter: interFinished
     });
 
     return {
@@ -317,14 +236,9 @@ module.exports.task = async function runTask(
         task,
         url: task.result.final,
         path: final ? downloadPath : null,
-        inter: interFinished,
+        inter: interFinished
     };
 };
 
 module.exports.styles = require("./styles.js");
 module.exports.download = require("./download.js");
-
-// Make `node .` a shorthand for `node cli.js`
-// if (require.main === module) {
-// require("./sequential.js");
-// }

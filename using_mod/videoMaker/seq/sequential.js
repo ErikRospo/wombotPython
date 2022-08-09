@@ -38,10 +38,18 @@ async function generate(
             break;
         case "progress":
             // eslint-disable-next-line no-case-declarations
-            if (!quiet)
-                console.log(
-                    `${prefix}Submitted! Waiting on results... (${data.task.photo_url_list.length}/${styles.steps.get(style) + 1})`
-                );
+            let progress=data.task.photo_url_list.length;
+            if (progress!=0){
+                if (!quiet)
+                    console.log(
+                        `${prefix}Submitted! Waiting on results... (${data.task.photo_url_list.length}/${styles.steps.get(style)})`
+                    );
+            }else{
+                if (!quiet)
+                    console.log(
+                        `${prefix}Waiting on results...`
+                    );
+            }
             break;
         case "generated":
             if (!quiet)
@@ -121,57 +129,13 @@ async function generateSequential(
 }
 async function generateFromArray(prompts, style) {
     let images = [];
-    let limit = 4;
-    if (prompts.length > limit) {
-        for (let i = 0; i < Math.floor(prompts.length / limit); i++) {
-            let promises = [];
-            for (let j = 0; j < limit; j++) {
-                let n = i * limit + j;
-                promises.push(
-                    generate(prompts[n], style, `${n + 1}/${prompts.length}: `)
-                        .then(e => {
-                            images.push(e);
-                        })
-                        .catch(e => {
-                            console.log(e);
-                        })
-                );
-            }
-
-            await Promise.all(promises);
-        }
-        for (let i = 0; i < prompts.length % limit; i++) {
-            let n = prompts.length - i - 1;
-            let res = await generate(
-                prompts[n],
-                style,
-                `${n + 1}/${prompts.length}: `
-            );
-            images.push(res);
-        }
-    } else {
-        for (let n = 0; n < prompts.length; n++) {
-            while (true) {
-                try {
-                    let res = await generate(
-                        prompts[n],
-                        style,
-                        `${n + 1}/${prompts.length}: `
-                    );
-                    images.push(res);
-                    break;
-                } catch (e) {
-                    console.log(e);
-                }
-            }
-            // generate(prompts[n], style, `${n + 1}/${prompts.length}: `)
-            //   .then(e => {
-            //     images.push(e);
-            //   })
-            //   .catch(e => {
-            //     console.log(e);
-            //   });
-        }
+    for (let n = 0; n < prompts.length; n++) {
+        let res = await generate(
+            prompts[n],
+            style,
+            `${n + 1}/${prompts.length}: `
+        );
+        images.push(res);
     }
     return images;
 }
