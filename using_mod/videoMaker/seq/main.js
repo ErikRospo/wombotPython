@@ -9,7 +9,7 @@ let samplesArray = fs
     .readFileSync(sample)
     .toString()
     .replace("\r\n", "\n")
-    .split("\n");
+    .split("\n").slice(0,8);
 const style = 15;
 (async function () {
     sequential.generateFromArray(samplesArray, style, 15).then(async (ff) => {
@@ -70,5 +70,8 @@ const style = 15;
                 }
             }
         }
+    },(e) => {
+        console.log(e);
+        
     });
 })();

@@ -1,5 +1,5 @@
 /* eslint-disable no-constant-condition */
-const task = require("./index.js");
+const {task} = require("./index.js");
 const styles = require("./styles.js");
 const fs = require("fs");
 

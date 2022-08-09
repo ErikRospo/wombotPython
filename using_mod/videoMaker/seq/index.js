@@ -16,7 +16,7 @@ let imagePaintRest = new Rest("app.wombo.art", 100);
  * @param {string} _prefix
  * @returns {object} task
  */
-module.exports = async function task(
+module.exports.task = async function runTask(
     prompt,
     style,
     // eslint-disable-next-line no-empty-function
@@ -29,12 +29,12 @@ module.exports = async function task(
     let {
         final = true,
         inter = false,
-        downloadDir = "./generated/"
+        downloadDir = "./generated/",
     } = settings;
     let {
         inputImage = false,
         mediaSuffix = null,
-        imageWeight = "HIGH"
+        imageWeight = "HIGH",
     } = inputImageArg;
     if (final || inter) mkdirp(downloadDir);
     let id;
@@ -65,7 +65,7 @@ module.exports = async function task(
             "Accept": "*/*",
             "Accept-encoding": "gzip, deflate, br",
             "Accept-language": "en-US,en;q=0.9",
-            "Aontent-type": "text/plain;charset=UTF-8"
+            "Aontent-type": "text/plain;charset=UTF-8",
         };
         let created = Date.now();
         let expire = Date.now() + 960000;
@@ -89,12 +89,12 @@ module.exports = async function task(
     paintRest.customHeaders = {
         Authorization: "bearer " + id,
         Origin: "https://app.wombo.art",
-        Referer: "https://app.wombo.art/"
+        Referer: "https://app.wombo.art/",
     };
 
     updateFn({
         state: "authenticated",
-        id
+        id,
     });
 
     let task;
@@ -137,7 +137,7 @@ module.exports = async function task(
         taskPath = "/api/tasks/" + task.id;
     } catch (err) {
         if (typeof err == TypeError) {
-            return await task(
+            return await runTask(
                 prompt,
                 style,
                 updateFn,
@@ -150,7 +150,7 @@ module.exports = async function task(
     updateFn({
         state: "allocated",
         id,
-        task
+        task,
     });
     let inputObject = {
         // eslint-disable-next-line camelcase
@@ -158,8 +158,8 @@ module.exports = async function task(
             // eslint-disable-next-line camelcase
             display_freq: 10,
             prompt,
-            style: +style
-        }
+            style: +style,
+        },
     };
     if (inputImage) {
         // eslint-disable-next-line camelcase
@@ -167,7 +167,7 @@ module.exports = async function task(
             // eslint-disable-next-line camelcase
             weight: imageWeight,
             // eslint-disable-next-line camelcase
-            mediastore_id: mediastoreid
+            mediastore_id: mediastoreid,
         };
     }
 
@@ -197,7 +197,7 @@ module.exports = async function task(
     updateFn({
         state: "submitted",
         id,
-        task
+        task,
     });
 
     let interDownloads = [];
@@ -209,20 +209,11 @@ module.exports = async function task(
                 task = await paintRest.get(taskPath, "GET");
             } catch (err) {
                 console.log("Rate limited, retrying");
-                while (true) {
-                    try {
-                        task = await paintRest.get(taskPath, "GET");
-                        break;
-                    } catch (errorValue) {
-                        if (errorValue.detail == "User has been rate-limited") {
-                            console.log("Rate limited, retrying in 2 seconds");
-                            await new Promise((resolve) =>
-                                setTimeout(resolve, 2000)
-                            );
-                        } else {
-                            throw errorValue;
-                        }
-                    }
+                try {
+                    task = await paintRest.get(taskPath, "GET");
+                } catch (errorValue) {
+                    console.log("Rate limited, retrying in 2 seconds");
+                    await new Promise((resolve) => setTimeout(resolve, 2000));
                 }
             }
 
@@ -254,13 +245,33 @@ module.exports = async function task(
                 state: "progress",
                 id,
                 task,
-                inter: interFinished
+                inter: interFinished,
             });
             await new Promise((res) => setTimeout(res, 1000));
         }
     } catch (e) {
         console.log(prefix);
         console.log(e);
+        return await runTask(
+            prompt,
+            style,
+            updateFn,
+            settings,
+            inputImage,
+            photoDownloads
+        );
+        
+    }
+    if (task["result"] == null) {
+        console.log(task);
+        return await runTask(
+            prompt,
+            style,
+            updateFn,
+            settings,
+            inputImage,
+            photoDownloads
+        );
     }
     console.log(task);
     try {
@@ -269,7 +280,7 @@ module.exports = async function task(
             id,
             task,
             url: task.result.final,
-            inter: interFinished
+            inter: interFinished,
         });
     } catch (e) {
         console.log(prefix + " Error:" + e);
@@ -297,7 +308,7 @@ module.exports = async function task(
         task,
         url: task.result.final,
         path: final ? downloadPath : null,
-        inter: interFinished
+        inter: interFinished,
     });
 
     return {
@@ -306,7 +317,7 @@ module.exports = async function task(
         task,
         url: task.result.final,
         path: final ? downloadPath : null,
-        inter: interFinished
+        inter: interFinished,
     };
 };
 
