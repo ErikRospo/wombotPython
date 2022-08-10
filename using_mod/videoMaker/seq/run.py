@@ -1,42 +1,38 @@
-import os
-import csv
-import time
-import json
-print("Starting sequential.js")
-start_time=time.time()
-return_code=os.system("node sequential.js")
-end_time=time.time()
-if return_code==0:
-    print("Sequential.js finished")
-    print("Sequential: ", end_time-start_time)
-    print("Starting make_video.py")
-    start_time_1=time.time()
-    return_code_py=os.system("python3 make_video.py")
-    end_time_1=time.time()
-    if return_code_py==0:
-        print("Make_video.py finished")
-        print("Make Video: ", end_time_1-start_time_1)
-        print("Starting benchmark writing")
-        csv_file=open("benchmarks.csv", "r", newline="")
-        json_file=open("settings.json", "r")
-        json_data=json.load(json_file)
-        csv_reader=csv.reader(csv_file)
-        # for row in csv_reader:
-            # print(row)
-        timing=end_time-start_time
-        timing/=60
-        timing1=end_time_1-start_time_1
-        csv_object=[ row for row in csv_reader ]
-        csv_file.close()
-        json_file.close()
-        csv_object.append([str(json_data['iterations']), str(round(timing,3)), str(round(timing1,3)),str(round(timing1+timing,3))])
-        csv_header=csv_object[0]
-        csv_object=csv_object[1:]
-        csv_object.sort(key=lambda x: float(x[0]))
-        csv_object.insert(0, csv_header)
-        with open('benchmarks.csv', 'w', newline='') as csvfile:
-            writer = csv.writer(csvfile)
-            writer.writerows(csv_object)
-            csvfile.close()
-            print("Done")
-        print("Benchmark writing finished")
+#!/usr/bin/python
+import os, time
+
+start=time.time()
+res=os.system("node main.js")
+end=time.time()
+if res==0:
+    start_make_video=time.time()
+    res1=os.system("python3 make_video.py")
+    end_make_video=time.time()
+    hours=int((end-start)/3600)
+    minutes=int(((end-start)%3600)/60)
+    seconds=int(((end-start)%3600)%60)
+    print("Time taken for main.js: "+str(hours)+" hours "+str(minutes)+" minutes "+str(seconds)+" seconds")
+    print("Time taken for main.js: "+str(end-start)+" seconds")
+    print("Time taken for main.js: "+str((end-start)/60)+" minutes")
+
+    if res1==0:
+        mvhours=int((end_make_video-start_make_video)/3600)
+        mvminutes=int(((end_make_video-start_make_video)%3600)/60)
+        mvseconds=int(((end_make_video-start_make_video)%3600)%60)
+        print("Time taken for make_video.py: "+str(mvhours)+" hours "+str(mvminutes)+" minutes "+str(mvseconds)+" seconds")
+        print("Time taken for make_video.py: "+str(end_make_video-start_make_video)+" seconds")
+        print("Time taken for make_video.py: "+str((end_make_video-start_make_video)/60)+" minutes")
+
+        lines=len(open("../lyrics_sample.txt").readlines())
+        lines=3
+        with open("./benchmarks.csv","at") as f:
+            f.write("\n"+str(lines)+','+str(end-start)+','+str(end_make_video-start_make_video)+','+str((end-start)+(end_make_video-start_make_video)))
+    else:
+        print("Error in make_video.py")
+        lines=len(open("../lyrics_sample.txt").readlines())
+        lines=3
+        with open("./benchmarks.csv","at") as f:
+            f.write("\n"+str(lines)+','+str(end-start)+',err,'+str((end-start)))
+else:
+    print("Error in main.js")
+    

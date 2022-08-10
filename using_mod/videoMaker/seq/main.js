@@ -54,11 +54,7 @@ const style = 15;
                 if (i != res.length - 1) {
                     second = await imagepixels(imagePaths[i + 1]);
                 } else {
-                    second = await imagepixels({
-                        source: new Float32Array(first.length, 0),
-                        width: first.width,
-                        height: first.height
-                    });
+                    second = await imagepixels(imagePaths[0]);
                 }
                 try {
                     fs.mkdirSync(dirPaths[i], { recursive: true });
@@ -69,7 +65,8 @@ const style = 15;
                 for (let j = 1; j < 10; j++) {
                     let weight = 1 - j / 10;
                     let newImage = new Uint8Array(first.data.length);
-                    console.log(`i:${i + 1}/${res.length},j:${j + 1}/10: AS`);
+                    let prefix=`i:${i + 1}/${res.length},j:${j + 1}/10:`;
+                    console.log(`${prefix} AS`);
 
                     for (let k = 0; k < first.data.length; k++) {
                         // second[k] = second[k] || -2;
@@ -78,13 +75,13 @@ const style = 15;
                             mix(first.data[k], second.data[k], weight)
                         );
                     }
-                    console.log(`i:${i + 1}/${res.length},j:${j + 1}/10: AD`);
+                    console.log(`${prefix} AD`);
                     let ii = imageencode(
                         newImage,
                         [first.width, first.height],
                         "jpeg"
                     );
-                    console.log(`i:${i + 1}/${res.length},j:${j + 1}/10: GS`);
+                    console.log(`${prefix} GS`);
 
                     imageoutput(
                         {
@@ -94,30 +91,40 @@ const style = 15;
                         },
                         dirPaths[i] + "/" + j + "source.jpg"
                     );
-                    await sequential.generate(
-                        samplesArray[i],
+                    let resim=await sequential.generate(
+                        samplesArray[(i+Math.round(j))%samplesArray.length],
                         style,
-                        `i:${i + 1}/${res.length},j:${j + 1}/10: `,
+                        prefix,
                         {
                             // eslint-disable-next-line camelcase
                             image_weight: "HIGH",
                             // eslint-disable-next-line camelcase
                             media_suffix: "jpeg",
                             // eslint-disable-next-line camelcase
-                            input_image: ii
+                            input_image: ii.toString("base64")
                         },
                         dirPaths[i] + "/" + j + ".jpg"
                     );
-                    console.log(`i:${i + 1}/${res.length},j:${j + 1}/10: GD`);
+                    await download(resim.url, dirPaths[i] + "/" + j + ".jpg");
+                    console.log(`${prefix} GD`);
 
-                    // console.log(newImage);
-                    // fs.writeFileSync(
-                    // dirPaths[i] + "/" + j + ".jpg",
-                    // Buffer.from(newImage)
-                    // );
-                    allPaths.push(dirPaths[i] + "/" + j + ".jpg");
+                    allPaths.push(path.resolve(dirPaths[i] + "/" + j + ".jpg"));
                 }
             }
+            fs.writeFileSync("path.txt",dir);
+
+            let ap=[allPaths,imagePaths].flat();
+            ap.sort((a,b) => {
+                let a1=parseInt(a.split("/").slice(-1)[0].split(".")[0]);
+                let b1=parseInt(b.split("/").slice(-1)[0].split(".")[0]);
+                let a2=parseInt(a.split("/").slice(-2)[0]);
+                let b2=parseInt(b.split("/").slice(-2)[0]);
+                if(a2==b2){
+                    return a1-b1;
+                }
+                return a2-b2;
+            });
+            fs.writeFileSync(dir + "/allPaths.txt");
         },
         (e) => {
             console.log(e);

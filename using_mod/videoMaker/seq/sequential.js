@@ -1,5 +1,5 @@
 /* eslint-disable no-constant-condition */
-const {task} = require("./index.js");
+const { task } = require("./index.js");
 const styles = require("./styles.js");
 const fs = require("fs");
 
@@ -24,41 +24,40 @@ async function generate(
     downloadDir = "./generated",
     iteration_ = 0
 ) {
+    let warned = false;
     function handler(data, prefix) {
         switch (data.state) {
         case "authenticated":
-            if (!quiet) console.log(`${prefix}Authenticated, allocating a task...`);
+            if (!quiet) console.log(`${prefix}AUTH`);
             break;
         case "allocated":
-            if (!quiet)
-                console.log(`${prefix}Allocated, submitting the prompt and style...`);
+            if (!quiet) console.log(`${prefix}ALLOC`);
             break;
         case "submitted":
-            if (!quiet) console.log(`${prefix}Submitted! Waiting on results...`);
+            if (!quiet) console.log(`${prefix}SUB`);
             break;
         case "progress":
             // eslint-disable-next-line no-case-declarations
-            let progress=data.task.photo_url_list.length;
-            if (progress!=0){
+            let progress = data.task.photo_url_list.length;
+            if (progress != 0) {
                 if (!quiet)
                     console.log(
-                        `${prefix}Submitted! Waiting on results... (${data.task.photo_url_list.length}/${styles.steps.get(style)})`
+                        `${prefix}SUBPR (${
+                            data.task.photo_url_list.length
+                        }/${styles.steps.get(style)})`
                     );
-            }else{
-                if (!quiet)
-                    console.log(
-                        `${prefix}Waiting on initial response...`
-                    );
+            } else {
+                if (!warned) {
+                    if (!quiet) console.log(`${prefix}WAIT`);
+                    warned = true;
+                }
             }
             break;
         case "generated":
-            if (!quiet)
-                console.log(
-                    `${prefix}Results are in, downloading the final image...`
-                );
+            if (!quiet) console.log(`${prefix}GEN`);
             break;
         case "downloaded":
-            if (!quiet) console.log(`${prefix}Downloaded!`);
+            if (!quiet) console.log(`${prefix}DLD`);
             break;
         }
     }
@@ -66,8 +65,8 @@ async function generate(
     let res = await task(
         prompt,
         style,
-        data => handler(data, prefix),
-        { final, inter, downloadDir},
+        (data) => handler(data, prefix),
+        { final, inter, downloadDir },
         inputImage,
         iteration_,
         prefix
@@ -101,7 +100,6 @@ async function generateSequential(
         );
         let limage = fs.readFileSync(res.path).toString("base64");
         lastImage = {
-              
             // eslint-disable-next-line camelcase
             image_weight: "MEDIUM",
             // eslint-disable-next-line camelcase
