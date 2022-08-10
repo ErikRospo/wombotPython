@@ -2,11 +2,10 @@
 const { task } = require("./index.js");
 const styles = require("./styles.js");
 const fs = require("fs");
-
-let settings = JSON.parse(fs.readFileSync("./settings.json"));
-let quiet = false;
-let inter = false;
-let final = false;
+const settings=require("./settings");
+const quiet=settings.quiet
+const inter=settings.inter
+const final=settings.final
 if (typeof quiet === "undefined") {
     quiet = true;
 }
@@ -121,14 +120,6 @@ async function generateFromArray(prompts, style) {
         images.push(res);
     }
     return images;
-}
-if (require.main === module) {
-    generateSequential(
-        settings.prompt,
-        settings.style,
-        settings.iterations,
-        settings.file_folder
-    );
 }
 
 module.exports.generate = generate;

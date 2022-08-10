@@ -1,20 +1,21 @@
 const sequential = require("./sequential.js");
 const fs = require("fs");
 const mkdirp = require("mkdirp");
-const sample = "../lyrics_sample.txt";
 const download = require("./download.js");
 const path = require("path");
 const imagepixels = require("image-pixels");
 const imageoutput = require("image-output");
 const imageencode = require("image-encode");
 const { exit } = require("process");
+const settings=require("./settings.js")
 let samplesArray = fs
-    .readFileSync(sample)
+    .readFileSync(settings.samplePath)
     .toString()
     .replace("\r\n", "\n")
     .split("\n")
-    .slice(0, 3);
-const style = 15;
+    .filter((v)=>{return len(v)>2})
+if (settings.logPrompts) console.log(samplesArray)
+const style = settings.style;
 (async function () {
     sequential.generateFromArray(samplesArray, style, 15).then(
         async (ff) => {
@@ -44,6 +45,7 @@ const style = 15;
             // we then do this for each image pair in our sequence
             // once we have all of these images, we can make a video out of them
             // we can also make a video out of the original images, if we want
+
             function mix(first, second, weight) {
                 return first * weight + second * (1 - weight);
             }
@@ -65,23 +67,21 @@ const style = 15;
                 for (let j = 1; j < 10; j++) {
                     let weight = 1 - j / 10;
                     let newImage = new Uint8Array(first.data.length);
-                    let prefix=`i:${i + 1}/${res.length},j:${j + 1}/10:`;
-                    console.log(`${prefix} AS`);
+                    let prefix=`i:${i + 1}/${res.length},j:${j + 1}/10: `.padEnd(22," ");
+                    console.log(`${prefix}AS`);
 
                     for (let k = 0; k < first.data.length; k++) {
-                        // second[k] = second[k] || -2;
-                        // first[k] = first[k] || -1;
                         newImage[k] = Math.floor(
                             mix(first.data[k], second.data[k], weight)
                         );
                     }
-                    console.log(`${prefix} AD`);
+                    console.log(`${prefix}AD`);
                     let ii = imageencode(
                         newImage,
                         [first.width, first.height],
                         "jpeg"
                     );
-                    console.log(`${prefix} GS`);
+                    console.log(`${prefix}GS`);
 
                     imageoutput(
                         {
@@ -92,10 +92,12 @@ const style = 15;
                         dirPaths[i] + "/" + j + "source.jpg"
                     );
                     let resim=await sequential.generate(
-                        samplesArray[(i+Math.round(j))%samplesArray.length],
+                        samplesArray[(i+Math.round(1-j/10))%samplesArray.length],
                         style,
                         prefix,
                         {
+                            //the reason we choose high is to try to make the images similar to the starting
+                            //image, thus (Hopefully) reducing flickering.
                             // eslint-disable-next-line camelcase
                             image_weight: "HIGH",
                             // eslint-disable-next-line camelcase
@@ -106,7 +108,7 @@ const style = 15;
                         dirPaths[i] + "/" + j + ".jpg"
                     );
                     await download(resim.url, dirPaths[i] + "/" + j + ".jpg");
-                    console.log(`${prefix} GD`);
+                    console.log(`${prefix}GD`);
 
                     allPaths.push(path.resolve(dirPaths[i] + "/" + j + ".jpg"));
                 }
@@ -124,7 +126,7 @@ const style = 15;
                 }
                 return a2-b2;
             });
-            fs.writeFileSync(dir + "/allPaths.txt");
+            fs.writeFileSync(dir + "/allPaths.txt",ap.join("\n"));
         },
         (e) => {
             console.log(e);

@@ -2,7 +2,7 @@
 import os, time
 
 start=time.time()
-res=os.system("node main.js")
+res=os.system("node main.js");
 end=time.time()
 if res==0:
     start_make_video=time.time()
@@ -24,13 +24,11 @@ if res==0:
         print("Time taken for make_video.py: "+str((end_make_video-start_make_video)/60)+" minutes")
 
         lines=len(open("../lyrics_sample.txt").readlines())
-        lines=3
         with open("./benchmarks.csv","at") as f:
             f.write("\n"+str(lines)+','+str(end-start)+','+str(end_make_video-start_make_video)+','+str((end-start)+(end_make_video-start_make_video)))
     else:
         print("Error in make_video.py")
         lines=len(open("../lyrics_sample.txt").readlines())
-        lines=3
         with open("./benchmarks.csv","at") as f:
             f.write("\n"+str(lines)+','+str(end-start)+',err,'+str((end-start)))
 else:
