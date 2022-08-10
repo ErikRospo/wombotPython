@@ -13,7 +13,7 @@ let samplesArray = fs
     .toString()
     .replace("\r\n", "\n")
     .split("\n")
-    .filter((v)=>{return len(v)>2})
+    .filter((v)=>{return v.length>2})
 if (settings.logPrompts) console.log(samplesArray)
 const style = settings.style;
 (async function () {
