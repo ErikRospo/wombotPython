@@ -5,6 +5,8 @@ const sample = "../lyrics_sample.txt";
 const download = require("./download.js");
 const path = require("path");
 const imagepixels = require("image-pixels");
+const imageoutput = require("image-output");
+const imageencode = require("image-encode");
 const { exit } = require("process");
 let samplesArray = fs
     .readFileSync(sample)
@@ -28,7 +30,6 @@ const style = 15;
             for (let i = 0; i < res.length; i++) {
                 await mkdirp(dir + "/" + i);
                 dirPaths.push(path.resolve(dir + "/" + i));
-                await new Promise((res) => setTimeout(res, 1000));
                 await download(res[i].url, dir + "/" + i + "/0.jpg");
                 imagePaths.push(path.resolve(dir + "/" + i + "/0.jpg"));
             }
@@ -46,6 +47,7 @@ const style = 15;
             function mix(first, second, weight) {
                 return first * weight + second * (1 - weight);
             }
+            let allPaths = [];
             for (let i = 0; i < res.length; i++) {
                 let first = await imagepixels(imagePaths[i]);
                 let second;
@@ -53,9 +55,9 @@ const style = 15;
                     second = await imagepixels(imagePaths[i + 1]);
                 } else {
                     second = await imagepixels({
-                        "source": new Float32Array( first.length,0),
-                        "width": first.width,
-                        "height": first.height
+                        source: new Float32Array(first.length, 0),
+                        width: first.width,
+                        height: first.height
                     });
                 }
                 try {
@@ -65,19 +67,55 @@ const style = 15;
                     exit(1);
                 }
                 for (let j = 1; j < 10; j++) {
-                    let weight = j / 10;
-                    let newImage = [];
-                    
-                    for (let k = 0; k < first.width*first.height; k++) {
+                    let weight = 1 - j / 10;
+                    let newImage = new Uint8Array(first.data.length);
+                    console.log(`i:${i + 1}/${res.length},j:${j + 1}/10: AS`);
+
+                    for (let k = 0; k < first.data.length; k++) {
                         // second[k] = second[k] || -2;
                         // first[k] = first[k] || -1;
-                        newImage.push(mix(first[k], second[k], weight));
+                        newImage[k] = Math.floor(
+                            mix(first.data[k], second.data[k], weight)
+                        );
                     }
-                    console.log(newImage);
-                    fs.writeFileSync(
-                        dirPaths[i] + "/" + j + ".jpg",
-                        Buffer.from(newImage)
+                    console.log(`i:${i + 1}/${res.length},j:${j + 1}/10: AD`);
+                    let ii = imageencode(
+                        newImage,
+                        [first.width, first.height],
+                        "jpeg"
                     );
+                    console.log(`i:${i + 1}/${res.length},j:${j + 1}/10: GS`);
+
+                    imageoutput(
+                        {
+                            data: newImage,
+                            width: first.width,
+                            height: first.height
+                        },
+                        dirPaths[i] + "/" + j + "source.jpg"
+                    );
+                    await sequential.generate(
+                        samplesArray[i],
+                        style,
+                        `i:${i + 1}/${res.length},j:${j + 1}/10: `,
+                        {
+                            // eslint-disable-next-line camelcase
+                            image_weight: "HIGH",
+                            // eslint-disable-next-line camelcase
+                            media_suffix: "jpeg",
+                            // eslint-disable-next-line camelcase
+                            input_image: ii
+                        },
+                        dirPaths[i] + "/" + j + ".jpg"
+                    );
+                    console.log(`i:${i + 1}/${res.length},j:${j + 1}/10: GD`);
+
+                    // console.log(newImage);
+                    // fs.writeFileSync(
+                    // dirPaths[i] + "/" + j + ".jpg",
+                    // Buffer.from(newImage)
+                    // );
+                    allPaths.push(dirPaths[i] + "/" + j + ".jpg");
                 }
             }
         },

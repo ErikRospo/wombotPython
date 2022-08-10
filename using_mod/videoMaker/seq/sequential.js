@@ -47,7 +47,7 @@ async function generate(
             }else{
                 if (!quiet)
                     console.log(
-                        `${prefix}Waiting on results...`
+                        `${prefix}Waiting on initial response...`
                     );
             }
             break;
@@ -72,21 +72,6 @@ async function generate(
         iteration_,
         prefix
     );
-    if (!quiet && final)
-        console.log(
-            `${prefix}Your results have been downloaded to the following files:`
-        );
-    else if (!quiet)
-        console.log(
-            `${prefix}Task finished, the results are available at the following addresses:`
-        );
-    if (!quiet) {
-        for (let inter of res.inter) {
-            console.log(inter);
-        }
-        if (final) console.log(res.path);
-        else console.log(res.url);
-    }
 
     return res;
 }
