@@ -2,19 +2,10 @@
 const { task } = require("./index.js");
 const styles = require("./styles.js");
 const fs = require("fs");
-const settings=require("./settings");
-const quiet=settings.quiet
-const inter=settings.inter
-const final=settings.final
-if (typeof quiet === "undefined") {
-    quiet = true;
-}
-if (typeof inter === "undefined") {
-    inter = false;
-}
-if (typeof final === "undefined") {
-    final = true;
-}
+const settings=JSON.parse(fs.readFileSync("settings.json"));
+const quiet=settings.quiet||true;
+const inter=settings.inter||false;
+const final=settings.final||true;
 async function generate(
     prompt,
     style,

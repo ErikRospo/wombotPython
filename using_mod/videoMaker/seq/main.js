@@ -7,14 +7,16 @@ const imagepixels = require("image-pixels");
 const imageoutput = require("image-output");
 const imageencode = require("image-encode");
 const { exit } = require("process");
-const settings=require("./settings.js")
+const settings=require("./settings.js");
 let samplesArray = fs
     .readFileSync(settings.samplePath)
     .toString()
     .replace("\r\n", "\n")
     .split("\n")
-    .filter((v)=>{return v.length>2})
-if (settings.logPrompts) console.log(samplesArray)
+    .filter((v) => {
+        return v.length>2;
+    });
+if (settings.logPrompts) console.log(samplesArray);
 const style = settings.style;
 (async function () {
     sequential.generateFromArray(samplesArray, style, 15).then(
@@ -96,8 +98,8 @@ const style = settings.style;
                         style,
                         prefix,
                         {
-                            //the reason we choose high is to try to make the images similar to the starting
-                            //image, thus (Hopefully) reducing flickering.
+                            // the reason we choose high is to try to make the images similar to the starting
+                            // image, thus (Hopefully) reducing flickering.
                             // eslint-disable-next-line camelcase
                             image_weight: "HIGH",
                             // eslint-disable-next-line camelcase
