@@ -89,7 +89,7 @@ const style = settings.style;
                             width: first.width,
                             height: first.height
                         },
-                        dirPaths[i] + "/" + j + "source.jpg"
+                        dirPaths[i] + "/" + (j) + "source.jpg"
                     );
                     let resim=await sequential.generate(
                         samplesArray[(i+Math.round(1-j/10))%samplesArray.length],
@@ -105,7 +105,7 @@ const style = settings.style;
                             // eslint-disable-next-line camelcase
                             input_image: ii.toString("base64")
                         },
-                        dirPaths[i] + "/" + j + ".jpg"
+                        dirPaths[i] + "/" + 10-j + ".jpg"
                     );
                     await download(resim.url, dirPaths[i] + "/" + j + ".jpg");
                     console.log(`${prefix}GD`);
