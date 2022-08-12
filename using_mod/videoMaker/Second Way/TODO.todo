@@ -1,0 +1,14 @@
+[ ] generate images
+    [ ] use the image from ~10 back to (hopefully) smooth things out
+        [ ] handle edge cases
+        [ ] MAYBE: use a weighted average of the previous 10 images
+            [ ] this might fix something?
+    [ ] instead of changing the prompt every time, we instead use each prompt for ~20 images
+        [ ] this will hopefully help with the video being too jumpy
+[ ] generate video
+    [ ] find out how to do interframe interpolation
+[ ] port over settings.js to settings.json
+    [ ] this way, we can use the same settings file for both the python and the javascript code
+        [ ] the descision to use both python and javascript was not a good one
+    [ ] however, it may take some time.
+        [ ] i really should just do it on the code that i keep copying.

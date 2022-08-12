@@ -1,0 +1,33 @@
+{
+  "name": "wombot",
+  "version": "1.5.0",
+  "description": "Unofficial API for app.wombo.art. Fork by Erik Rospo. Original API by Adrien Burgun (Shad Amethyst).",
+  "main": "main.js",
+  "scripts": {
+    "lint": "eslint ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ErikRospo/WombotPython.git"
+  },
+  "keywords": ["unofficial-api", "wombo-dream"],
+  "author": "Erik Rospo",
+  "module": "wombot-video",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ErikRospo/WombotPython.git"
+  },
+  "homepage": "https://github.com/ErikRospo/WombotPython.git",
+  "dependencies": {
+    "image-encode": "^1.3.1",
+    "image-output": "^2.4.2",
+    "image-pixels": "^1.1.1",
+    "mkdirp": "^1.0.4",
+    "node-fetch": "^3.2.10",
+    "videoshow": "^0.1.12"
+  },
+  "devDependencies": {
+    "yargs": "^17.3.0"
+  },
+  "readme": "./README.md"
+}
