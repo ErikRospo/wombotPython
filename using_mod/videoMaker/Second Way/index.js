@@ -23,7 +23,6 @@ module.exports.task = async function runTask(
     updateFn = () => {},
     settings = {},
     inputImageArg = {},
-    photoDownloads = "",
     _prefix = ""
 ) {
     let {
@@ -36,7 +35,7 @@ module.exports.task = async function runTask(
         mediaSuffix = null,
         imageWeight = "HIGH"
     } = inputImageArg;
-    if (final || inter) mkdirp(downloadDir);
+    // if (final || inter) mkdirp(downloadDir);
     let id;
     let prefix = _prefix;
     try {
@@ -111,8 +110,7 @@ module.exports.task = async function runTask(
                 style,
                 updateFn,
                 settings,
-                inputImage,
-                photoDownloads
+                inputImage
             );
         }
     }
@@ -167,7 +165,7 @@ module.exports.task = async function runTask(
 
         // if (task.state === "pending") console.warn("Warning: task is pending");
         if (inter) {
-            await mkdirp(`${downloadDir}/${photoDownloads}/`);
+            await mkdirp(`${downloadDir}/`);
             for (let n = 0; n < task.photo_url_list.length; n++) {
                 if (
                     interDownloads[n] ||
@@ -177,7 +175,7 @@ module.exports.task = async function runTask(
 
                 interPaths[n] = path.join(
                     downloadDir,
-                    `${photoDownloads}/${n}.jpg`
+                    `${n}.jpg`
                 );
 
                 interDownloads[n] = download(
@@ -205,11 +203,21 @@ module.exports.task = async function runTask(
         inter: interFinished
     });
     let downloadPath;
-    if (inter) {
-        downloadPath = path.join(downloadDir, `${photoDownloads}/final.jpg`);
+    if (!inter) {
+        downloadPath = downloadDir+".jpg";
+    
     }
     try {
-        if (final) await download(task.result.final, downloadPath);
+        let downloaded=!final;
+        while (!downloaded){
+            await download(task.result.final, downloadPath).catch(() => {
+                console.log("Error while downloading final image");
+                downloaded=false;
+            }).then(() => {
+                downloaded=true;
+                
+            });
+        }
         if (inter) await Promise.all(interDownloads);
     } catch (err) {
         console.log(prefix);

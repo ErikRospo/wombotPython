@@ -3,9 +3,11 @@ const { task } = require("./index.js");
 const styles = require("./styles.js");
 const fs = require("fs");
 const settings=require("./settings");
-const quiet=settings.quiet||true;
+
+const colors=require("./colors");
+const quiet=settings.quiet||false;
 const inter=settings.inter||false;
-const final=settings.final||true;
+const final=true;
 async function generate(
     prompt,
     style,
@@ -14,40 +16,46 @@ async function generate(
     downloadDir = "./generated",
     iteration_ = 0
 ) {
-    let warned = false;
+    let waited=0;
     function handler(data, prefix) {
         switch (data.state) {
         case "authenticated":
-            if (!quiet) console.log(`${prefix}AUTH`);
+            if (!quiet) colors.printGreen(`${prefix}Authenticated`);
             break;
         case "allocated":
-            if (!quiet) console.log(`${prefix}ALLOC`);
+            if (!quiet) colors.printBlue(`${prefix}Allocated`);
             break;
         case "submitted":
-            if (!quiet) console.log(`${prefix}SUB`);
+            if (!quiet) colors.printGreen(`${prefix}Submitted`);
             break;
         case "progress":
             // eslint-disable-next-line no-case-declarations
             let progress = data.task.photo_url_list.length;
             if (progress != 0) {
                 if (!quiet)
-                    console.log(
-                        `${prefix}SUBPR (${
+                    colors.printYellow(
+                        `${prefix}Submitted (${
                             data.task.photo_url_list.length
                         }/${styles.steps.get(style)})`
                     );
             } else {
-                if (!warned) {
-                    if (!quiet) console.log(`${prefix}WAIT`);
-                    warned = true;
+                waited++;
+                if (!quiet){ 
+                    if (waited<5){
+                        colors.printRed(`${prefix}Waiting ${waited}`);
+                
+                    } else {
+                        colors.printAlert(`${prefix}Waiting ${waited}`);
+                    
+                    }
                 }
             }
             break;
         case "generated":
-            if (!quiet) console.log(`${prefix}GEN`);
+            if (!quiet) colors.printGreen(`${prefix}Generated`);
             break;
         case "downloaded":
-            if (!quiet) console.log(`${prefix}DLD`);
+            if (!quiet) colors.printBlue(`${prefix}Downloaded`);
             break;
         }
     }
@@ -64,75 +72,56 @@ async function generate(
 
     return res;
 }
-// eslint-disable-next-line no-unused-vars
-async function generateSequential(
-    prompt,
-    style,
-    times,
-    directory = Date.now(),
-    inputImage = false
-) {
-    let lastImage = {};
-    if (inputImage) {
-        lastImage = inputImage;
-    }
-
-    const downloadDir = `./generated/${directory}/`;
-    for (let n = 0; n < times; n++) {
-        console.log(`${n + 1}/${times} Started`);
-        let res = await generate(
-            prompt,
-            style,
-            `${n + 1}: `,
-            lastImage,
-            downloadDir,
-            n
-        );
-        let limage = fs.readFileSync(res.path).toString("base64");
-        lastImage = {
-            // eslint-disable-next-line camelcase
-            image_weight: "MEDIUM",
-            // eslint-disable-next-line camelcase
-            media_suffix: "jpeg",
-            // eslint-disable-next-line camelcase
-            input_image: limage
-        };
-        console.log(`${n + 1}/${times} Finished`);
-    }
-}
 async function generateLaggySequential(
-    prompt,
+    prompts,
     style,
     times,
+    weighting,
     directory = Date.now(),
     inputImage = false
 ) {
+    
     let lastImage = {};
     if (inputImage) {
         lastImage = inputImage;
     }
-    const downloadDir = `./generated/${directory}/`;
-    for (let n = 0; n < times; n++) {
-        console.log(`${n + 1}/${times} Started`);
-        let res = await generate(
-            prompt,
-            style,
-            `${n + 1}: `,
-            lastImage,
-            downloadDir,
-            n
-        );
-        let limage = fs.readFileSync(res.path).toString("base64");
-        lastImage = {
-            // eslint-disable-next-line camelcase
-            image_weight: "MEDIUM",
-            // eslint-disable-next-line camelcase
-            media_suffix: "jpeg",
-            // eslint-disable-next-line camelcase
-            input_image: limage
-        };
-        console.log(`${n + 1}/${times} Finished`);
+    let images={};
+    for (let n=0;n<prompts.length;n++) {
+        let prompt=prompts[n];
+        for (let i=0;i<times;i++){
+            
+            let imgID=(i+times*n);
+            let imageIndex=Math.max(imgID-weighting,0);
+            
+            let prefix = `${imgID + 1}/${(times) * (prompts.length)}: `;
+            let res=await generate(
+                prompt,
+                style,
+                prefix,
+                lastImage,
+                `${directory}/${imgID}`
+            );
+            
+            images[imgID]={
+                "res":res,
+                "imageIndex":imageIndex,
+                "prompt":prompt,
+                "style":style,
+                "weighting":weighting,
+                "directory":directory,
+                "path":res.path
+            };
+            lastImage={
+                // eslint-disable-next-line camelcase
+                input_image:fs.readFileSync(images[imageIndex].path).toString("base64"),
+                // eslint-disable-next-line camelcase
+                media_suffix:"jpeg",
+                // eslint-disable-next-line camelcase
+                image_weight:"HIGH"
+            };
+        }
     }
+    return images;
 }
 
 module.exports.generate = generate;

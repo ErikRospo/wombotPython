@@ -13,7 +13,7 @@ styles.set(11, "Mystical");
 styles.set(12, "Festive");
 styles.set(13, "Baroque");
 styles.set(14, "Etching");
-styles.set(15, "S. Dali"); // Note: The website didn't put a space in it
+styles.set(15, "S. Dali"); 
 styles.set(16, "Wuhtercuhler");
 styles.set(17, "Provenance");
 styles.set(18, "Rose Gold");

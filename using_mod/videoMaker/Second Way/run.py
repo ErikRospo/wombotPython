@@ -1,10 +1,18 @@
 #!/usr/bin/python
-import os, time
+import os, time,json
 
 start=time.time()
 res=os.system("node main.js");
 end=time.time()
 if res==0:
+    with open("path.txt") as f:
+        path=f.read()
+    json_data=open(path).read()
+    data = json.loads(json_data)['responses']
+    paths=[]
+    for i in range(len(data)):
+        paths.append(data[str(i)]["path"])
+    lines=len(paths)
     start_make_video=time.time()
     res1=os.system("python3 make_video.py")
     end_make_video=time.time()
@@ -23,12 +31,10 @@ if res==0:
         print("Time taken for make_video.py: "+str(end_make_video-start_make_video)+" seconds")
         print("Time taken for make_video.py: "+str((end_make_video-start_make_video)/60)+" minutes")
 
-        lines=len(open("../lyrics_sample.txt").readlines())
         with open("./benchmarks.csv","at") as f:
             f.write("\n"+str(lines)+','+str(end-start)+','+str(end_make_video-start_make_video)+','+str((end-start)+(end_make_video-start_make_video)))
     else:
         print("Error in make_video.py")
-        lines=len(open("../lyrics_sample.txt").readlines())
         with open("./benchmarks.csv","at") as f:
             f.write("\n"+str(lines)+','+str(end-start)+',err,'+str((end-start)))
 else:
