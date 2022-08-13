@@ -41,7 +41,7 @@ async function generate(
             } else {
                 waited++;
                 if (!quiet){ 
-                    if (waited<5){
+                    if (waited<10){
                         colors.printRed(`${prefix}Waiting ${waited}`);
                 
                     } else {
