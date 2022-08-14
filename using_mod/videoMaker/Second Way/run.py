@@ -1,6 +1,12 @@
 #!/usr/bin/python
 import os, time,json
-
+import time_estimator
+et=round(time_estimator.calculate_expected_time(),3)
+exhours=int((et)/3600)
+exminutes=int(((et)%3600)/60)
+exseconds=int(((et)%3600)%60)
+print(f"expected time: {exhours}h {exminutes}m {exseconds}s")
+print(f"et: {et} etm:{et/60} eth:{et/3600}")
 start=time.time()
 res=os.system("node main.js");
 end=time.time()
@@ -37,6 +43,7 @@ if res==0:
         print("Error in make_video.py")
         with open("./benchmarks.csv","at") as f:
             f.write("\n"+str(lines)+','+str(end-start)+',err,'+str((end-start)))
+elif res==2:
+    print("Canceled")
 else:
-    print("Error in main.js")
-    
+    print("Error in main.js " +str(res))

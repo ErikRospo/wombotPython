@@ -2,3 +2,4 @@ secret.json
 node_modules
 generated/
 path.txt
+__pycache__
