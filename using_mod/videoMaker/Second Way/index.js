@@ -4,8 +4,10 @@ const identify = require("./identify.js");
 const download = require("./download.js");
 const mkdirp = require("mkdirp");
 const path = require("path");
+
 let paintRest = new Rest("paint.api.wombo.ai", 100);
 let imagePaintRest = new Rest("app.wombo.art", 100);
+
 /**
  * @param {string} prompt
  * @param {number} style
@@ -68,16 +70,10 @@ module.exports.task = async function runTask(
         let created = Date.now();
         let expire = Date.now() + 960000;
 
-        // image_paint_rest.handle_cookies(`_dd_s=rum=1;id=323368bd-45a7-4b9d-acf2-89cd59a16777;created=${created};expire=${expire}`)
         imagePaintRest.cookies[
             "_dd_s"
         ] = `rum=1&id=323368bd-45a7-4b9d-acf2-89cd59a16777&created=${created}&expire=${expire}`;
-        // image_paint_rest.cookies['expires']=String(expire);
-        // image_paint_rest.cookies['created']=String(created);
-        // image_paint_rest.cookies['id']='323368bd-45a7-4b9d-acf2-89cd59a16777';
         let paintRestPayload = `{"image":"${inputImage}","media_suffix":"${mediaSuffix}","num_uploads":1}`;
-        // task = await paint_rest.options("/api/tasks/", "POST")
-        // .then(() => paint_rest.post("/api/tasks/", {premium: false}));
         let res = await imagePaintRest.post(
             "/api/mediastore",
             paintRestPayload
@@ -114,11 +110,13 @@ module.exports.task = async function runTask(
             );
         }
     }
+    
     updateFn({
         state: "allocated",
         id,
         task
     });
+    
     let inputObject = {
         // eslint-disable-next-line camelcase
         input_spec: {
@@ -128,6 +126,7 @@ module.exports.task = async function runTask(
             style: +style
         }
     };
+    
     if (inputImage) {
         // eslint-disable-next-line camelcase
         inputObject.input_spec.input_image = {
@@ -205,7 +204,6 @@ module.exports.task = async function runTask(
     let downloadPath;
     if (!inter) {
         downloadPath = downloadDir+".jpg";
-    
     }
     try {
         let downloaded=!final;
