@@ -6,7 +6,12 @@ def calculate_expected_time():
     settings=json.load(open("./settings.json","rt"))
     current_data=list(csv.reader(open("benchmarks.csv","rt").readlines()))
     with open(settings['samplePath']) as f:
-        numPrompts=len(f.readlines())
+        prompts=f.readlines()
+        x=0
+        for n in prompts:
+            if len(n)>0 and "#" not in n:
+                x+=1
+        numPrompts=x
     numIterations=numPrompts*settings['times']
     current_data=current_data[1:]
     ys=[]
@@ -26,4 +31,5 @@ def calculate_expected_time():
     b1=r*(stdev(ys)/stdev(xs))
     b0=mean(ys)-b1*mean(xs)
     ev=b0+b1*numIterations
-    return ev
+    dev=stdev(ys)
+    return ev,ev+dev,ev-dev

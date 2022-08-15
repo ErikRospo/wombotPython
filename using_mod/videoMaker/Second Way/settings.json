@@ -4,7 +4,7 @@
   "quiet": false,
   "final": false,
   "inter": false,
-  "logPrompts": true,
-  "weighting":10,
+  "logPrompts": false,
+  "weighting":5,
   "times":20
 }

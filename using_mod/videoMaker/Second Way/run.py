@@ -1,12 +1,20 @@
 #!/usr/bin/python3
 import os, time,json
 import time_estimator
-et=round(time_estimator.calculate_expected_time(),3)
+et,mat,mit=time_estimator.calculate_expected_time()
 exhours=int((et)/3600)
 exminutes=int(((et)%3600)/60)
 exseconds=int(((et)%3600)%60)
 print(f"expected time: {exhours}h {exminutes}m {exseconds}s")
 print(f"et: {et} etm:{et/60} eth:{et/3600}")
+excomp=str(time.ctime(time.time()+et))
+excompmi=str(time.ctime(time.time()+mit))
+excompma=str(time.ctime(time.time()+mat))
+
+print(f"expected completion:       {excomp}")
+print(f"overestimated completion:  {excompma}")
+print(f"underestimated completion: {excompmi}")
+
 start=time.time()
 res=os.system("node main.js");
 end=time.time()
