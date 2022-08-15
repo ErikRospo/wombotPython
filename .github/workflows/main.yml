@@ -32,7 +32,7 @@ jobs:
           git checkout -b Linter
           eslint ./using_mod/ --ext .js,.jsx,.ts,.tsx -c ./using_mod/videoMaker/.eslintrc.json --fix
           eslint ./using_mod/js --ext .js,.jsx,.ts,.tsx -c ./using_mod/videoMaker/.eslintrc.json --fix 
-          eslint ./using_mod/sequential --ext .js,.jsx,.ts,.tsx -c ./using_mod/videoMaker/.eslintrc.json --fix 
+          #eslint ./using_mod/sequential --ext .js,.jsx,.ts,.tsx -c ./using_mod/videoMaker/.eslintrc.json --fix 
           eslint ./using_mod/videoMaker --ext .js,.jsx,.ts,.tsx -c ./using_mod/videoMaker/.eslintrc.json --fix 
           eslint ./using_mod/videoMaker/GoodVid --ext .js,.jsx,.ts,.tsx -c ./using_mod/videoMaker/.eslintrc.json --fix
           eslint ./using_mod/videoMaker/Second\ Way --ext .js,.jsx,.ts,.tsx -c ./using_mod/videoMaker/.eslintrc.json --fix
