@@ -20,7 +20,7 @@
   },
   "homepage": "https://github.com/adri326/wombot#readme",
   "dependencies": {
-    "image-js": "^0.35.0",
+    "image-js": "^0.35.1",
     "mkdirp": "^1.0.4"
   },
   "devDependencies": {
