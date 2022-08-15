@@ -39,3 +39,5 @@ jobs:
           eslint ./using_mod/videoMaker/Second\ Way --ext .js,.jsx,.ts,.tsx -c ./using_mod/videoMaker/.eslintrc.json
           eslint ./using_mod/videoMaker/seq --ext .js,.jsx,.ts,.tsx -c ./using_mod/videoMaker/.eslintrc.json
           
+        env:
+            GH_TOKEN: ${{ secrets.AUTHTOKEN }}
