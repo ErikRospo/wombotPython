@@ -1,6 +1,7 @@
 import csv
 import json
 from math import sqrt
+import time
 from statistics import mean, stdev
 def calculate_expected_time():
     settings=json.load(open("./settings.json","rt"))
@@ -9,7 +10,7 @@ def calculate_expected_time():
         prompts=f.readlines()
         x=0
         for n in prompts:
-            if len(n)>0 and "#" not in n:
+            if len(n)>2 and "#" not in n:
                 x+=1
         numPrompts=x
     numIterations=numPrompts*settings['times']
@@ -33,3 +34,17 @@ def calculate_expected_time():
     ev=b0+b1*numIterations
     dev=stdev(ys)
     return ev,ev+dev,ev-dev
+if __name__=="__main__":
+    et,mat,mit=calculate_expected_time()
+    exhours=int((et)/3600)
+    exminutes=int(((et)%3600)/60)
+    exseconds=int(((et)%3600)%60)
+    print(f"expected time: {exhours}h {exminutes}m {exseconds}s")
+    print(f"et: {et} etm:{et/60} eth:{et/3600}")
+    excomp=str(time.ctime(time.time()+et))
+    excompmi=str(time.ctime(time.time()+mit))
+    excompma=str(time.ctime(time.time()+mat))
+
+    print(f"expected completion:       {excomp}")
+    print(f"overestimated completion:  {excompma}")
+    print(f"underestimated completion: {excompmi}")
