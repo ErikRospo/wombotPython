@@ -22,7 +22,6 @@ styles.set(20, "Blacklight");
 styles.set(21, "Psychedelic");
 styles.set(22, "Ghibli");
 styles.set(23, "Surreal");
-// these styles seem to have been removed and aren't available anymore
 styles.set(27, "Radioactive");
 styles.set(28, "Arcane");
 

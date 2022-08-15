@@ -1,0 +1,10 @@
+[ ] MAYBE: use a weighted average of the previous 10 images
+[ ] find out how to do interframe interpolation
+Archive:
+  [x] generate images
+  [x] use the image from ~10 back to (hopefully) smooth things out
+  [x] generate video
+  [x] handle edge cases
+  [x] instead of changing the prompt every time, we instead use each prompt for ~20 images
+    this will hopefully help with the video being too jumpy
+  [x] port over settings.js to settings.json

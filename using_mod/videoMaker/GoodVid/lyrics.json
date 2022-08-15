@@ -1,0 +1,797 @@
+[
+    [
+        {
+            "word": "i'll",
+            "start": 43,
+            "end": 198
+        }
+    ],
+    [
+        {
+            "word": "it's",
+            "start": 690,
+            "end": 857
+        },
+        {
+            "word": "seats",
+            "start": 858,
+            "end": 916
+        },
+        {
+            "word": "he",
+            "start": 917,
+            "end": 951
+        },
+        {
+            "word": "is",
+            "start": 952,
+            "end": 998
+        },
+        {
+            "word": "as(2)",
+            "start": 999,
+            "end": 1035
+        },
+        {
+            "word": "east",
+            "start": 1036,
+            "end": 1114
+        },
+        {
+            "word": "and(2)",
+            "start": 1115,
+            "end": 1384
+        },
+        {
+            "word": "ask",
+            "start": 1385,
+            "end": 1419
+        },
+        {
+            "word": "through",
+            "start": 1420,
+            "end": 1439
+        },
+        {
+            "word": "the",
+            "start": 1440,
+            "end": 1460
+        },
+        {
+            "word": "<sil>",
+            "start": 1461,
+            "end": 1463
+        },
+        {
+            "word": "kind",
+            "start": 1464,
+            "end": 1533
+        },
+        {
+            "word": "i",
+            "start": 1534,
+            "end": 1542
+        },
+        {
+            "word": "that(2)",
+            "start": 1543,
+            "end": 1666
+        },
+        {
+            "word": "<sil>",
+            "start": 1667,
+            "end": 1720
+        },
+        {
+            "word": "<sil>",
+            "start": 1721,
+            "end": 1731
+        },
+        {
+            "word": "if",
+            "start": 1732,
+            "end": 1775
+        },
+        {
+            "word": "this",
+            "start": 1776,
+            "end": 1814
+        },
+        {
+            "word": "<sil>",
+            "start": 1815,
+            "end": 1826
+        },
+        {
+            "word": "list",
+            "start": 1827,
+            "end": 1867
+        },
+        {
+            "word": "<sil>",
+            "start": 1868,
+            "end": 1886
+        },
+        {
+            "word": "and(2)",
+            "start": 1887,
+            "end": 2001
+        },
+        {
+            "word": "for(2)",
+            "start": 2002,
+            "end": 2014
+        },
+        {
+            "word": "the(2)",
+            "start": 2015,
+            "end": 2038
+        },
+        {
+            "word": "<sil>",
+            "start": 2039,
+            "end": 2041
+        },
+        {
+            "word": "house",
+            "start": 2042,
+            "end": 2079
+        },
+        {
+            "word": "zealand",
+            "start": 2080,
+            "end": 2118
+        },
+        {
+            "word": "and",
+            "start": 2119,
+            "end": 2386
+        },
+        {
+            "word": "it",
+            "start": 2387,
+            "end": 2464
+        },
+        {
+            "word": "and(2)",
+            "start": 2465,
+            "end": 2664
+        },
+        {
+            "word": "lifetime",
+            "start": 2665,
+            "end": 2738
+        }
+    ],
+    [
+        {
+            "word": "and",
+            "start": 3635,
+            "end": 3667
+        }
+    ],
+    [
+        {
+            "word": "the",
+            "start": 3821,
+            "end": 3848
+        }
+    ],
+    [
+        {
+            "word": "one(2)",
+            "start": 4226,
+            "end": 4299
+        },
+        {
+            "word": "too",
+            "start": 4300,
+            "end": 4339
+        },
+        {
+            "word": "me",
+            "start": 4340,
+            "end": 4359
+        },
+        {
+            "word": "that(2)",
+            "start": 4360,
+            "end": 4436
+        },
+        {
+            "word": "it",
+            "start": 4437,
+            "end": 4499
+        },
+        {
+            "word": "is",
+            "start": 4500,
+            "end": 4519
+        },
+        {
+            "word": "<sil>",
+            "start": 4520,
+            "end": 4542
+        },
+        {
+            "word": "and",
+            "start": 4543,
+            "end": 4654
+        },
+        {
+            "word": "<sil>",
+            "start": 4655,
+            "end": 4717
+        },
+        {
+            "word": "[SPEECH]",
+            "start": 4718,
+            "end": 4751
+        }
+    ],
+    [
+        {
+            "word": "hum",
+            "start": 4835,
+            "end": 4891
+        }
+    ],
+    [
+        {
+            "word": "if",
+            "start": 5497,
+            "end": 5516
+        },
+        {
+            "word": "the",
+            "start": 5517,
+            "end": 5541
+        },
+        {
+            "word": "<sil>",
+            "start": 5542,
+            "end": 5550
+        },
+        {
+            "word": "[SPEECH]",
+            "start": 5551,
+            "end": 5565
+        },
+        {
+            "word": "<sil>",
+            "start": 5566,
+            "end": 5639
+        },
+        {
+            "word": "thief",
+            "start": 5640,
+            "end": 5698
+        },
+        {
+            "word": "<sil>",
+            "start": 5699,
+            "end": 5725
+        },
+        {
+            "word": "[SPEECH]",
+            "start": 5726,
+            "end": 5766
+        },
+        {
+            "word": "of",
+            "start": 5767,
+            "end": 5866
+        },
+        {
+            "word": "<sil>",
+            "start": 5867,
+            "end": 5875
+        },
+        {
+            "word": "hand",
+            "start": 5876,
+            "end": 5939
+        },
+        {
+            "word": "feed",
+            "start": 5940,
+            "end": 5973
+        },
+        {
+            "word": "<sil>",
+            "start": 5974,
+            "end": 6015
+        },
+        {
+            "word": "'em",
+            "start": 6016,
+            "end": 6051
+        },
+        {
+            "word": "<sil>",
+            "start": 6052,
+            "end": 6057
+        },
+        {
+            "word": "dead",
+            "start": 6058,
+            "end": 6167
+        },
+        {
+            "word": "[NOISE]",
+            "start": 6168,
+            "end": 6170
+        },
+        {
+            "word": "[SPEECH]",
+            "start": 6171,
+            "end": 6173
+        },
+        {
+            "word": "he",
+            "start": 6174,
+            "end": 6187
+        },
+        {
+            "word": "things",
+            "start": 6188,
+            "end": 6374
+        },
+        {
+            "word": "then",
+            "start": 6375,
+            "end": 6447
+        }
+    ],
+    [
+        {
+            "word": "but",
+            "start": 7566,
+            "end": 7603
+        },
+        {
+            "word": "how",
+            "start": 7604,
+            "end": 7612
+        },
+        {
+            "word": "[SPEECH]",
+            "start": 7613,
+            "end": 7634
+        }
+    ],
+    [
+        {
+            "word": "and(2)",
+            "start": 8556,
+            "end": 8675
+        },
+        {
+            "word": "yet",
+            "start": 8676,
+            "end": 8703
+        },
+        {
+            "word": "<sil>",
+            "start": 8704,
+            "end": 8730
+        },
+        {
+            "word": "to(3)",
+            "start": 8731,
+            "end": 8849
+        },
+        {
+            "word": "[NOISE]",
+            "start": 8850,
+            "end": 8852
+        },
+        {
+            "word": "hand",
+            "start": 8853,
+            "end": 8882
+        },
+        {
+            "word": "<sil>",
+            "start": 8883,
+            "end": 8885
+        },
+        {
+            "word": "in",
+            "start": 8886,
+            "end": 8915
+        },
+        {
+            "word": "it",
+            "start": 8916,
+            "end": 8985
+        },
+        {
+            "word": "then",
+            "start": 8986,
+            "end": 9007
+        },
+        {
+            "word": "and",
+            "start": 9008,
+            "end": 9055
+        },
+        {
+            "word": "had",
+            "start": 9056,
+            "end": 9281
+        },
+        {
+            "word": "voir",
+            "start": 9282,
+            "end": 9378
+        }
+    ],
+    [
+        {
+            "word": "i",
+            "start": 9617,
+            "end": 9627
+        },
+        {
+            "word": "feel",
+            "start": 9628,
+            "end": 9673
+        },
+        {
+            "word": "kind",
+            "start": 9674,
+            "end": 9938
+        },
+        {
+            "word": "in",
+            "start": 9939,
+            "end": 9969
+        },
+        {
+            "word": "and",
+            "start": 9970,
+            "end": 10035
+        },
+        {
+            "word": "hit",
+            "start": 10036,
+            "end": 10060
+        },
+        {
+            "word": "and",
+            "start": 10061,
+            "end": 10223
+        },
+        {
+            "word": "run",
+            "start": 10224,
+            "end": 10252
+        },
+        {
+            "word": "<sil>",
+            "start": 10253,
+            "end": 10265
+        },
+        {
+            "word": "[SPEECH]",
+            "start": 10266,
+            "end": 10270
+        },
+        {
+            "word": "<sil>",
+            "start": 10271,
+            "end": 10281
+        },
+        {
+            "word": "up",
+            "start": 10282,
+            "end": 10338
+        },
+        {
+            "word": "<sil>",
+            "start": 10339,
+            "end": 10350
+        },
+        {
+            "word": "to(3)",
+            "start": 10351,
+            "end": 10372
+        }
+    ],
+    [
+        {
+            "word": "if",
+            "start": 10492,
+            "end": 10519
+        },
+        {
+            "word": "<sil>",
+            "start": 10520,
+            "end": 10534
+        },
+        {
+            "word": "i'd",
+            "start": 10535,
+            "end": 10596
+        },
+        {
+            "word": "<sil>",
+            "start": 10597,
+            "end": 10599
+        },
+        {
+            "word": "<sil>",
+            "start": 10600,
+            "end": 10605
+        },
+        {
+            "word": "[SPEECH]",
+            "start": 10606,
+            "end": 10619
+        },
+        {
+            "word": "type",
+            "start": 10620,
+            "end": 10740
+        },
+        {
+            "word": "[SPEECH]",
+            "start": 10741,
+            "end": 10748
+        },
+        {
+            "word": "it",
+            "start": 10749,
+            "end": 10782
+        },
+        {
+            "word": "good",
+            "start": 10783,
+            "end": 11093
+        },
+        {
+            "word": "things",
+            "start": 11094,
+            "end": 11138
+        },
+        {
+            "word": "what(2)",
+            "start": 11139,
+            "end": 11229
+        }
+    ],
+    [
+        {
+            "word": "when(4)",
+            "start": 11789,
+            "end": 11859
+        },
+        {
+            "word": "did",
+            "start": 11860,
+            "end": 12021
+        },
+        {
+            "word": "if",
+            "start": 12022,
+            "end": 12097
+        },
+        {
+            "word": "this",
+            "start": 12098,
+            "end": 12137
+        },
+        {
+            "word": "is",
+            "start": 12138,
+            "end": 12157
+        }
+    ],
+    [
+        {
+            "word": "hum",
+            "start": 12368,
+            "end": 12455
+        },
+        {
+            "word": "<sil>",
+            "start": 12456,
+            "end": 12471
+        },
+        {
+            "word": "[SPEECH]",
+            "start": 12472,
+            "end": 12509
+        },
+        {
+            "word": "<sil>",
+            "start": 12510,
+            "end": 12526
+        },
+        {
+            "word": "[SPEECH]",
+            "start": 12527,
+            "end": 12550
+        },
+        {
+            "word": "<sil>",
+            "start": 12551,
+            "end": 12555
+        }
+    ],
+    [
+        {
+            "word": "so",
+            "start": 13867,
+            "end": 13878
+        },
+        {
+            "word": "<sil>",
+            "start": 13879,
+            "end": 13915
+        },
+        {
+            "word": "if",
+            "start": 13916,
+            "end": 13947
+        },
+        {
+            "word": "[SPEECH]",
+            "start": 13948,
+            "end": 13964
+        },
+        {
+            "word": "<sil>",
+            "start": 13965,
+            "end": 13990
+        },
+        {
+            "word": "seth",
+            "start": 13991,
+            "end": 14055
+        }
+    ],
+    [
+        {
+            "word": "of",
+            "start": 16534,
+            "end": 16570
+        },
+        {
+            "word": "<sil>",
+            "start": 16571,
+            "end": 16604
+        },
+        {
+            "word": "[SPEECH]",
+            "start": 16605,
+            "end": 16620
+        },
+        {
+            "word": "the",
+            "start": 16621,
+            "end": 16631
+        },
+        {
+            "word": "<sil>",
+            "start": 16632,
+            "end": 16657
+        },
+        {
+            "word": "things",
+            "start": 16658,
+            "end": 16708
+        },
+        {
+            "word": "the(2)",
+            "start": 16709,
+            "end": 16737
+        },
+        {
+            "word": "<sil>",
+            "start": 16738,
+            "end": 16777
+        },
+        {
+            "word": "vet",
+            "start": 16778,
+            "end": 16923
+        },
+        {
+            "word": "and(2)",
+            "start": 16924,
+            "end": 16986
+        },
+        {
+            "word": "if",
+            "start": 16987,
+            "end": 16999
+        },
+        {
+            "word": "he",
+            "start": 17000,
+            "end": 17022
+        },
+        {
+            "word": "if",
+            "start": 17023,
+            "end": 17043
+        },
+        {
+            "word": "<sil>",
+            "start": 17044,
+            "end": 17069
+        },
+        {
+            "word": "he",
+            "start": 17070,
+            "end": 17099
+        },
+        {
+            "word": "<sil>",
+            "start": 17100,
+            "end": 17114
+        },
+        {
+            "word": "have",
+            "start": 17115,
+            "end": 17146
+        },
+        {
+            "word": "<sil>",
+            "start": 17147,
+            "end": 17149
+        },
+        {
+            "word": "<sil>",
+            "start": 17150,
+            "end": 17152
+        },
+        {
+            "word": "[SPEECH]",
+            "start": 17153,
+            "end": 17167
+        },
+        {
+            "word": "one(2)",
+            "start": 17168,
+            "end": 17242
+        },
+        {
+            "word": "him(2)",
+            "start": 17243,
+            "end": 17274
+        },
+        {
+            "word": "what",
+            "start": 17275,
+            "end": 17284
+        },
+        {
+            "word": "he",
+            "start": 17285,
+            "end": 17314
+        },
+        {
+            "word": "first",
+            "start": 17315,
+            "end": 17353
+        },
+        {
+            "word": "landed",
+            "start": 17354,
+            "end": 17396
+        },
+        {
+            "word": "on(2)",
+            "start": 17397,
+            "end": 17420
+        },
+        {
+            "word": "the",
+            "start": 17421,
+            "end": 17450
+        }
+    ]
+]
