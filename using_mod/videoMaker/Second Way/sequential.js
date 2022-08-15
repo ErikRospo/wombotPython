@@ -5,6 +5,9 @@ const fs = require("fs");
 const settings=require("./settings");
 
 const colors=require("./colors");
+const imagepixels = require("image-pixels");
+// const imageoutput = require("image-output");
+const imageencode = require("image-encode");
 const quiet=settings.quiet||false;
 const inter=settings.inter||false;
 const final=true;
@@ -72,6 +75,7 @@ async function generate(
 
     return res;
 }
+
 async function generateLaggySequential(
     prompts,
     style,
@@ -86,6 +90,36 @@ async function generateLaggySequential(
         lastImage = inputImage;
     }
     let images={};
+    function processImages(images){
+        // fs.readFileSync(images[imageIndex].path).toString("base64");
+        // let imageIndex=image.index;
+        let imageDataList=[];
+        let imageList=[];
+        for (let i=Math.max(0,images.length-10);i<images.length;i++){
+            imageList.push(fs.readFileSync(images[i].path));
+        }
+        const imageHeight=1568;
+        const imageWidth=960;
+        
+        // then, get the image data from the image data list
+        for (let i=0;i<imageList.length;i++){
+            imageDataList.push(imagepixels(imageList[i]));
+        }
+        // then, get the image data from the image data list
+        for (let i=0;i<imageDataList.length;i++){
+            imageDataList[i]=imageDataList[i].data;
+        }
+        let imageData=imageDataList[0];
+        for (let i=0;i<imageData.length;i++){
+            for (let j=1;j<imageDataList.length;j++){
+                imageData[i]+=imageDataList[j][i]/j;
+            }
+            imageData[i]/=Math.sqrt(imageDataList.length);
+        }
+        imageData=imageData.map((x) => Math.round(x));
+        let image=imageencode(imageData,"jpg",{"width":imageWidth,"height":imageHeight});
+        return image.toString("base64");
+    }
     for (let n=0;n<prompts.length;n++) {
         let prompt=prompts[n];
         for (let i=0;i<times;i++){
@@ -111,9 +145,10 @@ async function generateLaggySequential(
                 "directory":directory,
                 "path":res.path
             };
+            let ii=processImages(images);
             lastImage={
                 // eslint-disable-next-line camelcase
-                input_image:fs.readFileSync(images[imageIndex].path).toString("base64"),
+                input_image:ii,
                 // eslint-disable-next-line camelcase
                 media_suffix:"jpeg",
                 // eslint-disable-next-line camelcase
