@@ -16,7 +16,7 @@ print(f"overestimated completion:  {excompma}")
 print(f"underestimated completion: {excompmi}")
 
 start=time.time()
-res=os.system("node main.js");
+res=os.system("node main.js")
 end=time.time()
 if res==0:
     with open("path.txt") as f:
