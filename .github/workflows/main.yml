@@ -29,8 +29,7 @@ jobs:
           npm install eslint --location=global
       - name: Run ESLint
         run: |
-          gh pr create -f -t Linted
-          gh pr checkout -b Linted
+          git checkout -b Linter
           eslint ./using_mod/ --ext .js,.jsx,.ts,.tsx -c ./using_mod/videoMaker/.eslintrc.json
           eslint ./using_mod/js --ext .js,.jsx,.ts,.tsx -c ./using_mod/videoMaker/.eslintrc.json
           eslint ./using_mod/sequential --ext .js,.jsx,.ts,.tsx -c ./using_mod/videoMaker/.eslintrc.json
@@ -38,6 +37,7 @@ jobs:
           eslint ./using_mod/videoMaker/GoodVid --ext .js,.jsx,.ts,.tsx -c ./using_mod/videoMaker/.eslintrc.json
           eslint ./using_mod/videoMaker/Second\ Way --ext .js,.jsx,.ts,.tsx -c ./using_mod/videoMaker/.eslintrc.json
           eslint ./using_mod/videoMaker/seq --ext .js,.jsx,.ts,.tsx -c ./using_mod/videoMaker/.eslintrc.json
-          
+          git add *
+          git push
         env:
             GH_TOKEN: ${{ secrets.AUTHTOKEN }}
