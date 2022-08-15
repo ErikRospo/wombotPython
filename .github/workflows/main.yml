@@ -27,7 +27,6 @@ jobs:
       - name: Install modules
         run: |
           npm install eslint --location=global
-          npm install 
       - name: Run ESLint
         run: |
           eslint ./using_mod/ --ext .js,.jsx,.ts,.tsx -c ./using_mod/videoMaker/.eslintrc.json
