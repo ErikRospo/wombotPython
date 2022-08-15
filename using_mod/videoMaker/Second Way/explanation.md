@@ -156,7 +156,7 @@ The next few lines are pretty much the same as the last block, with one exceptio
         print("Time taken for make_video.py: "+str((end_make_video-start_make_video)/60)+" minutes")
 ```
 The `if` statement at the top checks to make sure that the video making worked.
-Note<sup><a href="#footnotes">1</a></sup>  
+Note [^1]  
 
 The next lines are mostly about saving timing data to a file
 ```python
@@ -189,4 +189,4 @@ Finaly, the 2 lines after that handle all other error codes. simply by just sayi
 
 
 # footnotes
-[1]:If you were paying close attention, you may have noticed that the blocks were getting indented further and further. this is just how python does its control flow, and block/scope dictation.   
+[^1]:If you were paying close attention, you may have noticed that the blocks were getting indented further and further. this is just how python does its control flow, and block/scope dictation.   
