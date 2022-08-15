@@ -26,7 +26,14 @@ jobs:
       - uses: actions/checkout@v3
       - name: Install modules
         run: |
-          npm install eslint -g
+          npm install eslint --location=global
           npm install 
       - name: Run ESLint
-        run: eslint . --ext .js,.jsx,.ts,.tsx
+        run: |
+          eslint ./using_mod/ --ext .js,.jsx,.ts,.tsx -c ./using_mod/videoMaker/.eslintrc.json
+          eslint ./using_mod/js --ext .js,.jsx,.ts,.tsx -c ./using_mod/videoMaker/.eslintrc.json
+          eslint ./using_mod/sequential --ext .js,.jsx,.ts,.tsx -c ./using_mod/videoMaker/.eslintrc.json
+          eslint ./using_mod/videoMaker --ext .js,.jsx,.ts,.tsx -c ./using_mod/videoMaker/.eslintrc.json
+          eslint ./using_mod/videoMaker/GoodVid --ext .js,.jsx,.ts,.tsx -c ./using_mod/videoMaker/.eslintrc.json
+          eslint ./using_mod/videoMaker/Second\ Way --ext .js,.jsx,.ts,.tsx -c ./using_mod/videoMaker/.eslintrc.json
+          eslint ./using_mod/videoMaker/seq --ext .js,.jsx,.ts,.tsx -c ./using_mod/videoMaker/.eslintrc.json
