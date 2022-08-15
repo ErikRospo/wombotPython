@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 import os, time,json
 import time_estimator
 et=round(time_estimator.calculate_expected_time(),3)
@@ -38,11 +38,15 @@ if res==0:
         print("Time taken for make_video.py: "+str((end_make_video-start_make_video)/60)+" minutes")
 
         with open("./benchmarks.csv","at") as f:
-            f.write("\n"+str(lines)+','+str(end-start)+','+str(end_make_video-start_make_video)+','+str((end-start)+(end_make_video-start_make_video)))
+            TimeSeconds = end-start
+            TimeSecondsMKV=end_make_video-start_make_video
+            TotalTime=TimeSeconds+TimeSecondsMKV
+            csvLine = "\n"+str(lines)+','+str(TimeSeconds)+','+str(TimeSecondsMKV)+','+str(et)+","+str(TotalTime-et)+","+str(TotalTime)
+            f.write(csvLine)
     else:
         print("Error in make_video.py")
         with open("./benchmarks.csv","at") as f:
-            f.write("\n"+str(lines)+','+str(end-start)+',err,'+str((end-start)))
+            f.write("\n"+str(lines)+','+str(end-start)+',err,err,err'+str((end-start)))
 elif res==2:
     print("Canceled")
 else:
