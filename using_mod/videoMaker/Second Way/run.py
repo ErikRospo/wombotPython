@@ -8,7 +8,7 @@ exminutes=int(((et)%3600)/60)
 exseconds=int(((et)%3600)%60)
 print(f"expected time: {exhours}h {exminutes}m {exseconds}s")
 print(f"et: {et} etm:{et/60} eth:{et/3600}")
-
+st=time.time()
 excomp=datetime.datetime.fromtimestamp(time.time()+et).strftime('%Y-%m-%d %I:%M:%S %p')
 excompmi=datetime.datetime.fromtimestamp(time.time()+mit).strftime('%Y-%m-%d %I:%M:%S %p')
 excompma=datetime.datetime.fromtimestamp(time.time()+mat).strftime('%Y-%m-%d %I:%M:%S %p')
@@ -46,7 +46,28 @@ if res==0:
         print("Time taken for make_video.py: "+str(mvhours)+" hours "+str(mvminutes)+" minutes "+str(mvseconds)+" seconds")
         print("Time taken for make_video.py: "+str(end_make_video-start_make_video)+" seconds")
         print("Time taken for make_video.py: "+str((end_make_video-start_make_video)/60)+" minutes")
-
+        tts=(end_make_video-start_make_video)+(end-start)
+        tthours=int(tts/3600)
+        ttminutes=int((tts%3600)/60)
+        ttseconds=int((tts%3600)%60)
+        print("Total time taken: "+str(tthours)+" hours "+str(ttminutes)+" minutes "+str(ttseconds)+" seconds")
+        print("Total time taken: "+str(tts)+" seconds")
+        print("Total time taken: "+str(tts/60)+" minutes")
+        terr=time.time()-st+et
+        miterr=time.time-st+mit
+        materr=time.time()-st+mat
+        terrhours=int(terr/3600)
+        terrminutes=int((terr%3600)/60)
+        terrseconds=int((terr%3600)%60)
+        miterrhours=int(miterr/3600)
+        miterrminutes=int((miterr%3600)/60)
+        miterrseconds=int((miterr%3600)%60)
+        materrhours=int(materr/3600)
+        materrminutes=int((materr%3600)/60)
+        materrseconds=int((materr%3600)%60)
+        print("Time error (Actual):  "+str(terrhours)+" hours "+str(terrminutes)+" minutes "+str(terrseconds)+" seconds")
+        print("Time error (Maximum): "+str(miterrhours)+" hours "+str(miterrminutes)+" minutes "+str(miterrseconds)+" seconds")
+        print("Time error (Minumim): "+str(materrhours)+" hours "+str(materrminutes)+" minutes "+str(materrseconds)+" seconds")
         with open("./benchmarks.csv","at") as f:
             TimeSeconds = end-start
             TimeSecondsMKV=end_make_video-start_make_video
