@@ -11,7 +11,7 @@ let samplesArray = fs
     .filter((v) => {
         return v.length>2;
     }).filter((v) => {
-        return v.indexOf("#")===-1;
+        return (v.indexOf("#")===-1)&(v.indexOf("[")===-1)&(v.indexOf("]")===-1);
     });
 if (settings.logPrompts) console.log(samplesArray);
 const style = settings.style;
