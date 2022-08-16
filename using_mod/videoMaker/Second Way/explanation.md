@@ -187,6 +187,172 @@ The first `else` is for the making of the video. if instead of returning a `0`, 
 The next line checks if the response of `main.js` was exactly 2. This is the error code of `^C`, or cancel. if it is, it just prints out `Canceled`  
 Finaly, the 2 lines after that handle all other error codes. simply by just saying that there was an error, and what the error was.
 
+## time_estimator.py
+
+This is a module that I wrote that predicts how long a given configuration will take to process, given previous data. 
+
+Similar to the previous file, I'll show it in full, then go block by block, explaning what each part does.
+```python
+import csv
+import json
+from math import sqrt
+import time
+from statistics import mean, stdev
+def calculate_expected_time():
+    settings=json.load(open("./settings.json","rt"))
+    current_data=list(csv.reader(open("benchmarks.csv","rt").readlines()))
+    with open(settings['samplePath']) as f:
+        prompts=f.readlines()
+        x=0
+        for n in prompts:
+            if len(n)>2 and "#" not in n and "[" not in n and "]" not in n:
+                x+=1
+        numPrompts=x
+    numIterations=numPrompts*settings['times']
+    current_data=current_data[1:]
+    ys=[]
+    xs=[]
+    for n in range(len(current_data)):
+        ys.append(float(current_data[n][-1]))
+        xs.append(float(current_data[n][0]))
+
+    r_upper_values=[]
+    for n in range(len(current_data)):
+        vx=xs[n]
+        vy=ys[n]
+        r_upper_values.append(((vx-mean(xs))*(vy-mean(ys))))
+    r_upper=sum(r_upper_values)
+    r_lower=sqrt(sum([(vx-mean(xs))**2 for vx in xs])*sum([(vy-mean(ys))**2 for vy in ys]))
+    r=r_upper/r_lower
+    b1=r*(stdev(ys)/stdev(xs))
+    b0=mean(ys)-b1*mean(xs)
+    ev=b0+b1*numIterations
+    dev=stdev(ys)
+    return ev,ev+dev,ev-dev
+if __name__=="__main__":
+    et,mat,mit=calculate_expected_time()
+    exhours=int((et)/3600)
+    exminutes=int(((et)%3600)/60)
+    exseconds=int(((et)%3600)%60)
+    print(f"expected time: {exhours}h {exminutes}m {exseconds}s")
+    print(f"et: {et} etm:{et/60} eth:{et/3600}")
+    excomp=str(time.ctime(time.time()+et))
+    excompmi=str(time.ctime(time.time()+mit))
+    excompma=str(time.ctime(time.time()+mat))
+
+    print(f"expected completion:       {excomp}")
+    print(f"overestimated completion:  {excompma}")
+    print(f"underestimated completion: {excompmi}")
+```
+
+The first block is (like the previous one), imports 
+```python
+import csv
+import json
+from math import sqrt
+import time
+from statistics import mean, stdev
+```
+We get the comma seperated values library (`csv`), the `json` library, the `sqrt` function from the `math` library, the `time` module, and the `mean` and `stdev` functions from the `statistics` module  
+
+
+The next block is a bit different, both in content and structure from the previous file.  
+```python 
+def calculate_expected_time():
+    settings=json.load(open("./settings.json","rt"))
+    current_data=list(csv.reader(open("benchmarks.csv","rt").readlines()))
+    with open(settings['samplePath']) as f:
+        prompts=f.readlines()
+        x=0
+        for n in prompts:
+            if len(n)>2 and "#" not in n and "[" not in n and "]" not in n:
+                x+=1
+```
+The first line is defining a function that will be called `calculate_expected_time`. This is what gets called in `run.py`, to get the expected time.  
+the second and third lines are opening the `settings.json` and the `benchmarks.csv` files, and reading them into the `settings` and `current_data` variables respectively.  
+The next block opens a file that's path is defined in the `settings.json` file, from the key `samplePath`. this contains the prompts that will be fed into the generator. Then, we read the file (line by line) into the `prompts` variable, and define `x` to be zero.  
+Then, for each prompt in the prompts, we check if its length is greater than 2, it doesn't have a `#`, and that it does not have a `[` nor a `]`. If all of those conditions are met, we increment x by one.  
+Stepping through the conditions, we can get a better idea of what it is trying to exclude.
+- Making sure that the length is greater than two ensures that no blank lines are included in the count.[^2]
+- Making sure that it doesn't include a `#` means we can easily exclude lines, just by putting a `#` in them.
+- The last two work in parallel, as most lyrics websites put a block of text denoting choruses, exits and more in square brackets. this filters those out.[^3]  
+
+I could add more restrictions, or less, but i find that this strikes a balence between restrictiveness, and freedom.
+
+The next block is a continuation of the last
+```python
+        numPrompts=x
+    numIterations=numPrompts*settings['times']
+    current_data=current_data[1:]
+```
+this, after going through all of the lines of text, and filtering them out, sets a variable named `numPrompts` to the number of valid prompts, that didn't get filtered out. then, it sets `numIterations` to the `numPrompts` times whatever is in the `times` key of `settings`.  
+The next line sets `current_data` equal to whatever is in current_data, except the first line. this just excludes the header data, that would almost certainlly cause some issues with further code.
+ 
+the next block is getting some variable set up
+```python
+    ys=[]
+    xs=[]
+    for n in range(len(current_data)):
+        ys.append(float(current_data[n][-1]))
+        xs.append(float(current_data[n][0]))
+```
+we set `ys` and `xs` to empty arrays.
+then, for each item in our `current_data`, we put the last item into `ys`, and the first item into `xs`. so, in the format that we save them in, `xs` ends up being the number of iterations, and `ys` is the time it took to do those iterations.
+
+the next block is where most of the magic actually happens. this is where we calculate how long it will take to do a given number of iterations
+
+```python
+    r_upper_values=[]
+    for n in range(len(current_data)):
+        vx=xs[n]
+        vy=ys[n]
+        r_upper_values.append(((vx-mean(xs))*(vy-mean(ys))))
+    r_upper=sum(r_upper_values)
+    r_lower=sqrt(sum([(vx-mean(xs))**2 for vx in xs])*sum([(vy-mean(ys))**2 for vy in ys]))
+    r=r_upper/r_lower
+    b1=r*(stdev(ys)/stdev(xs))
+    b0=mean(ys)-b1*mean(xs)
+    ev=b0+b1*numIterations
+    dev=stdev(ys)
+```
+And, as you might expect, it's kind of a mess. 
+the first thing we do is declare an empty array called `r_upper_values`. then, for each item in our current data, we put the x value, minus the mean of all of the other values,times the y value, minus the mean of all of the other values.  
+After that, we set `r_upper` equal to the sum of all those values.  
+Then, we set `r_lower` to ...
+The sqrt of the sum of `vx` minus mean of `xs` squared, for each value of `vx` in `xs`, squared, times the sum of `vy` minus the mean of `ys`, for each value of `vy` in `ys`, squared.  
+
+Then, after that mess, we set `r` equal to `r_upper` over `r_lower`. 
+Also, `r` isn't actually our slope, or our y intercept, that's just essentialy how corralated our data is, and in what direction.  
+So, `b1` is the `stdev` of `ys` over the `stdev` of `xs`, times `r`. This is the only time we use `r`.  
+`b0` is the mean of ys, minus `b1` times the mean of `xs`
+after all of this, we finaly have our slope and y-intercept. so, we can just set ev equal to `b0+b1*numIterations`. this is our expected value.
+
+We could just return that immediatly, but instead, we calculate the `stdev` of our data, and return our expected value `ev`, an upper bound `ev+dev`, and a lower bound `ev-dev`.
+
+
+the final block is essentialy what happens in `run.py`, but I'll go over it again.
+```python
+if __name__=="__main__":
+    et,mat,mit=calculate_expected_time()
+    exhours=int((et)/3600)
+    exminutes=int(((et)%3600)/60)
+    exseconds=int(((et)%3600)%60)
+    print(f"expected time: {exhours}h {exminutes}m {exseconds}s")
+    print(f"et: {et} etm:{et/60} eth:{et/3600}")
+    excomp=str(time.ctime(time.time()+et))
+    excompmi=str(time.ctime(time.time()+mit))
+    excompma=str(time.ctime(time.time()+mat))
+
+    print(f"expected completion:       {excomp}")
+    print(f"overestimated completion:  {excompma}")
+    print(f"underestimated completion: {excompmi}")
+```
+the first line checks if this is being run by itself, and is not being `import`ed by another module.
+the next few lines get an estimation of the end time, and print it out.
+
+So, as far as complexity, this one is not insane, but does have some significant math involved with it, such as linear forcasting.
 
 # footnotes
-[^1]:If you were paying close attention, you may have noticed that the blocks were getting indented further and further. this is just how python does its control flow, and block/scope dictation.   
+[^1]: If you were paying close attention, you may have noticed that the blocks were getting indented further and further. this is just how python does its control flow, and block/scope dictation.   
+[^2]: the reasoning behind having the limit be at 2 rather than one is that Windows computers use `\r\n`, as opposed to Unix's `\n`. 
+[^3]: Forgot to mention that I get the prompts from songs, as it can be kind of hard to think of original prompts sometimes.
