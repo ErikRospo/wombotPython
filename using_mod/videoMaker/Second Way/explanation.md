@@ -1,5 +1,10 @@
 # Explanation of Wombo.art video/image generation
+[Back](https://erikrospo.github.io/wombotPython/)
 
+## Table of contents
+1. [Run.py](https://erikrospo.github.io/wombotPython/using_mod/videoMaker/Second%20Way/explanation#runpy)
+2. [Time_estimator.py](https://erikrospo.github.io/wombotPython/using_mod/videoMaker/Second%20Way/explanation#time_estimatorpy)
+3. [Main.js](https://erikrospo.github.io/wombotPython/using_mod/videoMaker/Second%20Way/explanation#mainjs)
 ## run.py
 this is a wrapper for all functionality of the application. It gives an estimation of the duration that a given configuration will take, and runs both the actual image generation and the video maker.  
 
@@ -8,15 +13,17 @@ First, I'll show the code in full, then, I'll step through it
 #!/usr/bin/python3
 import os, time,json
 import time_estimator
+import datetime
 et,mat,mit=time_estimator.calculate_expected_time()
 exhours=int((et)/3600)
 exminutes=int(((et)%3600)/60)
 exseconds=int(((et)%3600)%60)
 print(f"expected time: {exhours}h {exminutes}m {exseconds}s")
 print(f"et: {et} etm:{et/60} eth:{et/3600}")
-excomp=str(time.ctime(time.time()+et))
-excompmi=str(time.ctime(time.time()+mit))
-excompma=str(time.ctime(time.time()+mat))
+st=time.time()
+excomp=datetime.datetime.fromtimestamp(time.time()+et).strftime('%Y-%m-%d %I:%M:%S %p')
+excompmi=datetime.datetime.fromtimestamp(time.time()+mit).strftime('%Y-%m-%d %I:%M:%S %p')
+excompma=datetime.datetime.fromtimestamp(time.time()+mat).strftime('%Y-%m-%d %I:%M:%S %p')
 
 print(f"expected completion:       {excomp}")
 print(f"overestimated completion:  {excompma}")
@@ -51,7 +58,28 @@ if res==0:
         print("Time taken for make_video.py: "+str(mvhours)+" hours "+str(mvminutes)+" minutes "+str(mvseconds)+" seconds")
         print("Time taken for make_video.py: "+str(end_make_video-start_make_video)+" seconds")
         print("Time taken for make_video.py: "+str((end_make_video-start_make_video)/60)+" minutes")
-
+        tts=(end_make_video-start_make_video)+(end-start)
+        tthours=int(tts/3600)
+        ttminutes=int((tts%3600)/60)
+        ttseconds=int((tts%3600)%60)
+        print("Total time taken: "+str(tthours)+" hours "+str(ttminutes)+" minutes "+str(ttseconds)+" seconds")
+        print("Total time taken: "+str(tts)+" seconds")
+        print("Total time taken: "+str(tts/60)+" minutes")
+        terr=time.time()-st+et
+        miterr=time.time()-st+mit
+        materr=time.time()-st+mat
+        terrhours=int(terr/3600)
+        terrminutes=int((terr%3600)/60)
+        terrseconds=int((terr%3600)%60)
+        miterrhours=int(miterr/3600)
+        miterrminutes=int((miterr%3600)/60)
+        miterrseconds=int((miterr%3600)%60)
+        materrhours=int(materr/3600)
+        materrminutes=int((materr%3600)/60)
+        materrseconds=int((materr%3600)%60)
+        print("Time error (Actual):  "+str(terrhours)+" hours "+str(terrminutes)+" minutes "+str(terrseconds)+" seconds")
+        print("Time error (Maximum): "+str(miterrhours)+" hours "+str(miterrminutes)+" minutes "+str(miterrseconds)+" seconds")
+        print("Time error (Minumim): "+str(materrhours)+" hours "+str(materrminutes)+" minutes "+str(materrseconds)+" seconds")
         with open("./benchmarks.csv","at") as f:
             TimeSeconds = end-start
             TimeSecondsMKV=end_make_video-start_make_video
@@ -76,8 +104,8 @@ import os, time, json
 import time_estimator
 ```
 
-The first line is telling Linux (the OS) where to find python (the language)  
-The second line is some modules that are part of python's standard library, that are included with most installations.  
+The first line is telling Linux (the OS) where to find Python (the language)  
+The second line is some modules that are part of Python's standard library, that are included with most installations.  
 Line 3 is a time estimator library I wrote.
 
 
@@ -87,11 +115,17 @@ et,mat,mit=time_estimator.calculate_expected_time()
 exhours=int((et)/3600)
 exminutes=int(((et)%3600)/60)
 exseconds=int(((et)%3600)%60)
+st=time.time()
 print(f"expected time: {exhours}h {exminutes}m {exseconds}s")
 print(f"et: {et} etm:{et/60} eth:{et/3600}")
-excomp=str(time.ctime(time.time()+et))
-excompmi=str(time.ctime(time.time()+mit))
-excompma=str(time.ctime(time.time()+mat))
+
+excomp=datetime.datetime.fromtimestamp(time.time()+et).strftime('%Y-%m-%d %I:%M:%S %p')
+excompmi=datetime.datetime.fromtimestamp(time.time()+mit).strftime('%Y-%m-%d %I:%M:%S %p')
+excompma=datetime.datetime.fromtimestamp(time.time()+mat).strftime('%Y-%m-%d %I:%M:%S %p')
+
+print(f"expected completion:       {excomp}")
+print(f"overestimated completion:  {excompma}")
+print(f"underestimated completion: {excompmi}")
 
 ```
 `et` is the estimated time.  
@@ -107,7 +141,8 @@ end=time.time()
 ```
 The start and end just record when the program was started, and stopped.  
 The second line is basically just saying to the operating system "hey, run this in the terminal", and it returns the status code of whatever was run.  
-Counter intuitively, this status code is zero when it succeeds, and anything else means failure.   
+We will get to what main.js does in a bit.   
+Counter-intuitively, this status code is zero when it succeeds, and anything else means failure.   
 
 The next block deals with the setup for making the video
 ```python
@@ -154,9 +189,37 @@ The next few lines are pretty much the same as the last block, with one exceptio
         print("Time taken for make_video.py: "+str(mvhours)+" hours "+str(mvminutes)+" minutes "+str(mvseconds)+" seconds")
         print("Time taken for make_video.py: "+str(end_make_video-start_make_video)+" seconds")
         print("Time taken for make_video.py: "+str((end_make_video-start_make_video)/60)+" minutes")
+        
+        
 ```
 The `if` statement at the top checks to make sure that the video making worked.
-Note [^1]  
+Note [^1]
+And the next few are also the same, just with the expected time to get by how much our guess was off by.
+```python
+      tts=(end_make_video-start_make_video)+(end-start)
+        tthours=int(tts/3600)
+        ttminutes=int((tts%3600)/60)
+        ttseconds=int((tts%3600)%60)
+        print("Total time taken: "+str(tthours)+" hours "+str(ttminutes)+" minutes "+str(ttseconds)+" seconds")
+        print("Total time taken: "+str(tts)+" seconds")
+        print("Total time taken: "+str(tts/60)+" minutes")
+        terr=time.time()-st+et
+        miterr=time.time()-st+mit
+        materr=time.time()-st+mat
+        terrhours=int(terr/3600)
+        terrminutes=int((terr%3600)/60)
+        terrseconds=int((terr%3600)%60)
+        miterrhours=int(miterr/3600)
+        miterrminutes=int((miterr%3600)/60)
+        miterrseconds=int((miterr%3600)%60)
+        materrhours=int(materr/3600)
+        materrminutes=int((materr%3600)/60)
+        materrseconds=int((materr%3600)%60)
+        print("Time error (Actual):  "+str(terrhours)+" hours "+str(terrminutes)+" minutes "+str(terrseconds)+" seconds")
+        print("Time error (Maximum): "+str(miterrhours)+" hours "+str(miterrminutes)+" minutes "+str(miterrseconds)+" seconds")
+        print("Time error (Minumim): "+str(materrhours)+" hours "+str(materrminutes)+" minutes "+str(materrseconds)+" seconds")
+```
+This is essentially the same as the last part, so I'll spare you the details  
 
 The next lines are mostly about saving timing data to a file
 ```python
@@ -215,7 +278,6 @@ def calculate_expected_time():
     for n in range(len(current_data)):
         ys.append(float(current_data[n][-1]))
         xs.append(float(current_data[n][0]))
-
     r_upper_values=[]
     for n in range(len(current_data)):
         vx=xs[n]
@@ -239,7 +301,6 @@ if __name__=="__main__":
     excomp=str(time.ctime(time.time()+et))
     excompmi=str(time.ctime(time.time()+mit))
     excompma=str(time.ctime(time.time()+mat))
-
     print(f"expected completion:       {excomp}")
     print(f"overestimated completion:  {excompma}")
     print(f"underestimated completion: {excompmi}")
@@ -342,7 +403,6 @@ if __name__=="__main__":
     excomp=str(time.ctime(time.time()+et))
     excompmi=str(time.ctime(time.time()+mit))
     excompma=str(time.ctime(time.time()+mat))
-
     print(f"expected completion:       {excomp}")
     print(f"overestimated completion:  {excompma}")
     print(f"underestimated completion: {excompmi}")
@@ -350,9 +410,154 @@ if __name__=="__main__":
 the first line checks if this is being run by itself, and is not being `import`ed by another module.
 the next few lines get an estimation of the end time, and print it out.
 
-So, as far as complexity, this one is not insane, but does have some significant math involved with it, such as linear forecasting.
+So, as far as complexity, this one is not insane, but does have some significant math involved with it, such as linear forecasting.  
+## main.js  
+Again, like the last one, I'll show the code in full, then I'll step through it.
+```js
+#!/home/erik/.nvm/versions/node/v18.7.0/bin/node
+const sequential = require("./sequential.js");
+const fs = require("fs");
+const path = require("path");
+const settings=JSON.parse(fs.readFileSync("./settings.json", "utf8"));
+let samplesArray = fs
+    .readFileSync(settings.samplePath)
+    .toString()
+    .replace("\r\n", "\n")
+    .split("\n")
+    .filter((v) => {
+        return v.length>2;
+    }).filter((v) => {
+        return (v.indexOf("#")===-1)&(v.indexOf("[")===-1)&(v.indexOf("]")===-1);
+    });
+if (settings.logPrompts) console.log(samplesArray);
+const style = settings.style;
 
-# footnotes
-[^1]: If you were paying close attention, you may have noticed that the blocks were getting indented further and further. this is just how python does its control flow, and block/scope dictation.   
+(async function() {
+    let start=Date.now();
+    let dir=path.resolve(`./generated/${Date.now()}`);
+    fs.mkdirSync(dir, { recursive: true });
+    sequential.generateLaggySequential(samplesArray,style,settings.times,settings.weighting,dir,false).then((v) => {
+        // console.log(v);
+        let end=Date.now();
+        console.log(`Finished in ${(end-start)/1000} seconds`);
+        let r={
+            "responses":v,
+            "settings":settings,
+            "timeStart":start,
+            "timeEnd":end,
+            "timeTotal":end-start,
+            "timeSeconds":(end-start)/1000,
+            "timePerSample":(end-start)/v.length
+        };
+        fs.writeFileSync(`${dir}/final.json`,JSON.stringify(r));
+        fs.writeFileSync("path.txt",path.resolve(`${dir}/final.json`));
+    }).catch((err) => {
+        console.log(err);
+    }).finally(() => {
+        console.log("Done");
+    });
+})();
+```
+
+
+So, the first part, like the Python ones, is imports, and telling the OS where to find the executable for this.
+```js
+#!/home/erik/.nvm/versions/node/v18.7.0/bin/node
+const sequential = require("./sequential.js");
+const fs = require("fs");
+const path = require("path");
+const settings=JSON.parse(fs.readFileSync("./settings.json", "utf8"));
+```
+
+however, this one looks a lot different than the previous two. this is because this is JavaScript, and the last few were Python. This is one thing that I didn't love doing, as it can be kind of confusing. We get the `sequential.js` module, that we wrote, as well as the builtin `fs` (file system) and `path` (file path) modules. we also get the settings from our `settings.json` file.  
+
+the next few lines are essentially the same as what we did in Python to load in the prompts.
+```js
+let samplesArray = fs
+    .readFileSync(settings.samplePath)
+    .toString()
+    .replace("\r\n", "\n")
+    .split("\n")
+    .filter((v) => {
+        return v.length>2;
+    }).filter((v) => {
+        return (v.indexOf("#")===-1)&(v.indexOf("[")===-1)&(v.indexOf("]")===-1);
+    });
+```
+
+The first line essentially declares a variable named `samplesArray`. We then read from a path, that is given from our `settings.json` file, that we have loaded in the previous block. we turn it into a string, as `fs.readFileSync` returns an array of bytes, so we have to convert that to a string. The next line is replacing `\r\n` with `\n` (Details[^2]). Then, we split the file on each newline, and filter for everything with a length greater than 2 (again, more details[^2]). Then, we filter for everything that doesn't have a `#`, a `[`, or a `]`. I talked about the reason for this in `time_estimator.py`, so I won't repeat myself.  
+
+the next 2 lines aren't that exciting.
+```js
+if (settings.logPrompts) console.log(samplesArray);
+const style = settings.style;
+```
+we log `samplesArray` if `logPrompts` from `settings` is `true`. We also set `style` to the corresponding value in `settings`  
+
+However, the next few lines have a lot going on in them.
+```js
+(async function() {
+    let start=Date.now();
+    let dir=path.resolve(`./generated/${Date.now()}`);
+    fs.mkdirSync(dir, { recursive: true });
+```
+The first line essentially is JavaScript's way of declaring a function. `def` was Python's, if you don't remember, because I never told you. Then, we get the time when it starts on the next line, and after that, we get the *absolute* path of `./generated/` and the time together. The difference between **absolute** and **Relative** paths is that absolute paths go from the root of the file system (Think C:/path/to/file/here) while relative paths are from a specified starting directory (think path/to/file/here). we have to do this because JavaScript, and the `fs` module are kind of *interesting* when it comes to relative paths.  
+After that long tangent, the next line actually makes those directories, if they don't exist. the `{recursive:true}` means that if `generated/`+*time* doesn't exist, it will first create `generated`, then the *time* directory. However, if the `generated` directory does exist, it will just create the *time* directory. 
+
+
+the next line is where most of the complexity and time is spent in this file. 
+```js
+    sequential.generateLaggySequential(samplesArray,style,settings.times,settings.weighting,dir,false).then((v) => {
+```
+from the `sequential` module, we call the function `generateLaggySequential`, with the arguments `samplesArray`, `style`, `settings.times`, `settings.weighting`, `dir`, and `false`. then, ***after that finishes***, we go on to the next lines. see, normally, JavaScript goes on to the next line as soon as possible, but in this case, we need the result of the function to continue, so we wait for it to finish.
+I'll talk about what the arguments to the function *are* now, but I'll talk about what they *do* in the section for `sequential.js`. 
+1. The `samplesArray` is the lyrics loaded from the prompt file. 
+2. The `style` is loaded from the `settings.json` file.
+3. The `settings.times` is also loaded from the `settings.json` file.
+4. The `settings.weighting` is, as you might guess, also loaded from the `settings.json` file.
+5. The `dir` is gotten from the absolute path of `./generated` and *time* together.
+6. `false` is a language keyword.
+
+
+the next lines are mostly for finishing up with the function. 
+```js
+        // console.log(v);
+        let end=Date.now();
+        console.log(`Finished in ${(end-start)/1000} seconds`);
+        let r={
+            "responses":v,
+            "settings":settings,
+            "timeStart":start,
+            "timeEnd":end,
+            "timeTotal":end-start,
+            "timeSeconds":(end-start)/1000,
+            "timePerSample":(end-start)/v.length
+        };
+```
+The first line is a comment. This means that it won't actually be executed by JavaScript.  
+The next line gets the endpoint of the function, and the line after that gets how long that took in total. Essentially, it takes the end time minus the start time, and because that is in milliseconds, divides it by 1000 to get the number in seconds. Then, it prints it out, with some formatting.
+
+The next few lines declare an object with some info about how it was run. this includes the object that was returned by the `generateLaggySequential`, once it had finished, the settings that were used, the start and end times, the total time, the total time in seconds (remember, `end` and `start` are in milliseconds), and the time per sample.
+
+the next few lines are writing the data out to a file, and handling errors and stuff.
+```js
+        fs.writeFileSync(`${dir}/final.json`,JSON.stringify(r));
+        fs.writeFileSync("path.txt",path.resolve(`${dir}/final.json`));
+    }).catch((err) => {
+        console.log(err);
+    }).finally(() => {
+        console.log("Done");
+    });
+})();
+```
+The first line is writing the object we declared out to a file, as a string.   
+The next line is writing the path to that file to a file called `path.txt`  
+This means that we don't have to guess during the video making process which files to use, and in which order.   
+Then, the next five lines are just handling errors, and outputting when we are done.  
+The final line is executing the function we declared. this kind of function is known as a `IIFE` which stands for an **I**mmediately **I**nvoked **F**unction **E**xpression.
+
+
+# Footnotes
+[^1]: If you were paying close attention, you may have noticed that the blocks were getting indented further and further. this is just how Python does its control flow, and block/scope dictation.   
 [^2]: the reasoning behind having the limit be at 2 rather than one is that Windows computers use `\r\n`, as opposed to UNIX's `\n`. 
 [^3]: Forgot to mention that I get the prompts from songs, as it can be kind of hard to think of original prompts sometimes.
