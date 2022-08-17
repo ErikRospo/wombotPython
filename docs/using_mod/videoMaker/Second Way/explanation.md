@@ -62,7 +62,7 @@ if res==0:
         print("Total time taken: "+str(tts)+" seconds")
         print("Total time taken: "+str(tts/60)+" minutes")
         terr=time.time()-st+et
-        miterr=time.time-st+mit
+        miterr=time.time()-st+mit
         materr=time.time()-st+mat
         terrhours=int(terr/3600)
         terrminutes=int((terr%3600)/60)
@@ -200,7 +200,7 @@ And the next few are also the same, just with the expected time to get by how mu
         print("Total time taken: "+str(tts)+" seconds")
         print("Total time taken: "+str(tts/60)+" minutes")
         terr=time.time()-st+et
-        miterr=time.time-st+mit
+        miterr=time.time()-st+mit
         materr=time.time()-st+mat
         terrhours=int(terr/3600)
         terrminutes=int((terr%3600)/60)
