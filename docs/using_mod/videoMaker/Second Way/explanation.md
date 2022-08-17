@@ -219,7 +219,7 @@ And the next few are also the same, just with the expected time to get by how mu
         print("Time error (Maximum): "+str(miterrhours)+" hours "+str(miterrminutes)+" minutes "+str(miterrseconds)+" seconds")
         print("Time error (Minumim): "+str(materrhours)+" hours "+str(materrminutes)+" minutes "+str(materrseconds)+" seconds")
 ```
-This is essentialy the same as the last part, so I'll spare you the details  
+This is essentially the same as the last part, so I'll spare you the details  
 
 The next lines are mostly about saving timing data to a file
 ```python
@@ -460,7 +460,7 @@ const style = settings.style;
 ```
 
 
-So, the first part, like the Python ones, is imports, and telling the os where to find the executable for this.
+So, the first part, like the Python ones, is imports, and telling the OS where to find the executable for this.
 ```js
 #!/home/erik/.nvm/versions/node/v18.7.0/bin/node
 const sequential = require("./sequential.js");
@@ -469,9 +469,9 @@ const path = require("path");
 const settings=JSON.parse(fs.readFileSync("./settings.json", "utf8"));
 ```
 
-however, this one looks a lot different than the previous two. this is because this is javascript, and the last few were Python. This is one thing that I didn't love doing, as it can be kind of confusing. We get the `sequential.js` module, that we wrote, as well as the builtin `fs` (file system) and `path` (file path) modules. we also get the settings from our `settings.json` file.  
+however, this one looks a lot different than the previous two. this is because this is JavaScript, and the last few were Python. This is one thing that I didn't love doing, as it can be kind of confusing. We get the `sequential.js` module, that we wrote, as well as the builtin `fs` (file system) and `path` (file path) modules. we also get the settings from our `settings.json` file.  
 
-the next few lines are essentialy the same as what we did in Python to load in the prompts.
+the next few lines are essentially the same as what we did in Python to load in the prompts.
 ```js
 let samplesArray = fs
     .readFileSync(settings.samplePath)
@@ -501,7 +501,7 @@ However, the next few lines have a lot going on in them.
     let dir=path.resolve(`./generated/${Date.now()}`);
     fs.mkdirSync(dir, { recursive: true });
 ```
-The first line essentially is JavaScript's way of declaring a function. `def` was Python's, if you don't remember, because I never told you. Then, we get the time when it starts on the next line, and after that, we get the *absolute* path of `./generated/` and the time together. The difference beween **absoulute** and **Relative** paths is that absolute paths go from the root of the file system (Think C:/path/to/file/here) while relative paths are from a specified starting directory (think path/to/file/here). we have to do this because javascript, and the `fs` module are kind of *interesing* when it comes to relative paths.  
+The first line essentially is JavaScript's way of declaring a function. `def` was Python's, if you don't remember, because I never told you. Then, we get the time when it starts on the next line, and after that, we get the *absolute* path of `./generated/` and the time together. The difference between **absolute** and **Relative** paths is that absolute paths go from the root of the file system (Think C:/path/to/file/here) while relative paths are from a specified starting directory (think path/to/file/here). we have to do this because JavaScript, and the `fs` module are kind of *interesting* when it comes to relative paths.  
 After that long tangent, the next line actually makes those directories, if they don't exist. the `{recursive:true}` means that if `generated/`+*time* doesn't exist, it will first create `generated`, then the *time* directory. However, if the `generated` directory does exist, it will just create the *time* directory. 
 
 
@@ -509,7 +509,7 @@ the next line is where most of the complexity and time is spent in this file.
 ```js
     sequential.generateLaggySequential(samplesArray,style,settings.times,settings.weighting,dir,false).then((v) => {
 ```
-from the `sequential` module, we call the function `generateLaggySequential`, with the arguments `samplesArray`, `style`, `settings.times`, `settings.weighting`, `dir`, and `false`. then, ***after that finishes***, we go on to the next lines. see, normally, javascript goes on to the next line as soon as possible, but in this case, we need the result of the function to continue, so we wait for it to finish.
+from the `sequential` module, we call the function `generateLaggySequential`, with the arguments `samplesArray`, `style`, `settings.times`, `settings.weighting`, `dir`, and `false`. then, ***after that finishes***, we go on to the next lines. see, normally, JavaScript goes on to the next line as soon as possible, but in this case, we need the result of the function to continue, so we wait for it to finish.
 I'll talk about what the arguments to the function *are* now, but I'll talk about what they *do* in the section for `sequential.js`. 
 1. The `samplesArray` is the lyrics loaded from the prompt file. 
 2. The `style` is loaded from the `settings.json` file.
@@ -519,7 +519,7 @@ I'll talk about what the arguments to the function *are* now, but I'll talk abou
 6. `false` is a language keyword.
 
 
-the next lines are mostly for finnishing up with the function. 
+the next lines are mostly for finishing up with the function. 
 ```js
         // console.log(v);
         let end=Date.now();
@@ -534,10 +534,10 @@ the next lines are mostly for finnishing up with the function.
             "timePerSample":(end-start)/v.length
         };
 ```
-The first line is a comment. This means that it won't actually be executed by javascript.  
-The next line gets the endpoint of the function, and the line after that gets how long that took in total. Essentially, it takes the end time minus the start time, and because that is in miliseconds, divides it by 1000 to get the number in seconds. Then, it prints it out, with some formatting.
+The first line is a comment. This means that it won't actually be executed by JavaScript.  
+The next line gets the endpoint of the function, and the line after that gets how long that took in total. Essentially, it takes the end time minus the start time, and because that is in milliseconds, divides it by 1000 to get the number in seconds. Then, it prints it out, with some formatting.
 
-The next few lines declare an object with some info about how it was run. this includes the object that was returned by the `generateLaggySequential`, once it had finished, the settings that were used, the start and end times, the total time, the total time in seconds (remember, `end` and `start` are in miliseconds), and the time per sample.
+The next few lines declare an object with some info about how it was run. this includes the object that was returned by the `generateLaggySequential`, once it had finished, the settings that were used, the start and end times, the total time, the total time in seconds (remember, `end` and `start` are in milliseconds), and the time per sample.
 
 the next few lines are writing the data out to a file, and handling errors and stuff.
 ```js
@@ -550,11 +550,11 @@ the next few lines are writing the data out to a file, and handling errors and s
     });
 })();
 ```
-The first line is writing the object we declared out to a file, as a string.  
+The first line is writing the object we declared out to a file, as a string.   
 The next line is writing the path to that file to a file called `path.txt`  
 This means that we don't have to guess during the video making process which files to use, and in which order.   
-Then, the next five lines are just handling errors, and outputting when we are done.
-The final line is executing the function we declared. this kind of function is known as a `IIFE` which standes for an **I**mediatily **I**nvoked **F**unction **E**xpression.  
+Then, the next five lines are just handling errors, and outputting when we are done.  
+The final line is executing the function we declared. this kind of function is known as a `IIFE` which stands for an **I**mmediately **I**nvoked **F**unction **E**xpression.
 
 
 # Footnotes

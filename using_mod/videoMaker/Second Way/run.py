@@ -72,12 +72,12 @@ if res==0:
             TimeSeconds = end-start
             TimeSecondsMKV=end_make_video-start_make_video
             TotalTime=TimeSeconds+TimeSecondsMKV
-            csvLine = "\n"+str(lines)+','+str(TimeSeconds)+','+str(TimeSecondsMKV)+','+str(et)+","+str(TotalTime-et)+","+str(TotalTime)
+            csvLine = str(lines)+','+str(TimeSeconds)+','+str(TimeSecondsMKV)+','+str(et)+","+str(TotalTime-et)+","+str(TotalTime)
             f.write(csvLine)
     else:
         print("Error in make_video.py")
         with open("./benchmarks.csv","at") as f:
-            f.write("\n"+str(lines)+','+str(end-start)+',err,err,err'+str((end-start)))
+            f.write(str(lines)+','+str(end-start)+',err,err,err'+str((end-start)))
 elif res==2:
     print("Canceled")
 else:
