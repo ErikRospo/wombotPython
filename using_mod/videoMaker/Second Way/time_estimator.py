@@ -1,4 +1,5 @@
 import csv
+import datetime
 import json
 from math import sqrt
 import time
@@ -41,9 +42,11 @@ if __name__=="__main__":
     exseconds=int(((et)%3600)%60)
     print(f"expected time: {exhours}h {exminutes}m {exseconds}s")
     print(f"et: {et} etm:{et/60} eth:{et/3600}")
-    excomp=str(time.ctime(time.time()+et))
-    excompmi=str(time.ctime(time.time()+mit))
-    excompma=str(time.ctime(time.time()+mat))
+    
+    excomp=datetime.datetime.fromtimestamp(time.time()+et).strftime('%Y-%m-%d %I:%M:%S %p')
+    excompmi=datetime.datetime.fromtimestamp(time.time()+mit).strftime('%Y-%m-%d %I:%M:%S %p')
+    excompma=datetime.datetime.fromtimestamp(time.time()+mat).strftime('%Y-%m-%d %I:%M:%S %p')
+
 
     print(f"expected completion:       {excomp}")
     print(f"overestimated completion:  {excompma}")

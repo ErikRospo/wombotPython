@@ -37,7 +37,6 @@ module.exports.task = async function runTask(
         mediaSuffix = null,
         imageWeight = "HIGH"
     } = inputImageArg;
-    // if (final || inter) mkdirp(downloadDir);
     let id;
     let prefix = _prefix;
     try {
@@ -90,14 +89,13 @@ module.exports.task = async function runTask(
         state: "authenticated",
         id
     });
-
+    
     let task;
-    task = await paintRest
-        .options("/api/tasks/", "POST")
-        .then(() => paintRest.post("/api/tasks/", { premium: false }));
     let taskPath;
-
     try {
+        task = await paintRest
+            .options("/api/tasks/", "POST")
+            .then(() => paintRest.post("/api/tasks/", { premium: false }));
         taskPath = "/api/tasks/" + task.id;
     } catch (err) {
         if (typeof err == TypeError) {
@@ -147,7 +145,7 @@ module.exports.task = async function runTask(
         });
     }catch (e){
         console.log(e);
-        return runTask(prompt,style,updateFn,settings,inputImageArg,_prefix);
+        return await runTask(prompt,style,updateFn,settings,inputImageArg,_prefix);
     }
     let interDownloads = [];
     let interPaths = [];

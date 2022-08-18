@@ -77,7 +77,7 @@ if res==0:
     else:
         print("Error in make_video.py")
         with open("./benchmarks.csv","at") as f:
-            f.write(str(lines)+','+str(end-start)+',err,err,err'+str((end-start)))
+            f.write(str(lines)+','+str(end-start)+',err,err,err,'+str((end-start)))
 elif res==2:
     print("Canceled")
 else:

@@ -5,6 +5,6 @@
   "final": false,
   "inter": false,
   "logPrompts": false,
-  "weighting":10,
-  "times":20
+  "weighting":5,
+  "times":10
 }
