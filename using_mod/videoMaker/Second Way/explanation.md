@@ -503,7 +503,9 @@ However, the next few lines have a lot going on in them.
     let dir=path.resolve(`./generated/${Date.now()}`);
     fs.mkdirSync(dir, { recursive: true });
 ```
-The first line essentially is JavaScript's way of declaring a function. `def` was Python's, if you don't remember, because I never told you. Then, we get the time when it starts on the next line, and after that, we get the *absolute* path of `./generated/` and the time together. The difference between **absolute** and **Relative** paths is that absolute paths go from the root of the file system (Think C:/path/to/file/here) while relative paths are from a specified starting directory (think path/to/file/here). we have to do this because JavaScript, and the `fs` module are kind of *interesting* when it comes to relative paths.  
+The first line essentially is JavaScript's way of declaring a function. `def` was Python's, if you don't remember, because I never told you.
+Then, we get the time when it starts on the next line, and after that, we get the *absolute* path of `./generated/` and the time together.
+The difference between **absolute** and **Relative** paths is that absolute paths go from the root of the file system (Think C:/path/to/file/here) while relative paths are from a specified starting directory (think path/to/file/here). we have to do this because JavaScript, and the `fs` module are kind of *interesting* when it comes to relative paths.  
 After that long tangent, the next line actually makes those directories, if they don't exist. the `{recursive:true}` means that if `generated/`+*time* doesn't exist, it will first create `generated`, then the *time* directory. However, if the `generated` directory does exist, it will just create the *time* directory. 
 
 
@@ -559,7 +561,354 @@ Then, the next five lines are just handling errors, and outputting when we are d
 The final line is executing the function we declared. this kind of function is known as a `IIFE` which stands for an **I**mmediately **I**nvoked **F**unction **E**xpression.
 
 
+Moving on to `sequential.js`.
+```js
+/* eslint-disable no-constant-condition */
+const { task } = require("./index.js");
+const styles = require("./styles.js");
+const fs = require("fs");
+const settings=require("./settings.js");
+const colors=require("./colors");
+
+const quiet=settings.quiet||false;
+const inter=settings.inter||false;
+const final=true;
+async function generate(
+    prompt,
+    style,
+    prefix,
+    inputImage = false,
+    downloadDir = "./generated",
+    iteration_ = 0
+) {
+    let waited=0;
+    function handler(data, prefix) {
+        switch (data.state) {
+        case "authenticated":
+            if (!quiet) colors.printGreen(`${prefix}Authenticated`);
+            break;
+        case "allocated":
+            if (!quiet) colors.printBlue(`${prefix}Allocated`);
+            break;
+        case "submitted":
+            if (!quiet) colors.printGreen(`${prefix}Submitted`);
+            break;
+        case "progress":
+            // eslint-disable-next-line no-case-declarations
+            let progress = data.task.photo_url_list.length;
+            if (progress != 0) {
+                if (!quiet)
+                    colors.printYellow(
+                        `${prefix}Submitted (${
+                            data.task.photo_url_list.length
+                        }/${styles.steps.get(style)})`
+                    );
+            } else {
+                waited++;
+                if (!quiet){ 
+                    if (waited<10){
+                        colors.printRed(`${prefix}Waiting ${waited}`);
+                
+                    } else {
+                        colors.printAlert(`${prefix}Waiting ${waited}`);
+                    
+                    }
+                }
+            }
+            break;
+        case "generated":
+            if (!quiet) colors.printGreen(`${prefix}Generated`);
+            break;
+        case "downloaded":
+            if (!quiet) colors.printBlue(`${prefix}Downloaded`);
+            break;
+        }
+    }
+
+    let res = await task(
+        prompt,
+        style,
+        (data) => handler(data, prefix),
+        { final, inter, downloadDir },
+        inputImage,
+        iteration_,
+        prefix
+    );
+
+    return res;
+}
+async function generateLaggySequential(
+    prompts,
+    style,
+    times,
+    weighting,
+    directory = Date.now(),
+    inputImage = false
+) {
+    
+    let lastImage = {};
+    if (inputImage) {
+        lastImage = inputImage;
+    }
+    let images={};
+    for (let n=0;n<prompts.length;n++) {
+        let prompt=prompts[n];
+        for (let i=0;i<times;i++){
+            
+            let imgID=(i+times*n);
+            let imageIndex=Math.max(imgID-weighting,0);
+            
+            let prefix = `${imgID + 1}/${(times) * (prompts.length)}: `;
+            let res=await generate(
+                prompt,
+                style,
+                prefix,
+                lastImage,
+                `${directory}/${imgID}`
+            );
+            
+            images[imgID]={
+                "res":res,
+                "imageIndex":imageIndex,
+                "prompt":prompt,
+                "style":style,
+                "weighting":weighting,
+                "directory":directory,
+                "path":res.path
+            };
+            lastImage={
+                // eslint-disable-next-line camelcase
+                input_image:fs.readFileSync(images[imageIndex].path).toString("base64"),
+                // eslint-disable-next-line camelcase
+                media_suffix:"jpeg",
+                // eslint-disable-next-line camelcase
+                image_weight:"HIGH"
+            };
+        }
+    }
+    return images;
+}
+
+module.exports.generate = generate;
+module.exports.generateLaggySequential = generateLaggySequential;
+```
+
+So, the first few lines, like the last, are imports.
+```js
+/* eslint-disable no-constant-condition */
+const { task } = require("./index.js");
+const styles = require("./styles.js");
+const fs = require("fs");
+const settings=require("./settings.js");
+const colors=require("./colors");
+
+```
+We get the `task` function from `index.js`, the `styles` module from `style.js`, the `fs` module, which is a builtin, the `settings` module from the `settings.js`, and the `colors` module from `colors.js`.  
+The comment at the top essentially tells `eslint` to not check for the rule `no-constant-condition`. `eslint` helps maintain code quality and conventions.  
+
+The next few lines are getting settings from `settings`
+```js
+const quiet=settings.quiet||false;
+const inter=settings.inter||false;
+const final=true;
+```
+We get `quiet` from `settings.quiet`, or if that is not set, `false`. Similarly, we get `inter` from `settings.inter`, or if that isn't set, it defaults to `false`. However, we just set `final` to `true`, as it doesn't work otherwise.  
+
+The next part is declaring a function
+```js
+async function generate(
+    prompt,
+    style,
+    prefix,
+    inputImage = false,
+    downloadDir = "./generated",
+    iteration_ = 0
+) {
+    let waited=0;
+
+```
+
+We declare a function, `generate`, with the arguments `prompt`, `style`, `prefix`, `inputImage`, that defaults to `false`, `downloadDir`, that defaults to `"./generated"`, and `iteration_`, that defaults to `0`
+Also, near the bottom, we declare a variable called `waited`, and set it to `0`.
+
+The next block is a large one.
+```js
+function handler(data, prefix) {
+        switch (data.state) {
+        case "authenticated":
+            if (!quiet) colors.printGreen(`${prefix}Authenticated`);
+            break;
+        case "allocated":
+            if (!quiet) colors.printBlue(`${prefix}Allocated`);
+            break;
+        case "submitted":
+            if (!quiet) colors.printGreen(`${prefix}Submitted`);
+            break;
+        case "progress":
+            // eslint-disable-next-line no-case-declarations
+            let progress = data.task.photo_url_list.length;
+            if (progress != 0) {
+                if (!quiet)
+                    colors.printYellow(
+                        `${prefix}Submitted (${
+                            data.task.photo_url_list.length
+                        }/${styles.steps.get(style)})`
+                    );
+            } else {
+                waited++;
+                if (!quiet){ 
+                    if (waited<10){
+                        colors.printRed(`${prefix}Waiting ${waited}`);
+                
+                    } else {
+                        colors.printAlert(`${prefix}Waiting ${waited}`);
+                    
+                    }
+                }
+            }
+            break;
+        case "generated":
+            if (!quiet) colors.printGreen(`${prefix}Generated`);
+            break;
+        case "downloaded":
+            if (!quiet) colors.printBlue(`${prefix}Downloaded`);
+            break;
+        }
+    }
+```
+
+So, this block declares a function `handler`, that takes in two arguments, `data`, and `prefix`.  
+Then, we jump into a `switch-case` statement. this is kind of like a splitter for the control flow. We jump to different places depending on `data.state`.  
+For example, if it is `"authenticated"`, we jump to the first one, if it is `"allocated"`, we jump to the second one, and so on.  
+For the most part, this is just printing out the state, with some extra things involved. In each case, we check if `quiet` is `true`. if it is, we don't print out anything. if it isn't, we print out the prefix, plus whatever status we have, in a given color.   
+For the most part, i tried to make it so that green indicated good things, blue indicated neutral things, red indicated negative things, yellow slightly negative things, and red with yellow background things were really not going well.  
+Is it a completely arbitrary descision?  
+Absoulutely.  
+Does it work?  
+Mostly. Kind of.
+
+`Progress` is the only one that actually has any logic to it. It checks if there is no progress at all, and if there is, it increases `waited` by one, and then checks if `waited` is greater than ten. if it is, it prints out an alert, otherwise, it just prints out how many times its waited. if there has been progress, it prints it out, along with the number of steps in total that a given style has.  
+
+Why don't we check if it has been stuck at any other percentage? Well, once it has gone above one, it usually completes in ~2-7 seconds. however, it can get stuck at zero for 5-10 seconds.  
+
+
+```js
+let res = await task(
+        prompt,
+        style,
+        (data) => handler(data, prefix),
+        { final, inter, downloadDir },
+        inputImage,
+        iteration_,
+        prefix
+    );
+return res;
+```
+The next block is where a lot of time is spent. It actually calls the `task` function. It uses the `prompt`, and `style` arguements given.   
+We also see it pass in a weird looking third argument. this is a function declaration that takes in `data`, and uses `handler` as the return value, passing in `prefix`, which was passed in to the `generate` function. it is kind of confusing, but that is just what JavaScript just loves doing.  
+For the rest of the arguments, it isn't that crazy. The fourth one is just an object declaration, that packs `final`, `inter`, and `downloadDir` into one object.  
+then, once it has finished (again, note the `await`), it returns the result `res`.
+
+
+```js
+async function generateLaggySequential(
+    prompts,
+    style,
+    times,
+    weighting,
+    directory = Date.now(),
+    inputImage = false
+) {
+```
+This one takes in fairly similar arguments to `generate`, with the exception of `times` and `weighting`, so I won't repeat myself.
+
+```js
+    let lastImage = {};
+    if (inputImage) {
+        lastImage = inputImage;
+    }
+    let images={};
+```
+This is mostly just setup for future stuff.  
+We declare a `lastImage` object, and if `inputImage` is `true`, we set `lastImage` to it.
+We also set `images` to an empty object
+
+The next part is why this can take so long.
+```js
+    for (let n=0;n<prompts.length;n++) {
+        let prompt=prompts[n];
+        for (let i=0;i<times;i++){
+```
+This is a `for-loop`. It starts by executing the first part in the parenthies. it sets `n` equal to zero. Then, it runs everything inside the curly braces while the second condition is true. in this case, while `n` is less than the length of `prompts`. Finally, each loop through, it runs the code at the end. This increments `n` by one.  
+
+Inside the loop, it sets `prompt` equal to the `n`th object of `prompts`.  Then, inside this, we enter another loop that runs `times` times. 
+
+
+The next lines may be a bit hard to understand, but it is actually fairly simple.
+```js
+            let imgID=(i+times*n);
+            let imageIndex=Math.max(imgID-weighting,0);
+            
+            let prefix = `${imgID + 1}/${(times) * (prompts.length)}: `;
+```
+First, it sets `imgID` equal to `i` plus `n` multiplied by `times`.  
+
+The next line has the effect of clamping the result of `imgID` minus `weighting` to a positive number[^4]. Negative indicies is unwanted behaviour in this case, but can be useful in certain circumstances.  
+Finally, we set `prefix` to the `imgID`, plus one, a `"/"`, and the total number that are to be generated in total, which is `times` multiplied by the length of `prompt`.
+
+```js
+            let res=await generate(
+                prompt,
+                style,
+                prefix,
+                lastImage,
+                `${directory}/${imgID}`
+            );
+```
+This calls the `generate` function we declared above. we pass in `prompt`, `style`, and the `prefix`, as well as the `lastImage`. we also pass in the directory that we will use, which is the `directory` plus `imgID`.
+
+
+```js
+            images[imgID]={
+                "res":res,
+                "imageIndex":imageIndex,
+                "prompt":prompt,
+                "style":style,
+                "weighting":weighting,
+                "directory":directory,
+                "path":res.path
+            };
+```
+This is essentialy just setting the `imgID`th item of `images` to a kind of large object, with a bunch of information, like the response from the generation, the `imageIndex`, the `prompt`, the `style`, the `weighting`, the `directory`, and the `path`.  
+
+
+```js
+            lastImage={
+                // eslint-disable-next-line camelcase
+                input_image:fs.readFileSync(images[imageIndex].path).toString("base64"),
+                // eslint-disable-next-line camelcase
+                media_suffix:"jpeg",
+                // eslint-disable-next-line camelcase
+                image_weight:"HIGH"
+            };
+        }
+    }
+    return images;
+}
+
+```
+this block just sets `lastImage` to an object. we get the `imageIndex`th object of `images`, and get that object's `path`. we then read from the path, and convert that to base64, which i will not be going over.
+we also set the `media_suffix` to `"jpeg"` which is essentaily the file format, and the `image_weight` to `"HIGH"`. we also finish the two loops.
+Then, we return the `images` object, and finish up the function.
+
+
+```js
+module.exports.generate = generate;
+module.exports.generateLaggySequential = generateLaggySequential;
+```
+this is how javascript does modules. you have to define the `generate` export to be `generate`, and `generateLaggySequential` export to be the function with the same name.
 # Footnotes
 [^1]: If you were paying close attention, you may have noticed that the blocks were getting indented further and further. this is just how Python does its control flow, and block/scope dictation.   
-[^2]: the reasoning behind having the limit be at 2 rather than one is that Windows computers use `\r\n`, as opposed to UNIX's `\n`. 
+[^2]: The reasoning behind having the limit be at 2 rather than one is that Windows computers use `\r\n`, as opposed to UNIX's `\n`. 
 [^3]: Forgot to mention that I get the prompts from songs, as it can be kind of hard to think of original prompts sometimes.
+[^4]: This is fairly simple to reason through, but the maximum between zero and a negative number will always be zero, and the maximum of a positive number and zero will always be the positive number. if you pass in a zero, it will return zero. whether that zero is the constant or the other value is up to the implementaion. 
