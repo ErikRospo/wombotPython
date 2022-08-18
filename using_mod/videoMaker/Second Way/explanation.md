@@ -5,7 +5,7 @@
 1. [Run.py](https://erikrospo.github.io/wombotPython/using_mod/videoMaker/Second%20Way/explanation#runpy)
 2. [Time_estimator.py](https://erikrospo.github.io/wombotPython/using_mod/videoMaker/Second%20Way/explanation#time_estimatorpy)
 3. [Main.js](https://erikrospo.github.io/wombotPython/using_mod/videoMaker/Second%20Way/explanation#mainjs)
-
+4. [Sequential.js](https://erikrospo.github.io/wombotPython/using_mod/videoMaker/Second%20Way/explanation#sequnetialjs)
 
 ## run.py
 this is a wrapper for all functionality of the application. It gives an estimation of the duration that a given configuration will take, and runs both the actual image generation and the video maker.  
@@ -561,6 +561,8 @@ Then, the next five lines are just handling errors, and outputting when we are d
 The final line is executing the function we declared. this kind of function is known as a `IIFE` which stands for an **I**mmediately **I**nvoked **F**unction **E**xpression.
 
 
+
+## Sequential.js
 Moving on to `sequential.js`.
 ```js
 /* eslint-disable no-constant-condition */
