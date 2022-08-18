@@ -5,7 +5,7 @@
 1. [Run.py](https://erikrospo.github.io/wombotPython/using_mod/videoMaker/Second%20Way/explanation#runpy)
 2. [Time_estimator.py](https://erikrospo.github.io/wombotPython/using_mod/videoMaker/Second%20Way/explanation#time_estimatorpy)
 3. [Main.js](https://erikrospo.github.io/wombotPython/using_mod/videoMaker/Second%20Way/explanation#mainjs)
-4. [Sequential.js](https://erikrospo.github.io/wombotPython/using_mod/videoMaker/Second%20Way/explanation#sequnetialjs)
+4. [Sequential.js](https://erikrospo.github.io/wombotPython/using_mod/videoMaker/Second%20Way/explanation#sequentialjs)
 
 ## run.py
 this is a wrapper for all functionality of the application. It gives an estimation of the duration that a given configuration will take, and runs both the actual image generation and the video maker.  
