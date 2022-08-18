@@ -778,12 +778,12 @@ function handler(data, prefix) {
 ```
 
 So, this block declares a function `handler`, that takes in two arguments, `data`, and `prefix`.  
-Then, we jump into a `switch-case` statement. this is kind of like a splitter for the control flow. We jump to different places depending on `data.state`.  
+Then, we jump into a `switch-case` statement. this is kind of like a slitter for the control flow. We jump to different places depending on `data.state`.  
 For example, if it is `"authenticated"`, we jump to the first one, if it is `"allocated"`, we jump to the second one, and so on.  
 For the most part, this is just printing out the state, with some extra things involved. In each case, we check if `quiet` is `true`. if it is, we don't print out anything. if it isn't, we print out the prefix, plus whatever status we have, in a given color.   
 For the most part, i tried to make it so that green indicated good things, blue indicated neutral things, red indicated negative things, yellow slightly negative things, and red with yellow background things were really not going well.  
-Is it a completely arbitrary descision?  
-Absoulutely.  
+Is it a completely arbitrary decision?  
+Absolutely.  
 Does it work?  
 Mostly. Kind of.
 
@@ -804,7 +804,7 @@ let res = await task(
     );
 return res;
 ```
-The next block is where a lot of time is spent. It actually calls the `task` function. It uses the `prompt`, and `style` arguements given.   
+The next block is where a lot of time is spent. It actually calls the `task` function. It uses the `prompt`, and `style` arguments given.   
 We also see it pass in a weird looking third argument. this is a function declaration that takes in `data`, and uses `handler` as the return value, passing in `prefix`, which was passed in to the `generate` function. it is kind of confusing, but that is just what JavaScript just loves doing.  
 For the rest of the arguments, it isn't that crazy. The fourth one is just an object declaration, that packs `final`, `inter`, and `downloadDir` into one object.  
 then, once it has finished (again, note the `await`), it returns the result `res`.
@@ -839,7 +839,7 @@ The next part is why this can take so long.
         let prompt=prompts[n];
         for (let i=0;i<times;i++){
 ```
-This is a `for-loop`. It starts by executing the first part in the parenthies. it sets `n` equal to zero. Then, it runs everything inside the curly braces while the second condition is true. in this case, while `n` is less than the length of `prompts`. Finally, each loop through, it runs the code at the end. This increments `n` by one.  
+This is a `for-loop`. It starts by executing the first part in the parenthesis. it sets `n` equal to zero. Then, it runs everything inside the curly braces while the second condition is true. in this case, while `n` is less than the length of `prompts`. Finally, each loop through, it runs the code at the end. This increments `n` by one.  
 
 Inside the loop, it sets `prompt` equal to the `n`th object of `prompts`.  Then, inside this, we enter another loop that runs `times` times. 
 
@@ -853,7 +853,7 @@ The next lines may be a bit hard to understand, but it is actually fairly simple
 ```
 First, it sets `imgID` equal to `i` plus `n` multiplied by `times`.  
 
-The next line has the effect of clamping the result of `imgID` minus `weighting` to a positive number[^4]. Negative indicies is unwanted behaviour in this case, but can be useful in certain circumstances.  
+The next line has the effect of clamping the result of `imgID` minus `weighting` to a positive number[^4]. Negative indices is unwanted behavior in this case, but can be useful in certain circumstances.  
 Finally, we set `prefix` to the `imgID`, plus one, a `"/"`, and the total number that are to be generated in total, which is `times` multiplied by the length of `prompt`.
 
 ```js
@@ -879,7 +879,7 @@ This calls the `generate` function we declared above. we pass in `prompt`, `styl
                 "path":res.path
             };
 ```
-This is essentialy just setting the `imgID`th item of `images` to a kind of large object, with a bunch of information, like the response from the generation, the `imageIndex`, the `prompt`, the `style`, the `weighting`, the `directory`, and the `path`.  
+This is essentially just setting the `imgID`th item of `images` to a kind of large object, with a bunch of information, like the response from the generation, the `imageIndex`, the `prompt`, the `style`, the `weighting`, the `directory`, and the `path`.  
 
 
 ```js
@@ -898,7 +898,7 @@ This is essentialy just setting the `imgID`th item of `images` to a kind of larg
 
 ```
 this block just sets `lastImage` to an object. we get the `imageIndex`th object of `images`, and get that object's `path`. we then read from the path, and convert that to base64, which i will not be going over.
-we also set the `media_suffix` to `"jpeg"` which is essentaily the file format, and the `image_weight` to `"HIGH"`. we also finish the two loops.
+we also set the `media_suffix` to `"jpeg"` which is essentially the file format, and the `image_weight` to `"HIGH"`. we also finish the two loops.
 Then, we return the `images` object, and finish up the function.
 
 
@@ -906,9 +906,9 @@ Then, we return the `images` object, and finish up the function.
 module.exports.generate = generate;
 module.exports.generateLaggySequential = generateLaggySequential;
 ```
-this is how javascript does modules. you have to define the `generate` export to be `generate`, and `generateLaggySequential` export to be the function with the same name.
+this is how JavaScript does modules. you have to define the `generate` export to be `generate`, and `generateLaggySequential` export to be the function with the same name.
 # Footnotes
 [^1]: If you were paying close attention, you may have noticed that the blocks were getting indented further and further. this is just how Python does its control flow, and block/scope dictation.   
 [^2]: The reasoning behind having the limit be at 2 rather than one is that Windows computers use `\r\n`, as opposed to UNIX's `\n`. 
 [^3]: Forgot to mention that I get the prompts from songs, as it can be kind of hard to think of original prompts sometimes.
-[^4]: This is fairly simple to reason through, but the maximum between zero and a negative number will always be zero, and the maximum of a positive number and zero will always be the positive number. if you pass in a zero, it will return zero. whether that zero is the constant or the other value is up to the implementaion. 
+[^4]: This is fairly simple to reason through, but the maximum between zero and a negative number will always be zero, and the maximum of a positive number and zero will always be the positive number. if you pass in a zero, it will return zero. whether that zero is the constant or the other value is up to the implementation. 
