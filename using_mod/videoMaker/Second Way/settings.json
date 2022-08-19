@@ -1,11 +1,11 @@
 {
-  "style": 6,
-  "samplePath": "./songs/test.txt",
-  "quiet": false,
-  "final": false,
-  "inter": false,
-  "logPrompts": false,
-  "weighting":10,
-  "times":20,
-  "outPath":"5252525"
+    "style": 6,
+    "samplePath": "./songs/all_star.lrc",
+    "quiet": false,
+    "final": false,
+    "inter": false,
+    "logPrompts": false,
+    "weighting": 1,
+    "times": 2,
+    "outPath": "bf9b958bbbb505ef44fcb8e5305670be"
 }

@@ -1,8 +1,9 @@
 import glob
 import hashlib
 import json
+import os
 
-a=glob.glob("./songs/*.ly")
+a=glob.glob("./songs/*.lrc")
 
 for n in range(len(a)):
     with open(a[n],"rt") as mf:
@@ -13,5 +14,8 @@ for n in range(len(a)):
             s["samplePath"]=a[n]
             s["outPath"]=hashlib.md5(fc.encode()).hexdigest()
             print(json.dumps(s))
-            json.dump(s,f)
-    
+            json.dump(s,f,indent=4)
+        res=os.system("python3 run.py")
+        if res==2:
+            break
+        print(res)
