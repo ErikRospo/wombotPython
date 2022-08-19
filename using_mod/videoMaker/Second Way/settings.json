@@ -1,10 +1,10 @@
 {
   "style": 6,
-  "samplePath": "./lyrics_sample.txt",
+  "samplePath": "./lyrics_sample3.txt",
   "quiet": false,
   "final": false,
   "inter": false,
   "logPrompts": false,
-  "weighting":5,
-  "times":10
+  "weighting":10,
+  "times":20
 }
