@@ -72,7 +72,7 @@ if res==0:
             TimeSeconds = end-start
             TimeSecondsMKV=end_make_video-start_make_video
             TotalTime=TimeSeconds+TimeSecondsMKV
-            csvLine = str(lines)+','+str(TimeSeconds)+','+str(TimeSecondsMKV)+','+str(et)+","+str(TotalTime-et)+","+str(TotalTime)
+            csvLine = str(lines)+','+str(TimeSeconds)+','+str(TimeSecondsMKV)+','+str(et)+","+str(TotalTime-et)+","+str(TotalTime)+"\n"
             f.write(csvLine)
     else:
         print("Error in make_video.py")
