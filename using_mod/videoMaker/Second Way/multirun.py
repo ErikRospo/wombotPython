@@ -10,6 +10,7 @@ def run_prog():
     if res!=0:
         global wasError
         wasError=True
+        print("Error:"+str(res))
 while not wasError:
     ts=[]
     for i in range(0,tnum):
