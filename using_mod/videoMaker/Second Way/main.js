@@ -18,7 +18,7 @@ const style = settings.style;
 
 (async function() {
     let start=Date.now();
-    let dir=path.resolve(`./generated/${Date.now()}`);
+    let dir=path.resolve(`./generated/`+settings.outPath);
     fs.mkdirSync(dir, { recursive: true });
     sequential.generateLaggySequential(samplesArray,style,settings.times,settings.weighting,dir,false).then((v) => {
         // console.log(v);
