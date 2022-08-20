@@ -58,6 +58,39 @@ def calculate_expected_time_from_iterations(iterations):
     ev=b0+b1*numIterations
     dev=stdev(ys)
     return ev,ev+dev,ev-dev
+def print_fancy_time():
+    et,mit,mat=calculate_expected_time()
+    exhours=int((et)/3600)
+    exminutes=int(((et)%3600)/60)
+    exseconds=int(((et)%3600)%60)
+    print(f"expected time: {exhours}h {exminutes}m {exseconds}s")
+    print(f"et: {et} etm:{et/60} eth:{et/3600}")
+    
+    excomp=datetime.datetime.fromtimestamp(time.time()+et).strftime('%Y-%m-%d %I:%M:%S %p')
+    excompmi=datetime.datetime.fromtimestamp(time.time()+mit).strftime('%Y-%m-%d %I:%M:%S %p')
+    excompma=datetime.datetime.fromtimestamp(time.time()+mat).strftime('%Y-%m-%d %I:%M:%S %p')
+
+
+    print(f"expected completion:       {excomp}")
+    print(f"overestimated completion:  {excompma}")
+    print(f"underestimated completion: {excompmi}")
+def print_fancy_time_from_iterations(iterations):
+    et,mit,mat=calculate_expected_time_from_iterations(iterations)
+    exhours=int((et)/3600)
+    exminutes=int(((et)%3600)/60)
+    exseconds=int(((et)%3600)%60)
+    print(f"expected time: {exhours}h {exminutes}m {exseconds}s")
+    print(f"et: {et} etm:{et/60} eth:{et/3600}")
+    
+    excomp=datetime.datetime.fromtimestamp(time.time()+et).strftime('%Y-%m-%d %I:%M:%S %p')
+    excompmi=datetime.datetime.fromtimestamp(time.time()+mit).strftime('%Y-%m-%d %I:%M:%S %p')
+    excompma=datetime.datetime.fromtimestamp(time.time()+mat).strftime('%Y-%m-%d %I:%M:%S %p')
+
+
+    print(f"expected completion:       {excomp}")
+    print(f"overestimated completion:  {excompma}")
+    print(f"underestimated completion: {excompmi}")
+
 if __name__=="__main__":
     et,mat,mit=calculate_expected_time()
     exhours=int((et)/3600)
