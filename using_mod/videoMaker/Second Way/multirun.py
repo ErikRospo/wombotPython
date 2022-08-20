@@ -36,6 +36,7 @@ if __name__=="__main__":
     print(f"Over: {exhours}h {exminutes}m {exseconds}s")
 
 def run(threads, times):
+    c=0
     for n in range(times):
         ts=[]
         for i in range(0,threads):
