@@ -37,7 +37,7 @@ for n in range(nmin,nmax):
             f.write("\n".join(initial_samples[0:n]))
         with open("settings.json","wt") as f:
             json.dump(settings,f)
-        g=multirun.run(20,thread_its)
+        g=multirun.run(10,thread_its)
         if g=="KBI":
             exit()
         os.system("rm -r generated/*")

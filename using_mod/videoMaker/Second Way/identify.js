@@ -31,12 +31,22 @@ function identify(identifyKey) {
     if (new Date().getTime() >= identifyTimeout) {
         // eslint-disable-next-line no-unused-vars, no-async-promise-executor
         return new Promise(async (resolve, _reject) => {
-            let res = await identifyRest.post(
-                "/v1/accounts:signUp?key=" + identifyKey,
-                {
-                    key: identifyKey
+            async function tryToGetRes(){
+                try{
+                
+                    let res = await identifyRest.post(
+                        "/v1/accounts:signUp?key=" + identifyKey,
+                        {
+                            key: identifyKey
+                        }
+                    );
+                    return res;
+                } catch{
+                    await new Promise((res) => setTimeout(res, 2000));
+                    return await tryToGetRes();
                 }
-            );
+            }
+            let res=tryToGetRes();
             identifyCache = res.idToken;
             identifyTimeout =
                 new Date().getTime() + 1000 * +res.expiresIn - 30000;
