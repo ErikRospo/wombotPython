@@ -44,8 +44,11 @@ def run(threads, times):
             ts.append(t)
 
         for i in range(0,threads):
-            ts[i].start()
-            time.sleep(120)
+            try:
+                ts[i].start()
+                time.sleep(8)
+            except KeyboardInterrupt:
+                exit()
         for i in range(0,threads):
             ts[i].join()
         

@@ -18,11 +18,11 @@ initial_settings=json.load(open("settings.json","r"))
 with open("settingsold.json","w") as f:       
     json.dump(initial_settings,f)
 total_iterations=0
-nmin=2
-nmax=20
+nmin=1
+nmax=10
 kmin=4
-kmax=40
-thread_its=4
+kmax=20
+thread_its=2
 for n in range(nmin,nmax):
     for k in range(kmin,kmax):
         total_iterations+=thread_its*(n*k)
@@ -37,7 +37,7 @@ for n in range(nmin,nmax):
             f.write("\n".join(initial_samples[0:n]))
         with open("settings.json","wt") as f:
             json.dump(settings,f)
-        g=multirun.run(10,thread_its)
+        g=multirun.run(20,thread_its)
         if g=="KBI":
             exit()
         os.system("rm -r generated/*")
