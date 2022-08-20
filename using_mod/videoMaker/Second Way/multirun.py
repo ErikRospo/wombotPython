@@ -19,7 +19,7 @@ while not wasError:
         ts.append(t)
     for i in range(0,tnum):
         ts[i].start()
-        time.sleep(2)
+        time.sleep(120)
     for i in range(0,tnum):
         ts[i].join()
     c+=tnum
