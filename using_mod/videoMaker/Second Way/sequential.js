@@ -57,6 +57,8 @@ async function generate(
         case "downloaded":
             if (!quiet) colors.printBlue(`${prefix}Downloaded`);
             break;
+        case "error":
+            if (!quiet) colors.printAlert(`${prefix}Error: ${data.message} ${data.times}`);
         }
     }
 

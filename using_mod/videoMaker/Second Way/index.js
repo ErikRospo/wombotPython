@@ -134,19 +134,32 @@ module.exports.task = async function runTask(
             mediastore_id: mediastoreid
         };
     }
-    try{
-        task = await paintRest
-            .options(taskPath, "PUT")
-            .then(() => paintRest.put(taskPath, inputObject));
-        updateFn({
-            state: "submitted",
-            id,
-            task
-        });
-    }catch (e){
-        console.log(e);
-        return await runTask(prompt,style,updateFn,settings,inputImageArg,_prefix);
+    let ti=1000;
+    while (!task){
+        try {
+            task = await paintRest
+                .options(taskPath, "PUT")
+                .then(() => paintRest.put(taskPath, inputObject)
+                );
+            updateFn({
+                state: "submitted",
+                id,
+                task
+            });
+        } catch (error) {
+            updateFn({
+                state:"error",
+                id,
+                task,
+                message:error.toFriendly(),
+                times:ti
+                
+            });
+            ti*=2;
+            await new Promise((res) => setTimeout(res, ti));
+        }
     }
+    // eslint-disable-next-line no-undefined
     let interDownloads = [];
     let interPaths = [];
     let interFinished = [];
