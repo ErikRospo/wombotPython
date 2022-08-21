@@ -20,16 +20,18 @@ et,mat,mit=time_estimator.calculate_expected_time()
 exhours=int((et)/3600)
 exminutes=int(((et)%3600)/60)
 exseconds=int(((et)%3600)%60)
-print(f"expected time: {exhours}h {exminutes}m {exseconds}s")
-print(f"et: {et} etm:{et/60} eth:{et/3600}")
+tlq=not json.load(open("settings.json","r"))["tlq"]
+if tlq:
+    print(f"expected time: {exhours}h {exminutes}m {exseconds}s")
+    print(f"et: {et} etm:{et/60} eth:{et/3600}")
 st=time.time()
 excomp=datetime.datetime.fromtimestamp(time.time()+et).strftime('%Y-%m-%d %I:%M:%S %p')
 excompmi=datetime.datetime.fromtimestamp(time.time()+mit).strftime('%Y-%m-%d %I:%M:%S %p')
 excompma=datetime.datetime.fromtimestamp(time.time()+mat).strftime('%Y-%m-%d %I:%M:%S %p')
-
-print(f"expected completion:       {excomp}")
-print(f"overestimated completion:  {excompma}")
-print(f"underestimated completion: {excompmi}")
+if tlq:
+    print(f"expected completion:       {excomp}")
+    print(f"overestimated completion:  {excompma}")
+    print(f"underestimated completion: {excompmi}")
 
 start=time.time()
 res=os.system("node main.js")
@@ -49,24 +51,27 @@ if res==0:
     hours=int((end-start)/3600)
     minutes=int(((end-start)%3600)/60)
     seconds=int(((end-start)%3600)%60)
-    print("Time taken for main.js: "+str(hours)+" hours "+str(minutes)+" minutes "+str(seconds)+" seconds")
-    print("Time taken for main.js: "+str(end-start)+" seconds")
-    print("Time taken for main.js: "+str((end-start)/60)+" minutes")
+    if tlq:
+        print("Time taken for main.js: "+str(hours)+" hours "+str(minutes)+" minutes "+str(seconds)+" seconds")
+        print("Time taken for main.js: "+str(end-start)+" seconds")
+        print("Time taken for main.js: "+str((end-start)/60)+" minutes")
 
     if res1==0:
         mvhours=int((end_make_video-start_make_video)/3600)
         mvminutes=int(((end_make_video-start_make_video)%3600)/60)
         mvseconds=int(((end_make_video-start_make_video)%3600)%60)
-        print("Time taken for make_video.py: "+str(mvhours)+" hours "+str(mvminutes)+" minutes "+str(mvseconds)+" seconds")
-        print("Time taken for make_video.py: "+str(end_make_video-start_make_video)+" seconds")
-        print("Time taken for make_video.py: "+str((end_make_video-start_make_video)/60)+" minutes")
+        if tlq:
+            print("Time taken for make_video.py: "+str(mvhours)+" hours "+str(mvminutes)+" minutes "+str(mvseconds)+" seconds")
+            print("Time taken for make_video.py: "+str(end_make_video-start_make_video)+" seconds")
+            print("Time taken for make_video.py: "+str((end_make_video-start_make_video)/60)+" minutes")
         tts=(end_make_video-start_make_video)+(end-start)
         tthours=int(tts/3600)
         ttminutes=int((tts%3600)/60)
         ttseconds=int((tts%3600)%60)
-        print("Total time taken: "+str(tthours)+" hours "+str(ttminutes)+" minutes "+str(ttseconds)+" seconds")
-        print("Total time taken: "+str(tts)+" seconds")
-        print("Total time taken: "+str(tts/60)+" minutes")
+        if tlq:
+            print("Total time taken: "+str(tthours)+" hours "+str(ttminutes)+" minutes "+str(ttseconds)+" seconds")
+            print("Total time taken: "+str(tts)+" seconds")
+            print("Total time taken: "+str(tts/60)+" minutes")
         terr=time.time()-st+et
         miterr=time.time()-st+mit
         materr=time.time()-st+mat
@@ -79,23 +84,25 @@ if res==0:
         materrhours=int(materr/3600)
         materrminutes=int((materr%3600)/60)
         materrseconds=int((materr%3600)%60)
-        print("Time error (Actual):  "+str(terrhours)+" hours "+str(terrminutes)+" minutes "+str(terrseconds)+" seconds")
-        print("Time error (Maximum): "+str(miterrhours)+" hours "+str(miterrminutes)+" minutes "+str(miterrseconds)+" seconds")
-        print("Time error (Minumim): "+str(materrhours)+" hours "+str(materrminutes)+" minutes "+str(materrseconds)+" seconds")
+        if tlq:
+            print("Time error (Actual):  "+str(terrhours)+" hours "+str(terrminutes)+" minutes "+str(terrseconds)+" seconds")
+            print("Time error (Maximum): "+str(miterrhours)+" hours "+str(miterrminutes)+" minutes "+str(miterrseconds)+" seconds")
+            print("Time error (Minumim): "+str(materrhours)+" hours "+str(materrminutes)+" minutes "+str(materrseconds)+" seconds")
         with open("./benchmarks.csv","at") as f:
             TimeSeconds = end-start
             TimeSecondsMKV=end_make_video-start_make_video
             TotalTime=TimeSeconds+TimeSecondsMKV
-            csvLine = "\n"+str(lines)+','+str(TimeSeconds)+','+str(TimeSecondsMKV)+','+str(et)+","+str(TotalTime-et)+","+str(TotalTime)
+            csvLine = str(lines)+','+str(TimeSeconds)+','+str(TimeSecondsMKV)+','+str(et)+","+str(TotalTime-et)+","+str(TotalTime)+"\n"
             f.write(csvLine)
     else:
         print("Error in make_video.py")
         with open("./benchmarks.csv","at") as f:
-            f.write("\n"+str(lines)+','+str(end-start)+',err,err,err'+str((end-start)))
+            f.write(str(lines)+','+str(end-start)+',err,err,err,'+str((end-start))+"\n")
 elif res==2:
     print("Canceled")
 else:
     print("Error in main.js " +str(res))
+
 ```
 
 This block of code is mostly imports  
@@ -118,23 +125,25 @@ exhours=int((et)/3600)
 exminutes=int(((et)%3600)/60)
 exseconds=int(((et)%3600)%60)
 st=time.time()
-print(f"expected time: {exhours}h {exminutes}m {exseconds}s")
-print(f"et: {et} etm:{et/60} eth:{et/3600}")
+tlq=not json.load(open("settings.json","r"))["tlq"]
+if tlq:
+    print(f"expected time: {exhours}h {exminutes}m {exseconds}s")
+    print(f"et: {et} etm:{et/60} eth:{et/3600}")
 
 excomp=datetime.datetime.fromtimestamp(time.time()+et).strftime('%Y-%m-%d %I:%M:%S %p')
 excompmi=datetime.datetime.fromtimestamp(time.time()+mit).strftime('%Y-%m-%d %I:%M:%S %p')
 excompma=datetime.datetime.fromtimestamp(time.time()+mat).strftime('%Y-%m-%d %I:%M:%S %p')
-
-print(f"expected completion:       {excomp}")
-print(f"overestimated completion:  {excompma}")
-print(f"underestimated completion: {excompmi}")
+if tlq:
+    print(f"expected completion:       {excomp}")
+    print(f"overestimated completion:  {excompma}")
+    print(f"underestimated completion: {excompmi}")
 
 ```
 `et` is the estimated time.  
 `mit` is the minimum time it thinks it will take. this is one stddev away from `et`.  
 `mat` is the maximum time it thinks it will take. like `mit`, this is one stddev away from `et`.  
 most of the other code is converting the duration into actual times and dates.
-
+We also declare `tlq`, which stands for **T**op **L**evel **Q**uiet. this silences most `print` statements
 The next block is where the vast majority of the time is spent
 ```python
 start=time.time()
@@ -177,10 +186,12 @@ The next lines are just a bunch of number fiddling to get seconds into hours, mi
     hours=int((end-start)/3600)
     minutes=int(((end-start)%3600)/60)
     seconds=int(((end-start)%3600)%60)
-    print("Time taken for main.js: "+str(hours)+" hours "+str(minutes)+" minutes "+str(seconds)+" seconds")
-    print("Time taken for main.js: "+str(end-start)+" seconds")
-    print("Time taken for main.js: "+str((end-start)/60)+" minutes")
+    if tlq:
+        print("Time taken for main.js: "+str(hours)+" hours "+str(minutes)+" minutes "+str(seconds)+" seconds")
+        print("Time taken for main.js: "+str(end-start)+" seconds")
+        print("Time taken for main.js: "+str((end-start)/60)+" minutes")
 ```
+again, we also silence the print statments if `tlq` is `true`
 
 The next few lines are pretty much the same as the last block, with one exception
 ```python
@@ -188,11 +199,10 @@ The next few lines are pretty much the same as the last block, with one exceptio
         mvhours=int((end_make_video-start_make_video)/3600)
         mvminutes=int(((end_make_video-start_make_video)%3600)/60)
         mvseconds=int(((end_make_video-start_make_video)%3600)%60)
-        print("Time taken for make_video.py: "+str(mvhours)+" hours "+str(mvminutes)+" minutes "+str(mvseconds)+" seconds")
-        print("Time taken for make_video.py: "+str(end_make_video-start_make_video)+" seconds")
-        print("Time taken for make_video.py: "+str((end_make_video-start_make_video)/60)+" minutes")
-        
-        
+        if tlq:
+            print("Time taken for make_video.py: "+str(mvhours)+" hours "+str(mvminutes)+" minutes "+str(mvseconds)+" seconds")
+            print("Time taken for make_video.py: "+str(end_make_video-start_make_video)+" seconds")
+            print("Time taken for make_video.py: "+str((end_make_video-start_make_video)/60)+" minutes")
 ```
 The `if` statement at the top checks to make sure that the video making worked.
 Note [^1]
@@ -202,9 +212,10 @@ And the next few are also the same, just with the expected time to get by how mu
         tthours=int(tts/3600)
         ttminutes=int((tts%3600)/60)
         ttseconds=int((tts%3600)%60)
-        print("Total time taken: "+str(tthours)+" hours "+str(ttminutes)+" minutes "+str(ttseconds)+" seconds")
-        print("Total time taken: "+str(tts)+" seconds")
-        print("Total time taken: "+str(tts/60)+" minutes")
+        if tlq:    
+            print("Total time taken: "+str(tthours)+" hours "+str(ttminutes)+" minutes "+str(ttseconds)+" seconds")
+            print("Total time taken: "+str(tts)+" seconds")
+            print("Total time taken: "+str(tts/60)+" minutes")
         terr=time.time()-st+et
         miterr=time.time()-st+mit
         materr=time.time()-st+mat
@@ -217,9 +228,10 @@ And the next few are also the same, just with the expected time to get by how mu
         materrhours=int(materr/3600)
         materrminutes=int((materr%3600)/60)
         materrseconds=int((materr%3600)%60)
-        print("Time error (Actual):  "+str(terrhours)+" hours "+str(terrminutes)+" minutes "+str(terrseconds)+" seconds")
-        print("Time error (Maximum): "+str(miterrhours)+" hours "+str(miterrminutes)+" minutes "+str(miterrseconds)+" seconds")
-        print("Time error (Minumim): "+str(materrhours)+" hours "+str(materrminutes)+" minutes "+str(materrseconds)+" seconds")
+        if tlq:
+            print("Time error (Actual):  "+str(terrhours)+" hours "+str(terrminutes)+" minutes "+str(terrseconds)+" seconds")
+            print("Time error (Maximum): "+str(miterrhours)+" hours "+str(miterrminutes)+" minutes "+str(miterrseconds)+" seconds")
+            print("Time error (Minumim): "+str(materrhours)+" hours "+str(materrminutes)+" minutes "+str(materrseconds)+" seconds")
 ```
 This is essentially the same as the last part, so I'll spare you the details  
 
@@ -229,19 +241,19 @@ The next lines are mostly about saving timing data to a file
             TimeSeconds = end-start
             TimeSecondsMKV=end_make_video-start_make_video
             TotalTime=TimeSeconds+TimeSecondsMKV
-            csvLine = "\n"+str(lines)+','+str(TimeSeconds)+','+str(TimeSecondsMKV)+','+str(et)+","+str(TotalTime-et)+","+str(TotalTime)
+            csvLine = "\n"+str(lines)+','+str(TimeSeconds)+','+str(TimeSecondsMKV)+','+str(et)+","+str(TotalTime-et)+","+str(TotalTime)+"\n"
             f.write(csvLine)
 ```
 The first line opens up a file named `benchmarks.csv`. the `.csv` file is comma separated values. also, note the second parameter of the `open` function: `at`. this means that it will *A*ppend (add) *T*ext to the file.  
 The next 3 lines are just calculating some values so the next isn't insanely long.
-Then, we write the data to the file that we opened
+Then, we write the data to the file that we opened.
 
 The final lines are just handling errors, if they occur
 ```python
     else:
         print("Error in make_video.py")
         with open("./benchmarks.csv","at") as f:
-            f.write("\n"+str(lines)+','+str(end-start)+',err,err,err'+str((end-start)))
+            f.write("\n"+str(lines)+','+str(end-start)+',err,err,err'+str((end-start))+"\n")
 elif res==2:
     print("Canceled")
 else:
