@@ -1,5 +1,3 @@
-import json
-from math import inf
 import matplotlib.pyplot as plt
 from scipy.interpolate import make_interp_spline, BSpline
 import csv
