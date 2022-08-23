@@ -1447,12 +1447,6 @@ module.exports.task = async function runTask(
             task = await paintRest.get(taskPath, "GET");
         } catch (err) {
             console.log("Error while getting task");
-            // try {
-            //     task = await paintRest.get(taskPath, "GET");
-            // } catch (errorValue) {
-            //     console.log("Rate limited, retrying in 2 seconds");
-            //     await new Promise((resolve) => setTimeout(resolve, 2000));
-            // }
         }
 
         // if (task.state === "pending") console.warn("Warning: task is pending");
@@ -1657,13 +1651,250 @@ The next few lines were also a bit of a pain, but this time they were less so th
     }
 ```
 we get the current time, and a time 24 hours in the future (24\*60\*60). we also set some cookies up. cookies are temporary storage that are sent along with every request on a given site. 
-we then also declare the payload, which is a textual representation of `json` data, which is interesting, given that `json` is a valid `Aontent-type`. Yes, i am still sour about that. we then post our image object, and get our `mediastoreid` out.
+we then also declare the payload, which is a textual representation of `json` data, which is interesting, given that `json` is a valid `Aontent-type`. Yes, I am still sour about that. we then post our image object, and get our `mediastoreid` out.
+
+the next chunk is fairly simple
+```javascript
+    paintRest.customHeaders = {
+        Authorization: "bearer " + id,
+        Origin: "https://app.wombo.art",
+        Referer: "https://app.wombo.art/"
+    };
+    updateFn({
+        state: "authenticated",
+        id
+    });
+```
+we just set the `paintRest`'s custom headers to a Map-like object. It essentialy just has the Authorization, as well as some origin and referer data that is required. Additionaly, we also call the update function with some status data. this is the other end of the function that was seen in `sequentail.js`'s `generate` function.  
+
+Up until now, none of the code tecnuques have been particularly bad. this is the turning point.
+```javascript
+    let task;
+    let taskPath;
+    try {
+        task = await paintRest
+            .options("/api/tasks/", "POST")
+            .then(() => paintRest.post("/api/tasks/", { premium: false }));
+        taskPath = "/api/tasks/" + task.id;
+    } catch (err) {
+        if (typeof err == TypeError) {
+            return await runTask(
+                prompt,
+                style,
+                updateFn,
+                settings,
+                inputImage
+            );
+        }
+    }
+```
+We declare both `task`, and `taskPath`. then, we ask the `paintRest` if it is ok to `POST` to the `/api/tasks/` endpoint, and if it is, we post that we are not premium users. And, no it is not as simple as changing that value to true to get premium styles. then, we get the `taskPath`, by the response's `id` attribute.
+If there was any errors, we go down to the catch block. if the error was a TypeError, we call the `runTask` function. The thing is, we are inside the declaration of the `runTask` function. this is known as recursion, and don't try to wrap your head arround it. 
+
+The next block is really three small ones.
+```javascript
+    updateFn({
+        state: "allocated",
+        id,
+        task
+    });
+    
+    let inputObject = {
+        // eslint-disable-next-line camelcase
+        input_spec: {
+            // eslint-disable-next-line camelcase
+            display_freq: 10,
+            prompt,
+            style: +style
+        }
+    };
+    
+    if (inputImage) {
+        // eslint-disable-next-line camelcase
+        inputObject.input_spec.input_image = {
+            // eslint-disable-next-line camelcase
+            weight: imageWeight,
+            // eslint-disable-next-line camelcase
+            mediastore_id: mediastoreid
+        };
+    }
+    let ti=1000;
+    
+```
+after we have gotten the `id`, we call the updateFn with some more data, and then declare `inputObject`. however, we have to explicitly tell it that we don't want, and in this can't use camel case[^8]. the reason we can't use camel case is because this is passed directly into the API[^9], which uses snake case[^8].  
+
+Also, on the second part, it sets `style` to `+style`. this coerces whatever the variable `style` is into a number. it acts as 0+`style`,
+
+the third section checks if we are using an inputImage, and if we are, it sets the apropriate values on the object. we also set ti equal to 1000
+
+again with the bad code, is the next block
+```javascript
+    while (!task){
+        try {
+            task = await paintRest
+                .options(taskPath, "PUT")
+                .then(() => paintRest.put(taskPath, inputObject)
+                );
+            updateFn({
+                state: "submitted",
+                id,
+                task
+            });
+        } catch (error) {
+            updateFn({
+                state:"error",
+                id,
+                task,
+                message:error.toFriendly(),
+                times:ti
+                
+            });
+            ti*=2;
+            await new Promise((res) => setTimeout(res, ti));
+        }
+    }
+```
+while task is falsy (as opposed to truthy[^7]), we ask the paint rest if we can `PUT` to our `taskPath`, and if we can, we `PUT` our `inputObject` on it, and set `task` equal to that. after, we call our `updateFn`, to print that it has been submitted.  
+However, if that fails, we fall through to our `catch` block. we log out the error, and double `ti`. then, we wait for `ti` milliseconds. (1 second = 1000 milliseconds).  
+
+we also declare some variables, in preparation for the large code block next.
+
+```javascript
+    let interDownloads = [];
+    let interPaths = [];
+    let interFinished = [];
+```
+
+This is one of the largest blocks of code, and it is also where a long time is spent.
+```javascript
+while (!task.result) {
+        try {
+            task = await paintRest.get(taskPath, "GET");
+        } catch (err) {
+            console.log("Error while getting task");
+        }
+        // if (task.state === "pending") console.warn("Warning: task is pending");
+        if (inter) {
+            await mkdirp(`${downloadDir}/`);
+            for (let n = 0; n < task.photo_url_list.length; n++) {
+                if (
+                    interDownloads[n] ||
+                        /\/final\.je?pg/i.exec(task.photo_url_list[n])
+                )
+                    continue;
+
+                interPaths[n] = path.join(
+                    downloadDir,
+                    `${n}.jpg`
+                );
+
+                interDownloads[n] = download(
+                    task.photo_url_list[n],
+                    interPaths[n]
+                ).then(() => {
+                    return (interFinished[n] = interPaths[n]);
+                });
+            }
+        }
+
+        updateFn({
+            state: "progress",
+            id,
+            task,
+            inter: interFinished
+        });
+        await new Promise((res) => setTimeout(res, 1000));
+    }
+```
+
+This loop will run while the `task.result` attribute is falsey. we will try to `GET` from the `taskPath`, and if it fails, log it out to the console.  
+If the `inter` variable is set, we will make the download directory, `downloadDir`, and then for each item in the list of photos generated, check if it has already been downloaded, or if it is the final one. if it is, it will skip it. if it isn't, it will set the `n`th item in `interPaths` to the `downloadDir`, joined with `n`.jpg. 
+We then download it, to the path, and set the `interDownloads`'s `n`th item to it.   
+notice how we have a `then` clause, but no `await`. that is because we are using asyncronus functions the way they were meant to be used. we store the `Promise` item that returns, and then continue on, without blocking everything from continuing.  
+we then call our `updateFn` with some more data, and wait for 1000 miliseconds, or one second.
+
+After that finishes, and we have our `task.result`, we only have a few things left.
+```javascript
+    updateFn({
+        state: "generated",
+        id,
+        task,
+        url: task.result.final,
+        inter: interFinished
+    });
+    let downloadPath;
+    if (!inter) {
+        downloadPath = downloadDir+".jpg";
+    }
+```
+we again call our `updateFn` with yet more data.  
+then, we declare `downloadPath`, and if `inter` is falsey, we set it to the `downloadDir`, and `.jpg` combined.   
+
+the next block is downloading all of the images.
+```javascript
+    try {
+        let downloaded=!final;
+        while (!downloaded){
+            await download(task.result.final, downloadPath).catch(() => {
+                console.log("Error while downloading final image");
+                downloaded=false;
+            }).then(() => {
+                downloaded=true;
+                
+            });
+        }
+        if (inter) await Promise.all(interDownloads);
+    } catch (err) {
+        console.log(prefix);
+        console.error(err);
+        throw new Error(
+            `Error while downloading results:\n${
+                err.toFriendly ? err.toFriendly() : err.toString()
+            }`
+        );
+    }
+```
+the first block downloads the final image, and then sets some other stuff.  
+afterwards, we await all of the `interDownloads`, essentialy waiting for all of them to be resolved.
+
+the next part catches any errors, and throws another one, this time fancier.
+
+```javascript
+console.assert(task.result != null, `${prefix} task result is none:`);
+    updateFn({
+        state: "downloaded",
+        id,
+        task,
+        url: task.result.final,
+        path: final ? downloadPath : null,
+        inter: interFinished
+    });
+
+    return {
+        state: "downloaded",
+        id,
+        task,
+        url: task.result.final,
+        path: final ? downloadPath : null,
+        inter: interFinished
+    };
+};
+
+module.exports.styles = require("./styles.js");
+module.exports.download = require("./download.js");
+```
+the first line makes sure that the task's result is not null. if it is, there is a big problem, but hopefully that never hast to get used.  
+We then call our `updateFn` with yet more data.
+and finaly, we return a bunch of data about the results.
+We are done with the `runTask` function, but not the whole file. We have two more lines, that mostly just "carry on" the imports of the `styles` and `download` libraries.
 
 # Footnotes
-[^1]: If you were paying close attention, you may have noticed that the blocks were getting indented further and further. this is just how Python does its control flow, and block/scope dictation.   
-[^2]: The reasoning behind having the limit be at 2 rather than one is that Windows computers use `\r\n`, as opposed to UNIX's `\n`. 
-[^3]: Forgot to mention that I get the prompts from songs, as it can be kind of hard to think of original prompts sometimes.
-[^4]: This is fairly simple to reason through, but the maximum between zero and a negative number will always be zero, and the maximum of a positive number and zero will always be the positive number. if you pass in a zero, it will return zero. whether that zero is the constant or the other value is up to the implementation. 
-[^5]:  This is known as the Unix epoch, and on many systems, it is essentially T=0, so this time comes up a lot.
-[^6]: **I**ntegrated **D**evelopment **E**nvironment. It is a text editor with more features designed for developing things. 
-[^7]: Anything that is truthy will evaluate to true in an "`if`" statement. however, it is not equal to `true`. 
+[^1]: If you were paying close attention, you may have noticed that the blocks were getting indented further and further. this is just how Python does its control flow, and block/scope dictation.  
+[^2]: The reasoning behind having the limit be at 2 rather than one is that Windows computers use `\r\n`, as opposed to UNIX's `\n`.  
+[^3]: Forgot to mention that I get the prompts from songs, as it can be kind of hard to think of original prompts sometimes.  
+[^4]: This is fairly simple to reason through, but the maximum between zero and a negative number will always be zero, and the maximum of a positive number and zero will always be the positive number. if you pass in a zero, it will return zero. whether that zero is the constant or the other value is up to the implementation.  
+[^5]:  This is known as the Unix epoch, and on many systems, it is essentially T=0, so this time comes up a lot.  
+[^6]: **I**ntegrated **D**evelopment **E**nvironment. It is a text editor with more features designed for developing things.  
+[^7]: Anything that is truthy will evaluate to true in an "`if`" statement. however, it is not neccicaryily ***Strictly*** equal to `true`.  
+[^8]: E.g. thisIsCamelCase. this is in contrast to snake case, E.g. this_is_snake_case, or some other thing.  
+[^9]: Aplication program interface. it's used a lot in a lot of places, and can't really be summed up in a single sentance, or at least i can't.

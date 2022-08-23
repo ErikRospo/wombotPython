@@ -168,14 +168,7 @@ module.exports.task = async function runTask(
             task = await paintRest.get(taskPath, "GET");
         } catch (err) {
             console.log("Error while getting task");
-            // try {
-            //     task = await paintRest.get(taskPath, "GET");
-            // } catch (errorValue) {
-            //     console.log("Rate limited, retrying in 2 seconds");
-            //     await new Promise((resolve) => setTimeout(resolve, 2000));
-            // }
         }
-
         // if (task.state === "pending") console.warn("Warning: task is pending");
         if (inter) {
             await mkdirp(`${downloadDir}/`);
