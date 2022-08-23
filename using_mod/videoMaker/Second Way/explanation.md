@@ -3,9 +3,11 @@
 
 ## Table of contents
 1. [Run.py](https://erikrospo.github.io/wombotPython/using_mod/videoMaker/Second%20Way/explanation#runpy)
+2. [Multirun.py](https://erikrospo.github.io/wombotPython/using_mod/videoMaker/Second%20Way/explanation#multirunpy)
 2. [Time_estimator.py](https://erikrospo.github.io/wombotPython/using_mod/videoMaker/Second%20Way/explanation#time_estimatorpy)
-3. [Main.js](https://erikrospo.github.io/wombotPython/using_mod/videoMaker/Second%20Way/explanation#mainjs)
-4. [Sequential.js](https://erikrospo.github.io/wombotPython/using_mod/videoMaker/Second%20Way/explanation#sequentialjs)
+4. [Main.js](https://erikrospo.github.io/wombotPython/using_mod/videoMaker/Second%20Way/explanation#mainjs)
+5. [Sequential.js](https://erikrospo.github.io/wombotPython/using_mod/videoMaker/Second%20Way/explanation#sequentialjs)
+6. [Index.js](https://erikrospo.github.io/wombotPython/using_mod/videoMaker/Second%20Way/explanation#indexjs)
 
 ## run.py
 this is a wrapper for all functionality of the application. It gives an estimation of the duration that a given configuration will take, and runs both the actual image generation and the video maker.  
@@ -191,7 +193,7 @@ The next lines are just a bunch of number fiddling to get seconds into hours, mi
         print("Time taken for main.js: "+str(end-start)+" seconds")
         print("Time taken for main.js: "+str((end-start)/60)+" minutes")
 ```
-again, we also silence the print statments if `tlq` is `true`
+again, we also silence the print statements if `tlq` is `true`
 
 The next few lines are pretty much the same as the last block, with one exception
 ```python
@@ -264,6 +266,215 @@ The first `else` is for the making of the video. if instead of returning a `0`, 
 The next line checks if the response of `main.js` was exactly 2. This is the error code of `^C`, or cancel. if it is, it just prints out `Canceled`  
 Finally, the 2 lines after that handle all other error codes. simply by just saying that there was an error, and what the error was.
 
+## multirun.py
+
+So, `run.py` isn't actually the top level runner. This is, at least currently, the topmost level 
+```python
+import time
+import os
+import threading
+cmd="python3 run.py"
+c=0
+wasError=False
+tnum=8
+def run_prog():
+    res=os.system(cmd)
+    if res!=0:
+        global wasError
+        wasError=True
+        print("Error:"+str(res))
+if __name__=="__main__":
+    s=time.time_ns()
+    while not wasError:
+        ts=[]
+        for i in range(0,tnum):
+            t=threading.Thread(target=run_prog)
+            ts.append(t)
+        for i in range(0,tnum):
+            ts[i].start()
+            time.sleep(120)
+        for i in range(0,tnum):
+            ts[i].join()
+        c+=tnum
+    e=time.time_ns()
+    dur_ns=e-s
+    dur=dur_ns/10**9
+
+    print("DONE")
+    print("Ran "+str(c)+" times")
+    exhours=int((dur)/3600)
+    exminutes=int(((dur)%3600)/60)
+    exseconds=int(((dur)%3600)%60)
+    print(f"Over: {exhours}h {exminutes}m {exseconds}s")
+
+def run(threads, times):
+    c=0
+    for n in range(times):
+        ts=[]
+        for i in range(0,threads):
+            t=threading.Thread(target=run_prog)
+            t.daemon=True
+            ts.append(t)
+
+        for i in range(0,threads):
+            try:
+                ts[i].start()
+                time.sleep(120)
+            except KeyboardInterrupt:
+                exit()
+        for i in range(0,threads):
+            ts[i].join()
+        
+        c+=threads
+        print(f"{n}/{times}")
+        print(f"{c}/{times*threads}")
+        print(f"{c/(times*threads)*100}%")
+    print("DONE")
+```
+
+This module is a bit complicated. Mostly due to it involving multi-threading. 
+```python
+import time
+import os
+import threading
+```
+Like the last one, we do some imports, in this case `time`, `os`, and `threading`.
+
+We then set some variables up.
+```python
+cmd="python3 run.py"
+c=0
+wasError=False
+tnum=8
+```
+
+```python
+def run_prog():
+    res=os.system(cmd)
+    if res!=0:
+        global wasError
+        wasError=True
+        print("Error:"+str(res))
+```
+In this part, we define a function, `run_prog`.  
+We use `os.system` again. like i said, this tells the system to execute commands in the shell. in this case, we execute `cmd`, which is `"python3 run.py"`. This calls our `run.py` program. we also check if the response was nonzero. if it is, we change the variable `wasError` to True, and print out that there was an error.   
+Next is the main thing, that actually gets run.
+```python
+if __name__=="__main__":
+    s=time.time_ns()
+    while not wasError:
+        ts=[]
+        for i in range(0,tnum):
+            t=threading.Thread(target=run_prog)
+            ts.append(t)
+        for i in range(0,tnum):
+            ts[i].start()
+            time.sleep(120)
+        for i in range(0,tnum):
+            ts[i].join()
+        c+=tnum
+ 
+```
+we check if this is being run as the main program, and if it is, we store when it was started (in nanoseconds) in the `s` variable. then, we enter a `while` loop. what this does is repeat whatever is inside it for as long as the condition is true. in this case, the condition is that the `wasError` variable is `False`.  
+```python
+    while not wasError:
+        ts=[]
+        for i in range(0,tnum):
+            t=threading.Thread(target=run_prog)
+            ts.append(t)
+        for i in range(0,tnum):
+            ts[i].start()
+            time.sleep(120)
+        for i in range(0,tnum):
+            ts[i].join()
+        c+=tnum
+```
+inside the loop, we declare a variable `ts`, and set it to an empty list. then, for `tnum` times, we create a thread with the `threading` module. A thread is another process that is a part of the parent process, which in this case is the `multirun.py` program. in this case, the new process is our `run_prog` function. Then, we put it on in the `ts` list. After we do that, we start all of the threads, and wait 120 seconds, or 2 minutes. this is to allow the processes plenty of time to finish up with their video making processes at the end, as that uses just one file for pointing the videoMaker to the correct path. This could be fixed, but that isn't my main concern right now. 
+After we start all of the threads, and wait, we join them all together, this essentially waits until all of them are finished. Then, we increase `c` by the `tnum`. 
+
+
+```python
+    e=time.time_ns()
+    dur_ns=e-s
+    dur=dur_ns/10**9
+
+    print("DONE")
+    print("Ran "+str(c)+" times")
+    exhours=int((dur)/3600)
+    exminutes=int(((dur)%3600)/60)
+    exseconds=int(((dur)%3600)%60)
+    print(f"Over: {exhours}h {exminutes}m {exseconds}s")
+```
+Outside the loop, we set `e` to the time that we ended. then, we set `dur_ns` to the difference between `e` and `s`. this gives us our duration. however, because we used `time.time_ns`, this duration is in nanoseconds. so the next thing we need to do is to convert it back to seconds.  
+After we do, we do some more fancy printing, and then finish up with the function. 
+
+the next block is the function equivalent of the main part.
+```python
+def run(threads, times):
+    c=0
+    for n in range(times):
+        ts=[]
+        for i in range(0,threads):
+            t=threading.Thread(target=run_prog)
+            t.daemon=True
+            ts.append(t)
+
+        for i in range(0,threads):
+            try:
+                ts[i].start()
+                time.sleep(120)
+            except KeyboardInterrupt:
+                exit()
+        for i in range(0,threads):
+            ts[i].join()
+        
+        c+=threads
+        print(f"{n}/{times}")
+        print(f"{c}/{times*threads}")
+        print(f"{c/(times*threads)*100}%")
+    print("DONE")
+```
+We declare a function `run`, that takes in `threads` and `times`. we also set `c` equal to zero.
+```python
+def run(threads, times):
+    c=0
+```
+
+```python
+    for n in range(times):
+        ts=[]
+        for i in range(0,threads):
+            t=threading.Thread(target=run_prog)
+            t.daemon=True
+            ts.append(t)
+```
+then, we enter a loop that will run `times` times, and then declare a list `ts`
+we also declare `threads` threads, and add them all into the `ts` list. the main change from the previous one is that we set `t`'s `daemon` to true. I am not 100% sure what this does, but I think it will kill the threads if the main process is killed, instead of, and this will sound bad, having a child kill the parent, and leaving an orphaned child. really, programming has some ***interesting*** terms for things. recently, its shifted to `primary` and `secondary` processes, but `child` and `parent` are still used plenty.
+
+
+```python
+        for i in range(0,threads):
+            try:
+                ts[i].start()
+                time.sleep(120)
+            except KeyboardInterrupt:
+                exit()
+```
+then, for each of the threads, try to start them, and if the user cancels it, we exit. for some reason, i didn't realize that `threading.Thead.daemon` would prevent it from leaving orphaned threads.
+
+```python
+        for i in range(0,threads):
+            ts[i].join()
+        
+        c+=threads
+        print(f"{n}/{times}")
+        print(f"{c}/{times*threads}")
+        print(f"{c/(times*threads)*100}%")
+    print("DONE")
+```
+Like the last one, we join all of the threads, and then do some progress bar esque things, and after all `times` iterations, we print out `"DONE"`.
+
+
 ## time_estimator.py
 
 This is a module that I wrote that predicts how long a given configuration will take to process, given previous data. 
@@ -271,6 +482,7 @@ This is a module that I wrote that predicts how long a given configuration will 
 Similar to the previous file, I'll show it in full, then go block by block, explaining what each part does.
 ```python
 import csv
+import datetime
 import json
 from math import sqrt
 import time
@@ -292,6 +504,7 @@ def calculate_expected_time():
     for n in range(len(current_data)):
         ys.append(float(current_data[n][-1]))
         xs.append(float(current_data[n][0]))
+
     r_upper_values=[]
     for n in range(len(current_data)):
         vx=xs[n]
@@ -305,6 +518,62 @@ def calculate_expected_time():
     ev=b0+b1*numIterations
     dev=stdev(ys)
     return ev,ev+dev,ev-dev
+def calculate_expected_time_from_iterations(iterations):
+    numIterations=iterations
+    current_data=list(csv.reader(open("benchmarks.csv","rt").readlines()))
+    current_data=current_data[1:]
+    ys=[]
+    xs=[]
+    for n in range(len(current_data)):
+        ys.append(float(current_data[n][-1]))
+        xs.append(float(current_data[n][0]))
+
+    r_upper_values=[]
+    for n in range(len(current_data)):
+        vx=xs[n]
+        vy=ys[n]
+        r_upper_values.append(((vx-mean(xs))*(vy-mean(ys))))
+    r_upper=sum(r_upper_values)
+    r_lower=sqrt(sum([(vx-mean(xs))**2 for vx in xs])*sum([(vy-mean(ys))**2 for vy in ys]))
+    r=r_upper/r_lower
+    b1=r*(stdev(ys)/stdev(xs))
+    b0=mean(ys)-b1*mean(xs)
+    ev=b0+b1*numIterations
+    dev=stdev(ys)
+    return ev,ev+dev,ev-dev
+def print_fancy_time():
+    et,mit,mat=calculate_expected_time()
+    exhours=int((et)/3600)
+    exminutes=int(((et)%3600)/60)
+    exseconds=int(((et)%3600)%60)
+    print(f"expected time: {exhours}h {exminutes}m {exseconds}s")
+    print(f"et: {et} etm:{et/60} eth:{et/3600}")
+    
+    excomp=datetime.datetime.fromtimestamp(time.time()+et).strftime('%Y-%m-%d %I:%M:%S %p')
+    excompmi=datetime.datetime.fromtimestamp(time.time()+mit).strftime('%Y-%m-%d %I:%M:%S %p')
+    excompma=datetime.datetime.fromtimestamp(time.time()+mat).strftime('%Y-%m-%d %I:%M:%S %p')
+
+
+    print(f"expected completion:       {excomp}")
+    print(f"overestimated completion:  {excompma}")
+    print(f"underestimated completion: {excompmi}")
+def print_fancy_time_from_iterations(iterations):
+    et,mit,mat=calculate_expected_time_from_iterations(iterations)
+    exhours=int((et)/3600)
+    exminutes=int(((et)%3600)/60)
+    exseconds=int(((et)%3600)%60)
+    print(f"expected time: {exhours}h {exminutes}m {exseconds}s")
+    print(f"et: {et} etm:{et/60} eth:{et/3600}")
+    
+    excomp=datetime.datetime.fromtimestamp(time.time()+et).strftime('%Y-%m-%d %I:%M:%S %p')
+    excompmi=datetime.datetime.fromtimestamp(time.time()+mit).strftime('%Y-%m-%d %I:%M:%S %p')
+    excompma=datetime.datetime.fromtimestamp(time.time()+mat).strftime('%Y-%m-%d %I:%M:%S %p')
+
+
+    print(f"expected completion:       {excomp}")
+    print(f"overestimated completion:  {excompma}")
+    print(f"underestimated completion: {excompmi}")
+
 if __name__=="__main__":
     et,mat,mit=calculate_expected_time()
     exhours=int((et)/3600)
@@ -312,12 +581,16 @@ if __name__=="__main__":
     exseconds=int(((et)%3600)%60)
     print(f"expected time: {exhours}h {exminutes}m {exseconds}s")
     print(f"et: {et} etm:{et/60} eth:{et/3600}")
-    excomp=str(time.ctime(time.time()+et))
-    excompmi=str(time.ctime(time.time()+mit))
-    excompma=str(time.ctime(time.time()+mat))
+    
+    excomp=datetime.datetime.fromtimestamp(time.time()+et).strftime('%Y-%m-%d %I:%M:%S %p')
+    excompmi=datetime.datetime.fromtimestamp(time.time()+mit).strftime('%Y-%m-%d %I:%M:%S %p')
+    excompma=datetime.datetime.fromtimestamp(time.time()+mat).strftime('%Y-%m-%d %I:%M:%S %p')
+
+
     print(f"expected completion:       {excomp}")
     print(f"overestimated completion:  {excompma}")
     print(f"underestimated completion: {excompmi}")
+
 ```
 
 The first block is (like the previous one), imports 
@@ -404,6 +677,84 @@ after all of this, we finally have our slope and y-intercept. so, we can just se
 
 We could just return that immediately, but instead, we calculate the `stdev` of our data, and return our expected value `ev`, an upper bound `ev+dev`, and a lower bound `ev-dev`.
 
+The next block mostly the same as the last one, just that it doesn't load the iterations from the `settings.json` file, and instead loads it from a parameter of the function.  
+
+```python
+def calculate_expected_time_from_iterations(iterations):
+    numIterations=iterations
+    current_data=list(csv.reader(open("benchmarks.csv","rt").readlines()))
+    current_data=current_data[1:]
+    ys=[]
+    xs=[]
+    for n in range(len(current_data)):
+        ys.append(float(current_data[n][-1]))
+        xs.append(float(current_data[n][0]))
+
+    r_upper_values=[]
+    for n in range(len(current_data)):
+        vx=xs[n]
+        vy=ys[n]
+        r_upper_values.append(((vx-mean(xs))*(vy-mean(ys))))
+    r_upper=sum(r_upper_values)
+    r_lower=sqrt(sum([(vx-mean(xs))**2 for vx in xs])*sum([(vy-mean(ys))**2 for vy in ys]))
+    r=r_upper/r_lower
+    b1=r*(stdev(ys)/stdev(xs))
+    b0=mean(ys)-b1*mean(xs)
+    ev=b0+b1*numIterations
+    dev=stdev(ys)
+    return ev,ev+dev,ev-dev
+```
+
+The next block is to print out the iterations in a fancier way. right now, we just print out the number of seconds that it will take to complete. However, we aren't really good at looking at a number of seconds, and determining how long that is.  
+So, I made it so that it prints out some more information about how long it will take.
+
+
+```python
+def print_fancy_time():
+    et,mit,mat=calculate_expected_time()
+    exhours=int((et)/3600)
+    exminutes=int(((et)%3600)/60)
+    exseconds=int(((et)%3600)%60)
+    print(f"expected time: {exhours}h {exminutes}m {exseconds}s")
+    print(f"et: {et} etm:{et/60} eth:{et/3600}")
+    
+    excomp=datetime.datetime.fromtimestamp(time.time()+et).strftime('%Y-%m-%d %I:%M:%S %p')
+    excompmi=datetime.datetime.fromtimestamp(time.time()+mit).strftime('%Y-%m-%d %I:%M:%S %p')
+    excompma=datetime.datetime.fromtimestamp(time.time()+mat).strftime('%Y-%m-%d %I:%M:%S %p')
+
+
+    print(f"expected completion:       {excomp}")
+    print(f"overestimated completion:  {excompma}")
+    print(f"underestimated completion: {excompmi}")
+```
+We declare a `print_fancy_time` function, and inside it, we calculate the expected time, minimum time, and maximum time. we assign them to the `et`, `mit`, and `mat` variables. We calculate the expected time in minutes, seconds, and hours, and print that out. we also print out *exactly* how long in hours, minutes, and seconds it will take.  
+
+For brevity, I will only go over this once, as it is mostly the same for all three.  
+
+We use the `et` as an offset of time from `time.time()`, which just returns the number of seconds since January 1st, 1970[^5]. We then convert that into Years, Months, Days, separated by "`-`", and then Hours, Minutes, Seconds, and then the time zone. `strftime` is **str**ing **f**ormat **time**.  
+Again, like I said, it is essentially the same for the next two lines, but with different variables.  
+After that, we just print out all of the variables.
+
+The next block is mostly the same as the last.
+```python
+def print_fancy_time_from_iterations(iterations):
+    et,mit,mat=calculate_expected_time_from_iterations(iterations)
+    exhours=int((et)/3600)
+    exminutes=int(((et)%3600)/60)
+    exseconds=int(((et)%3600)%60)
+    print(f"expected time: {exhours}h {exminutes}m {exseconds}s")
+    print(f"et: {et} etm:{et/60} eth:{et/3600}")
+    
+    excomp=datetime.datetime.fromtimestamp(time.time()+et).strftime('%Y-%m-%d %I:%M:%S %p')
+    excompmi=datetime.datetime.fromtimestamp(time.time()+mit).strftime('%Y-%m-%d %I:%M:%S %p')
+    excompma=datetime.datetime.fromtimestamp(time.time()+mat).strftime('%Y-%m-%d %I:%M:%S %p')
+
+
+    print(f"expected completion:       {excomp}")
+    print(f"overestimated completion:  {excompma}")
+    print(f"underestimated completion: {excompmi}")
+```
+In this case, instead of using the `settings.json`, and the `calculate_expected_time` function, we pass it in the `iterations`, and use the `calculate_expected_time_from_iterations` function. Everything is essentially the same, so I won't repeat myself. 
 
 the final block is essentially what happens in `run.py`, but I'll go over it again.
 ```python
@@ -921,8 +1272,398 @@ module.exports.generate = generate;
 module.exports.generateLaggySequential = generateLaggySequential;
 ```
 this is how JavaScript does modules. you have to define the `generate` export to be `generate`, and `generateLaggySequential` export to be the function with the same name.
+
+## index.js
+
+this one is the main meat of how the program actually works, so as you might guess, it's long. really long.
+```javascript
+/* eslint-disable no-constant-condition */
+const Rest = require("./rest.js");
+const identify = require("./identify.js");
+const download = require("./download.js");
+const mkdirp = require("mkdirp");
+const path = require("path");
+
+let paintRest = new Rest("paint.api.wombo.ai", 100);
+let imagePaintRest = new Rest("app.wombo.art", 100);
+
+/**
+ * @param {string} prompt
+ * @param {number} style
+ * @param {function} updateFn
+ * @param {object} settings
+ * @param {object} inputImage
+ * @param {string} photoDownloads
+ * @param {string} _prefix
+ * @returns {object} task
+ */
+module.exports.task = async function runTask(
+    prompt,
+    style,
+    // eslint-disable-next-line no-empty-function
+    updateFn = () => {},
+    settings = {},
+    inputImageArg = {},
+    _prefix = ""
+) {
+    let {
+        final = true,
+        inter = false,
+        downloadDir = "./generated/"
+    } = settings;
+    let {
+        inputImage = false,
+        mediaSuffix = null,
+        imageWeight = "HIGH"
+    } = inputImageArg;
+    let id;
+    let prefix = _prefix;
+    try {
+        id = await identify();
+    } catch (err) {
+        console.error(err);
+        throw new Error(
+            `Error while sending prompt:\n${
+                err.toFriendly ? err.toFriendly() : err.toString()
+            }`
+        );
+    }
+    let mediastoreid;
+    if (inputImage) {
+        imagePaintRest.customHeaders = {
+            "Authorization": "bearer " + id,
+            "Origin": "https://app.wombo.art",
+            "Referer": "https://app.wombo.art/",
+            "Cache-control": "no-cache",
+            "Sec-fetch-mode": "cors",
+            "sec-fetch-site": "same-origin",
+            "User-Agent":
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36",
+            "Pragma": "no-cache",
+            "Accept": "*/*",
+            "Accept-encoding": "gzip, deflate, br",
+            "Accept-language": "en-US,en;q=0.9",
+            "Aontent-type": "text/plain;charset=UTF-8"
+        };
+        let created = Date.now();
+        let expire = Date.now() + 960000;
+
+        imagePaintRest.cookies[
+            "_dd_s"
+        ] = `rum=1&id=323368bd-45a7-4b9d-acf2-89cd59a16777&created=${created}&expire=${expire}`;
+        let paintRestPayload = `{"image":"${inputImage}","media_suffix":"${mediaSuffix}","num_uploads":1}`;
+        let res = await imagePaintRest.post(
+            "/api/mediastore",
+            paintRestPayload
+        );
+        mediastoreid = res.mediastore_uid;
+    }
+    paintRest.customHeaders = {
+        Authorization: "bearer " + id,
+        Origin: "https://app.wombo.art",
+        Referer: "https://app.wombo.art/"
+    };
+
+    updateFn({
+        state: "authenticated",
+        id
+    });
+    
+    let task;
+    let taskPath;
+    try {
+        task = await paintRest
+            .options("/api/tasks/", "POST")
+            .then(() => paintRest.post("/api/tasks/", { premium: false }));
+        taskPath = "/api/tasks/" + task.id;
+    } catch (err) {
+        if (typeof err == TypeError) {
+            return await runTask(
+                prompt,
+                style,
+                updateFn,
+                settings,
+                inputImage
+            );
+        }
+    }
+    
+    updateFn({
+        state: "allocated",
+        id,
+        task
+    });
+    
+    let inputObject = {
+        // eslint-disable-next-line camelcase
+        input_spec: {
+            // eslint-disable-next-line camelcase
+            display_freq: 10,
+            prompt,
+            style: +style
+        }
+    };
+    
+    if (inputImage) {
+        // eslint-disable-next-line camelcase
+        inputObject.input_spec.input_image = {
+            // eslint-disable-next-line camelcase
+            weight: imageWeight,
+            // eslint-disable-next-line camelcase
+            mediastore_id: mediastoreid
+        };
+    }
+    let ti=1000;
+    while (!task){
+        try {
+            task = await paintRest
+                .options(taskPath, "PUT")
+                .then(() => paintRest.put(taskPath, inputObject)
+                );
+            updateFn({
+                state: "submitted",
+                id,
+                task
+            });
+        } catch (error) {
+            updateFn({
+                state:"error",
+                id,
+                task,
+                message:error.toFriendly(),
+                times:ti
+                
+            });
+            ti*=2;
+            await new Promise((res) => setTimeout(res, ti));
+        }
+    }
+    // eslint-disable-next-line no-undefined
+    let interDownloads = [];
+    let interPaths = [];
+    let interFinished = [];
+    while (!task.result) {
+        try {
+            task = await paintRest.get(taskPath, "GET");
+        } catch (err) {
+            console.log("Error while getting task");
+            // try {
+            //     task = await paintRest.get(taskPath, "GET");
+            // } catch (errorValue) {
+            //     console.log("Rate limited, retrying in 2 seconds");
+            //     await new Promise((resolve) => setTimeout(resolve, 2000));
+            // }
+        }
+
+        // if (task.state === "pending") console.warn("Warning: task is pending");
+        if (inter) {
+            await mkdirp(`${downloadDir}/`);
+            for (let n = 0; n < task.photo_url_list.length; n++) {
+                if (
+                    interDownloads[n] ||
+                        /\/final\.je?pg/i.exec(task.photo_url_list[n])
+                )
+                    continue;
+
+                interPaths[n] = path.join(
+                    downloadDir,
+                    `${n}.jpg`
+                );
+
+                interDownloads[n] = download(
+                    task.photo_url_list[n],
+                    interPaths[n]
+                ).then(() => {
+                    return (interFinished[n] = interPaths[n]);
+                });
+            }
+        }
+
+        updateFn({
+            state: "progress",
+            id,
+            task,
+            inter: interFinished
+        });
+        await new Promise((res) => setTimeout(res, 1000));
+    }
+    updateFn({
+        state: "generated",
+        id,
+        task,
+        url: task.result.final,
+        inter: interFinished
+    });
+    let downloadPath;
+    if (!inter) {
+        downloadPath = downloadDir+".jpg";
+    }
+    try {
+        let downloaded=!final;
+        while (!downloaded){
+            await download(task.result.final, downloadPath).catch(() => {
+                console.log("Error while downloading final image");
+                downloaded=false;
+            }).then(() => {
+                downloaded=true;
+                
+            });
+        }
+        if (inter) await Promise.all(interDownloads);
+    } catch (err) {
+        console.log(prefix);
+        console.error(err);
+        throw new Error(
+            `Error while downloading results:\n${
+                err.toFriendly ? err.toFriendly() : err.toString()
+            }`
+        );
+    }
+    console.assert(task.result != null, `${prefix} task result is none:`);
+    updateFn({
+        state: "downloaded",
+        id,
+        task,
+        url: task.result.final,
+        path: final ? downloadPath : null,
+        inter: interFinished
+    });
+
+    return {
+        state: "downloaded",
+        id,
+        task,
+        url: task.result.final,
+        path: final ? downloadPath : null,
+        inter: interFinished
+    };
+};
+
+module.exports.styles = require("./styles.js");
+module.exports.download = require("./download.js");
+```
+The first few lines aren't all that interesting. we get some modules, some that I've written, some that are built-ins.
+```javascript
+/* eslint-disable no-constant-condition */
+const Rest = require("./rest.js");
+const identify = require("./identify.js");
+const download = require("./download.js");
+const mkdirp = require("mkdirp");
+const path = require("path");
+```
+we get `Rest.js`, `identify.js`, `download.js`, `mkdirp`, and `path`. the first three are the ones I have written, the others are built-ins, or installed from `npm`,  **N**ode **P**ackage **M**anager.  
+
+Then we define both `paintRest`, and `imagePaintRest`. these are `Rest` Objects from the `Rest` library we `require`d above. 
+
+Now, here is where the bulk of the program lies... 
+After some more stuff, of course. 
+ 
+```javascript
+/**
+ * @param {string} prompt
+ * @param {number} style
+ * @param {function} updateFn
+ * @param {object} settings
+ * @param {object} inputImage
+ * @param {string} photoDownloads
+ * @param {string} _prefix
+ * @returns {object} task
+ */
+```
+This is a `JSDoc` comment. Like any other comment, it isn't actually executed by `node`. however, it does help during development by telling the IDE[^6] what an object or function "*Looks*" like. i use looks hesitantly, as it doesn't really look like anything, but it shows what inputs, outputs, and attributes it has. 
+
+```javascript
+module.exports.task = async function runTask(
+    prompt,
+    style,
+    // eslint-disable-next-line no-empty-function
+    updateFn = () => {},
+    settings = {},
+    inputImageArg = {},
+    _prefix = ""
+) {
+```
+this is declaring a function, and sort of preemptively assigning it to the `module.exports`, so it will be exported. it takes in a prompt, a style, a update function, settings, an inputImage and a prefix. note how the argument's type lines up with the JSDoc comment's note. the prompt is a string, the style is a number, the function is a function, and so on.
+
+```javascript
+    let {
+        final = true,
+        inter = false,
+        downloadDir = "./generated/"
+    } = settings;
+    let {
+        inputImage = false,
+        mediaSuffix = null,
+        imageWeight = "HIGH"
+    } = inputImageArg;
+    let id;
+    let prefix = _prefix;
+```
+this is essentially unpacking and declaring a bunch of stuff. we set `final`, `inter`, and `downloadDir` to their respective attributes in `settings`, which was passed in. a similar story with the `inputImageArg`. we also declare `id` and `prefix`, with `prefix` being set to `_prefix`. also, in the object unpacking, we provide defaults to all of the arguments, so if they aren't given, it has something to fall back on.  
+
+```javascript
+    try {
+        id = await identify();
+    } catch (err) {
+        console.error(err);
+        throw new Error(
+            `Error while sending prompt:\n${
+                err.toFriendly ? err.toFriendly() : err.toString()
+            }`
+        );
+    }
+```
+this part gets an `id` from the `identify` function, that was gotten from the module of the same name. I will get to that soon. the `id` is necessary for basically everything.
+
+The next part is long, and was also an absolute **PAIN** to get working.
+```javascript
+let mediastoreid;
+    if (inputImage) {
+        imagePaintRest.customHeaders = {
+            "Authorization": "bearer " + id,
+            "Origin": "https://app.wombo.art",
+            "Referer": "https://app.wombo.art/",
+            "Cache-control": "no-cache",
+            "Sec-fetch-mode": "cors",
+            "sec-fetch-site": "same-origin",
+            "User-Agent":
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36",
+            "Pragma": "no-cache",
+            "Accept": "*/*",
+            "Accept-encoding": "gzip, deflate, br",
+            "Accept-language": "en-US,en;q=0.9",
+            "Aontent-type": "text/plain;charset=UTF-8"
+        };
+```
+The first two lines aren't that bad. We declare a variable `mediastoreid`, and check if `inputImage` is truthy[^7].   
+
+We also have a huge block that declares a bunch of headers. If you look closely, you might notice that the last one is `Aontent-type`. even if you know nothing about HTTP headers, you know that this is wrong. It is meant to be `Content-type`.  
+I thought that this was intentional to prevent people like me doing things like what I am doing, but, due to the standard, you have to prefix any custom headers with `X-`. so that wasn't it. The website was sending the `Content-type` attribute, so that couldn't be it. that also removes the possibility that it simply wasn't sent, so there is that. in the end, it was stupid lucky of me to mistype it as I was changing to uppercase letters.
+
+The next few lines were also a bit of a pain, but this time they were less so than the previous.
+```javascript
+        let created = Date.now();
+        let expire = Date.now() + 960000;
+
+        imagePaintRest.cookies[
+            "_dd_s"
+        ] = `rum=1&id=323368bd-45a7-4b9d-acf2-89cd59a16777&created=${created}&expire=${expire}`;
+        let paintRestPayload = `{"image":"${inputImage}","media_suffix":"${mediaSuffix}","num_uploads":1}`;
+        let res = await imagePaintRest.post(
+            "/api/mediastore",
+            paintRestPayload
+        );
+        mediastoreid = res.mediastore_uid;
+    }
+```
+we get the current time, and a time 24 hours in the future (24\*60\*60). we also set some cookies up. cookies are temporary storage that are sent along with every request on a given site. 
+we then also declare the payload, which is a textual representation of `json` data, which is interesting, given that `json` is a valid `Aontent-type`. Yes, i am still sour about that. we then post our image object, and get our `mediastoreid` out.
+
 # Footnotes
 [^1]: If you were paying close attention, you may have noticed that the blocks were getting indented further and further. this is just how Python does its control flow, and block/scope dictation.   
 [^2]: The reasoning behind having the limit be at 2 rather than one is that Windows computers use `\r\n`, as opposed to UNIX's `\n`. 
 [^3]: Forgot to mention that I get the prompts from songs, as it can be kind of hard to think of original prompts sometimes.
 [^4]: This is fairly simple to reason through, but the maximum between zero and a negative number will always be zero, and the maximum of a positive number and zero will always be the positive number. if you pass in a zero, it will return zero. whether that zero is the constant or the other value is up to the implementation. 
+[^5]:  This is known as the Unix epoch, and on many systems, it is essentially T=0, so this time comes up a lot.
+[^6]: **I**ntegrated **D**evelopment **E**nvironment. It is a text editor with more features designed for developing things. 
+[^7]: Anything that is truthy will evaluate to true in an "`if`" statement. however, it is not equal to `true`. 
