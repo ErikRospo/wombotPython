@@ -1,0 +1,30 @@
+{
+    "default": true,
+    "MD007": { "indent": 4 },
+    "MD005":true,
+    "no-hard-tabs": {
+        "code_blocks":false,
+        "spaces_per_tab":4
+    },
+    "whitespace": false,
+    "no-reversed-links":true,
+    "no-duplicate-heading":true,
+    "blanks-around-fences":true,
+    "blanks-around-lists":true,
+    "no-inline-html":true,
+    "no-bare-urls":true,
+    "fenced-code-language":true,
+    "proper-names":{
+        "names":[
+            "JavaScript",
+            "Python",
+            "Wombo",
+            "TypeScript",
+            "Linux",
+            "Windows"
+        ]
+    },
+    "code-block-style":"fenced",
+    "emphasis-style":"asterisk",
+    "line-length":false
+}
