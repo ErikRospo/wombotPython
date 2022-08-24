@@ -1666,9 +1666,9 @@ the next chunk is fairly simple
         id
     });
 ```
-we just set the `paintRest`'s custom headers to a Map-like object. It essentialy just has the Authorization, as well as some origin and referer data that is required. Additionaly, we also call the update function with some status data. this is the other end of the function that was seen in `sequentail.js`'s `generate` function.  
+we just set the `paintRest`'s custom headers to a Map-like object. It essentially just has the Authorization, as well as some origin and referrer data that is required. Additionally, we also call the update function with some status data. this is the other end of the function that was seen in `sequentail.js`'s `generate` function.  
 
-Up until now, none of the code tecnuques have been particularly bad. this is the turning point.
+Up until now, none of the code techniques have been particularly bad. this is the turning point.
 ```javascript
     let task;
     let taskPath;
@@ -1689,8 +1689,8 @@ Up until now, none of the code tecnuques have been particularly bad. this is the
         }
     }
 ```
-We declare both `task`, and `taskPath`. then, we ask the `paintRest` if it is ok to `POST` to the `/api/tasks/` endpoint, and if it is, we post that we are not premium users. And, no it is not as simple as changing that value to true to get premium styles. then, we get the `taskPath`, by the response's `id` attribute.
-If there was any errors, we go down to the catch block. if the error was a TypeError, we call the `runTask` function. The thing is, we are inside the declaration of the `runTask` function. this is known as recursion, and don't try to wrap your head arround it. 
+We declare both `task`, and `taskPath`. then, we ask the `paintRest` if it is OK to `POST` to the `/api/tasks/` endpoint, and if it is, we post that we are not premium users. And, no it is not as simple as changing that value to true to get premium styles. then, we get the `taskPath`, by the response's `id` attribute.
+If there was any errors, we go down to the catch block. if the error was a TypeError, we call the `runTask` function. The thing is, we are inside the declaration of the `runTask` function. this is known as recursion, and don't try to wrap your head around it. 
 
 The next block is really three small ones.
 ```javascript
@@ -1726,7 +1726,7 @@ after we have gotten the `id`, we call the updateFn with some more data, and the
 
 Also, on the second part, it sets `style` to `+style`. this coerces whatever the variable `style` is into a number. it acts as 0+`style`,
 
-the third section checks if we are using an inputImage, and if we are, it sets the apropriate values on the object. we also set ti equal to 1000
+the third section checks if we are using an inputImage, and if we are, it sets the appropriate values on the object. we also set ti equal to 1000
 
 again with the bad code, is the next block
 ```javascript
@@ -1811,8 +1811,8 @@ while (!task.result) {
 This loop will run while the `task.result` attribute is falsey. we will try to `GET` from the `taskPath`, and if it fails, log it out to the console.  
 If the `inter` variable is set, we will make the download directory, `downloadDir`, and then for each item in the list of photos generated, check if it has already been downloaded, or if it is the final one. if it is, it will skip it. if it isn't, it will set the `n`th item in `interPaths` to the `downloadDir`, joined with `n`.jpg. 
 We then download it, to the path, and set the `interDownloads`'s `n`th item to it.   
-notice how we have a `then` clause, but no `await`. that is because we are using asyncronus functions the way they were meant to be used. we store the `Promise` item that returns, and then continue on, without blocking everything from continuing.  
-we then call our `updateFn` with some more data, and wait for 1000 miliseconds, or one second.
+notice how we have a `then` clause, but no `await`. that is because we are using asynchronous functions the way they were meant to be used. we store the `Promise` item that returns, and then continue on, without blocking everything from continuing.  
+we then call our `updateFn` with some more data, and wait for 1000 milliseconds, or one second.
 
 After that finishes, and we have our `task.result`, we only have a few things left.
 ```javascript
@@ -1856,7 +1856,7 @@ the next block is downloading all of the images.
     }
 ```
 the first block downloads the final image, and then sets some other stuff.  
-afterwards, we await all of the `interDownloads`, essentialy waiting for all of them to be resolved.
+afterwards, we await all of the `interDownloads`, essentially waiting for all of them to be resolved.
 
 the next part catches any errors, and throws another one, this time fancier.
 
@@ -1886,7 +1886,7 @@ module.exports.download = require("./download.js");
 ```
 the first line makes sure that the task's result is not null. if it is, there is a big problem, but hopefully that never hast to get used.  
 We then call our `updateFn` with yet more data.
-and finaly, we return a bunch of data about the results.
+and Finally, we return a bunch of data about the results.
 We are done with the `runTask` function, but not the whole file. We have two more lines, that mostly just "carry on" the imports of the `styles` and `download` libraries.
 
 ## identify.js
@@ -2008,7 +2008,7 @@ function identify(identifyKey) {
     }
 ```
 
-We define an `identify` function, with an `identifyKey` parameter. If we didn't pass it in, we check if there was one defined before. in this case, this always succedees, but it is nice to have some checks in place.  
+We define an `identify` function, with an `identifyKey` parameter. If we didn't pass it in, we check if there was one defined before. in this case, this always succeeds, but it is nice to have some checks in place.  
 
 the next part is where we actually do the identification request.
 ```javascript   
@@ -2054,7 +2054,7 @@ so, in this part, we get the response, and set the cache equal to the id token, 
 module.exports = identify;
 ```
 this else statement will run if the time has not run out on a given token. We just resolve whatever is in the `identifyCache`. 
-Finaly, we export the identify function.
+Finally, we export the identify function.
 
 ## final notes.
 While there are more files, most of them are either boilerplate, or too short to deserve an entire section. 
@@ -2065,6 +2065,6 @@ While there are more files, most of them are either boilerplate, or too short to
 [^4]: This is fairly simple to reason through, but the maximum between zero and a negative number will always be zero, and the maximum of a positive number and zero will always be the positive number. if you pass in a zero, it will return zero. whether that zero is the constant or the other value is up to the implementation.  
 [^5]:  This is known as the Unix epoch, and on many systems, it is essentially T=0, so this time comes up a lot.  
 [^6]: **I**ntegrated **D**evelopment **E**nvironment. It is a text editor with more features designed for developing things.  
-[^7]: Anything that is truthy will evaluate to true in an "`if`" statement. however, it is not neccicaryily ***Strictly*** equal to `true`.  
+[^7]: Anything that is truthy will evaluate to true in an "`if`" statement. however, it is not necessarily ***Strictly*** equal to `true`.  
 [^8]: E.g. thisIsCamelCase. this is in contrast to snake case, E.g. this_is_snake_case, or some other thing.  
-[^9]: Aplication program interface. it's used a lot in a lot of places, and can't really be summed up in a single sentance, or at least i can't.
+[^9]: Application program interface. it's used a lot in a lot of places, and can't really be summed up in a single sentence, or at least i can't.
