@@ -2056,6 +2056,8 @@ module.exports = identify;
 this else statement will run if the time has not run out on a given token. We just resolve whatever is in the `identifyCache`. 
 Finaly, we export the identify function.
 
+## final notes.
+While there are more files, most of them are either boilerplate, or too short to deserve an entire section. 
 # Footnotes
 [^1]: If you were paying close attention, you may have noticed that the blocks were getting indented further and further. this is just how Python does its control flow, and block/scope dictation.  
 [^2]: The reasoning behind having the limit be at 2 rather than one is that Windows computers use `\r\n`, as opposed to UNIX's `\n`.  
