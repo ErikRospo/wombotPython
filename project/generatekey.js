@@ -1,3 +1,6 @@
 const identify = require("./javascript/identify");
 
-identify().finally(()=>{console.log(identify())})
+(async ()=>{
+await identify()
+console.log(await identify())
+})()

@@ -8,6 +8,7 @@
 4. [Main.js](https://erikrospo.github.io/wombotPython/using_mod/videoMaker/Second%20Way/explanation#mainjs)
 5. [Sequential.js](https://erikrospo.github.io/wombotPython/using_mod/videoMaker/Second%20Way/explanation#sequentialjs)
 6. [Index.js](https://erikrospo.github.io/wombotPython/using_mod/videoMaker/Second%20Way/explanation#indexjs)
+7. [Identify.js](https://erikrospo.github.io/wombotPython/using_mod/videoMaker/Second%20Way/explanation#identifyjs)
 
 ## run.py
 this is a wrapper for all functionality of the application. It gives an estimation of the duration that a given configuration will take, and runs both the actual image generation and the video maker.  
@@ -1887,6 +1888,173 @@ the first line makes sure that the task's result is not null. if it is, there is
 We then call our `updateFn` with yet more data.
 and finaly, we return a bunch of data about the results.
 We are done with the `runTask` function, but not the whole file. We have two more lines, that mostly just "carry on" the imports of the `styles` and `download` libraries.
+
+## identify.js
+first, the file
+```javascript
+const Rest = require("./rest.js");
+const fs = require("fs");
+const path = require("path");
+const SECRET_PATH = path.join(path.dirname(__filename), "secret.json");
+
+let identifyHostname = "identitytoolkit.googleapis.com";
+let identifySecretKey = "AIzaSyDCvp5MTJLUdtBYEKYWXJrlLzu1zuKM6Xw";
+
+if (fs.existsSync(SECRET_PATH)) {
+    let secret = JSON.parse(fs.readFileSync(SECRET_PATH, "utf8"));
+
+    if (secret.identify_key) identifySecretKey = secret.identify_key;
+    if (secret.identify_hostname) identifyHostname = secret.identify_hostname;
+}
+
+let identifyRest = new Rest(identifyHostname);
+
+let identifyCache;
+let identifyTimeout = 0;
+function identify(identifyKey) {
+    if (!identifyKey) {
+        if (identifySecretKey) {
+            identifyKey = identifySecretKey;
+        } else {
+            throw new Error(
+                "No identify key provided and no secret.json found!"
+            );
+        }
+    }
+
+    if (new Date().getTime() >= identifyTimeout) {
+        // eslint-disable-next-line no-unused-vars, no-async-promise-executor
+        return new Promise(async (resolve, _reject) => {
+            async function tryToGetRes(){
+                try{
+                
+                    let res = await identifyRest.post(
+                        "/v1/accounts:signUp?key=" + identifyKey,
+                        {
+                            key: identifyKey
+                        }
+                    );
+                    return res;
+                } catch{
+                    await new Promise((res) => setTimeout(res, 2000));
+                    return await tryToGetRes();
+                }
+            }
+            let res=tryToGetRes();
+            identifyCache = res.idToken;
+            identifyTimeout =
+                new Date().getTime() + 1000 * +res.expiresIn - 30000;
+            resolve(identifyCache);
+        });
+    } else {
+        return new Promise((resolve) => {
+            resolve(identifyCache);
+        });
+    }
+}
+
+module.exports = identify;
+```
+
+Again, the first few lines are imports,
+```javascript
+const Rest = require("./rest.js");
+const fs = require("fs");
+const path = require("path");
+```
+we get the `rest.js` module, as well as the `fs` and `path` modules.
+
+the next few lines are defining some variables.
+```javascript
+const SECRET_PATH = path.join(path.dirname(__filename), "secret.json");
+
+let identifyHostname = "identitytoolkit.googleapis.com";
+let identifySecretKey = "AIzaSyDCvp5MTJLUdtBYEKYWXJrlLzu1zuKM6Xw";
+```
+the first line is getting the path to a file in the same directory named `secret.json`. we also define a hostname and a not-so-secret key.  
+
+The next part is if you had a different set of secrets.
+```javascript
+if (fs.existsSync(SECRET_PATH)) {
+    let secret = JSON.parse(fs.readFileSync(SECRET_PATH, "utf8"));
+
+    if (secret.identify_key) identifySecretKey = secret.identify_key;
+    if (secret.identify_hostname) identifyHostname = secret.identify_hostname;
+}
+```
+it checks if there is a file at `secret.json` in the same directory, and if there is, it reads it, parses it, and sets some variables.
+
+we then declare the hostname and more.
+```javascript
+let identifyRest = new Rest(identifyHostname);
+
+let identifyCache;
+let identifyTimeout = 0;
+```
+we define `identifyRest`, as well as `identifyCache`, and `identifyTimeout`.
+
+
+Now, actually getting into the identification part.
+```javascript
+function identify(identifyKey) {
+    if (!identifyKey) {
+        if (identifySecretKey) {
+            identifyKey = identifySecretKey;
+        } else {
+            throw new Error(
+                "No identify key provided and no secret.json found!"
+            );
+        }
+    }
+```
+
+We define an `identify` function, with an `identifyKey` parameter. If we didn't pass it in, we check if there was one defined before. in this case, this always succedees, but it is nice to have some checks in place.  
+
+the next part is where we actually do the identification request.
+```javascript   
+    if (new Date().getTime() >= identifyTimeout) {
+        // eslint-disable-next-line no-unused-vars, no-async-promise-executor
+        return new Promise(async (resolve, _reject) => {
+            async function tryToGetRes(){
+                try{
+                
+                    let res = await identifyRest.post(
+                        "/v1/accounts:signUp?key=" + identifyKey,
+                        {
+                            key: identifyKey
+                        }
+                    );
+                    return res;
+                } catch{
+                    await new Promise((res) => setTimeout(res, 2000));
+                    return await tryToGetRes();
+                }
+            }
+```
+we check if the time is greater than the timeout, and return a promise that makes a request that will get the identification from the host.
+
+```javascript
+            let res=tryToGetRes();
+            identifyCache = res.idToken;
+            identifyTimeout =
+                new Date().getTime() + 1000 * +res.expiresIn - 30000;
+            resolve(identifyCache);
+        });
+```
+so, in this part, we get the response, and set the cache equal to the id token, and the timeout equal to some time in the future. then, we resolve the promise.
+
+```javascript
+    } else {
+        return new Promise((resolve) => {
+            resolve(identifyCache);
+        });
+    }
+}
+
+module.exports = identify;
+```
+this else statement will run if the time has not run out on a given token. We just resolve whatever is in the `identifyCache`. 
+Finaly, we export the identify function.
 
 # Footnotes
 [^1]: If you were paying close attention, you may have noticed that the blocks were getting indented further and further. this is just how Python does its control flow, and block/scope dictation.  
