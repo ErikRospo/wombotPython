@@ -4,3 +4,4 @@ generated/
 path.txt
 __pycache__
 *.bak
+old
