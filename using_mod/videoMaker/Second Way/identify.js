@@ -40,6 +40,7 @@ function identify(identifyKey) {
                             key: identifyKey
                         }
                     );
+                    // console.log(res)
                     return res;
                 } catch{
                     await new Promise((res) => setTimeout(res, 2000));

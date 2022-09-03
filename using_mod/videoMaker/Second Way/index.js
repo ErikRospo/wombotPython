@@ -82,7 +82,8 @@ module.exports.task = async function runTask(
     paintRest.customHeaders = {
         Authorization: "bearer " + id,
         Origin: "https://app.wombo.art",
-        Referer: "https://app.wombo.art/"
+        Referer: "https://app.wombo.art/",
+        "x-app-version": "WEB-1.90.1"
     };
 
     updateFn({
@@ -98,15 +99,14 @@ module.exports.task = async function runTask(
             .then(() => paintRest.post("/api/tasks/", { premium: false }));
         taskPath = "/api/tasks/" + task.id;
     } catch (err) {
-        if (typeof err == TypeError) {
-            return await runTask(
-                prompt,
-                style,
-                updateFn,
-                settings,
-                inputImage
-            );
-        }
+        console.log(err)
+        return await runTask(
+            prompt,
+            style,
+            updateFn,
+            settings,
+            inputImage
+        );
     }
     
     updateFn({

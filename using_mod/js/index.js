@@ -134,7 +134,6 @@ module.exports = async function task(
       task,
       inter: inter_finished
     });
-<<<<<<< Updated upstream
 
     let download_path = path.join(download_dir, `${task.id}-final.jpg`);
 
@@ -164,52 +163,6 @@ module.exports = async function task(
         inter: inter_finished,
     };
 }
-=======
-    await new Promise(res => setTimeout(res, 1000));
-  }
-
-  update_fn({
-    state: "generated",
-    id,
-    task,
-    url: task.result.final,
-    inter: inter_finished
-  });
-
-  let download_path = path.join(download_dir, `${task.id}-final.jpg`);
-
-  try {
-    console.log(task);
-    if (final) await download(task.result.final, download_path);
-    if (inter) await Promise.all(inter_downloads);
-  } catch (err) {
-    console.error(err);
-    throw new Error(
-      `Error while downloading results:\n${err.toFriendly
-        ? err.toFriendly()
-        : err.toString()}`
-    );
-  }
-
-  update_fn({
-    state: "downloaded",
-    id,
-    task,
-    url: task.result.final,
-    path: final ? download_path : null,
-    inter: inter_finished
-  });
-
-  return {
-    state: "downloaded",
-    id,
-    task,
-    url: task.result.final,
-    path: final ? download_path : null,
-    inter: inter_finished
-  };
-};
->>>>>>> Stashed changes
 
 module.exports.styles = require("./styles.js");
 module.exports.download = require("./download.js");

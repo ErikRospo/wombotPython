@@ -1,9 +1,11 @@
 const https = require("https");
 const RestError = (module.exports.RestError = class RestError extends Error {
-    constructor(hostname, path, method, ...args) {
+    constructor(hostname, path, statusCode,statusMessage, ...args) {
         super(...args);
         this.hostname = hostname;
         this.path = path;
+        this.statusCode=statusCode;
+        this.statusMessage=statusMessage;
 
         if (Error.captureStackTrace) {
             Error.captureStackTrace(this, RestError);
@@ -13,7 +15,7 @@ const RestError = (module.exports.RestError = class RestError extends Error {
     }
 
     toFriendly() {
-        return `RestError(hostname = "${this.hostname}", path = "${this.path}"): "${this.message}"`;
+        return `RestError(hostname = "${this.hostname}", path = "${this.path}", statusCode="${this.statusCode}", statusMessage="${this.statusMessage}"): "${this.message}"`;
     }
 });
 
@@ -133,7 +135,7 @@ const Rest = (module.exports = class Rest {
                 });
                 res.on("end", () => {
                     if (res.statusCode !== 200)
-                        reject(new RestError(this.hostname, path, data));
+                        reject(new RestError(this.hostname, path,res.statusCode,res.statusMessage,data));
                     else {
                         try {
                             resolve(JSON.parse(data));
@@ -143,7 +145,9 @@ const Rest = (module.exports = class Rest {
                     }
                 });
                 res.on("error", (err) => {
-                    reject(new RestError(this.hostname, path, err));
+                    reject(new RestError(this.hostname, path,res.statusCode,res.statusMessage,data));
+                    
+                    // reject(new RestError(this.hostname, path, err));
                 });
             });
 
@@ -185,7 +189,9 @@ const Rest = (module.exports = class Rest {
                 });
                 res.on("end", () => {
                     if (res.statusCode !== 200)
-                        reject(new RestError(this.hostname, path, data));
+                        reject(new RestError(this.hostname, path,res.statusCode,res.statusMessage,data));
+                    
+                        // reject(new RestError(this.hostname, path, data));
                     else {
                         try {
                             resolve(JSON.parse(data));
@@ -195,7 +201,9 @@ const Rest = (module.exports = class Rest {
                     }
                 });
                 res.on("error", (err) => {
-                    reject(new RestError(this.hostname, path, err));
+                    reject(new RestError(this.hostname, path,res.statusCode,res.statusMessage,data));
+                    
+                    // reject(new RestError(this.hostname, path, err));
                 });
             });
 
