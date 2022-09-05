@@ -74,18 +74,22 @@ module.exports.task = async function runTask (
     mediastoreid = res.mediastore_uid
   }
   paintRest.customHeaders = {
-    Authorization: 'bearer ' + id,
-    Origin: 'https://app.wombo.art',
-    Referer: 'https://app.wombo.art/',
-    'content-type': 'text/plain;charset=utf-8',
-    'user-agent':
-      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36',
-    'x-app-version': 'WEB-1.90.1',
-    'accept-language': 'en-US,en;q=0.9,en-GB-oxendict;q=0.8,en-AU;q=0.7',
-    "cache-control":"no-cache",
-    "sec-ch-ua":'"Chromium";v="104", " Not A;Brand";v="99", "Google Chrome";v="104"',
-    "pragma":"no-cache"
-  }
+    "accept": "*/*",
+    "accept-language": "en-US,en;q=0.9,en-GB-oxendict;q=0.8,en-AU;q=0.7",
+    "authorization": `bearer ${id}`,
+    "cache-control": "no-cache",
+    "pragma": "no-cache",
+    "sec-ch-ua": "\"Chromium\";v=\"104\", \" Not A;Brand\";v=\"99\", \"Google Chrome\";v=\"104\"",
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": "\"Windows\"",
+    "sec-fetch-dest": "empty",
+    "sec-fetch-mode": "cors",
+    "sec-fetch-site": "cross-site",
+    "x-app-version": "WEB-1.90.1",
+    "Referer": "https://app.wombo.art/",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+    "origin":"https://app.wombo.art/"
+  },
 
   updateFn({
     state: 'authenticated',
@@ -95,9 +99,27 @@ module.exports.task = async function runTask (
   let task
   let taskPath
   try {
-    task = await paintRest
-      .options('/api/tasks/', 'POST')
-      .then(() => paintRest.post('/api/tasks/', { premium: false }))
+//     fetch("https://paint.api.wombo.ai/api/tasks/86c5f074-f733-45a3-80af-bfa0d1ad28d2", {
+//   "headers": {
+//     "accept": "*/*",
+//     "accept-language": "en-US,en;q=0.9,en-GB-oxendict;q=0.8,en-AU;q=0.7",
+//     "authorization": "bearer eyJhbGciOiJSUzI1NiIsImtpZCI6ImVkNmJjOWRhMWFmMjM2ZjhlYTU2YTVkNjIyMzQwMWZmNGUwODdmMTEiLCJ0eXAiOiJKV1QifQ.eyJwcm92aWRlcl9pZCI6ImFub255bW91cyIsImlzcyI6Imh0dHBzOi8vc2VjdXJldG9rZW4uZ29vZ2xlLmNvbS9wYWludC1wcm9kIiwiYXVkIjoicGFpbnQtcHJvZCIsImF1dGhfdGltZSI6MTY2MjE4MjUxOSwidXNlcl9pZCI6ImtnRnd4MURwTW1UN1c4OWswN1p0TzFoYTZmbjIiLCJzdWIiOiJrZ0Z3eDFEcE1tVDdXODlrMDdadE8xaGE2Zm4yIiwiaWF0IjoxNjYyNDExMDQ5LCJleHAiOjE2NjI0MTQ2NDksImZpcmViYXNlIjp7ImlkZW50aXRpZXMiOnt9LCJzaWduX2luX3Byb3ZpZGVyIjoiYW5vbnltb3VzIn19.gHPKGmyRPvBuZM5RBFPbxGPQDH3XixcfRVCsaHaKGx94dt85rrf6_sDQj5FyW0LM8XTct7Ao2zIeKzlZf3SnIMVLOZQBTf8_GXt42eqoDy4r8b1wInLaaakyPiPQOlfwojBiAF2Id2_70aa9iZZZIeUKhKaF57KHl_o1D3yeJdHFJvjs9gbA_eqS57XJt13Md7MhzaZW00FijXPat-rwHgYQTngb-CU1md8RMJRxpyCFa-881mJ0jpxAwrfQEozo1GmOURYTzKPRHxAgyB7_Xr-KxsdnsnsVvivZQpy9TY-2S7K4wNOwDGOdQzzrJtnffBSzJiFf2G5bhdV7-dS2Dw",
+//     "cache-control": "no-cache",
+//     "pragma": "no-cache",
+//     "sec-ch-ua": "\"Chromium\";v=\"104\", \" Not A;Brand\";v=\"99\", \"Google Chrome\";v=\"104\"",
+//     "sec-ch-ua-mobile": "?0",
+//     "sec-ch-ua-platform": "\"Windows\"",
+//     "sec-fetch-dest": "empty",
+//     "sec-fetch-mode": "cors",
+//     "sec-fetch-site": "cross-site",
+//     "x-app-version": "WEB-1.90.1",
+//     "Referer": "https://app.wombo.art/",
+//     "Referrer-Policy": "strict-origin-when-cross-origin"
+//   },
+//   "body": null,
+//   "method": "GET"
+// });
+    task = await paintRest.post('/api/tasks/', { premium: false },"POST",{"content-type":"text/plain;charset=utf-8"})
     taskPath = '/api/tasks/' + task.id
   } catch (err) {
     console.log(err)
@@ -135,7 +157,7 @@ module.exports.task = async function runTask (
     try {
       task = await paintRest
         .options(taskPath, 'PUT')
-        .then(() => paintRest.put(taskPath, inputObject))
+        .then(() => paintRest.put(taskPath, inputObject,{"content-type":"text/plain;charset=utf-8"}))
       updateFn({
         state: 'submitted',
         id,
@@ -157,10 +179,11 @@ module.exports.task = async function runTask (
   let interDownloads = []
   let interPaths = []
   let interFinished = []
-  while (!task.result) {
+  while (task.result===null) {
     try {
       task = await paintRest.get(taskPath, 'GET')
-      console.log(task)
+        
+      console.log(task.state)
     } catch (err) {
       console.log('Error while getting task')
     }

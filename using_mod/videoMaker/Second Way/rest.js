@@ -118,7 +118,6 @@ const Rest = (module.exports = class Rest {
                 path,
                 method,
                 headers: {
-                    "Cookie": this.getCookies(),
                     "Content-Type": "application/json; charset=utf-8",
                     "Content-Length": Buffer.byteLength(postData),
                     ...this.customHeaders,
@@ -174,12 +173,11 @@ const Rest = (module.exports = class Rest {
                 path,
                 method,
                 headers: {
-                    Cookie: this.getCookies(),
                     ...this.customHeaders,
                     ...requestHeaders
                 }
             };
-
+            console.log(options)
             const req = https.request(options, (res) => {
                 this.handleCookies(res.headers["set-cookie"]);
                 let data = "";
@@ -188,6 +186,7 @@ const Rest = (module.exports = class Rest {
                     data += chunk;
                 });
                 res.on("end", () => {
+                    console.log(res)
                     if (res.statusCode !== 200)
                         reject(new RestError(this.hostname, path,res.statusCode,res.statusMessage,data));
                     
@@ -215,8 +214,8 @@ const Rest = (module.exports = class Rest {
         });
     }
 
-    put(path, data) {
-        return this.post(path, data, "PUT");
+    put(path, data,headers) {
+        return this.post(path, data, "PUT",headers);
     }
 
     options(path, requestMethod) {
