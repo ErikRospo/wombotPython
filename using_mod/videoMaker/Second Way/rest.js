@@ -177,7 +177,6 @@ const Rest = (module.exports = class Rest {
                     ...requestHeaders
                 }
             };
-            console.log(options)
             const req = https.request(options, (res) => {
                 this.handleCookies(res.headers["set-cookie"]);
                 let data = "";
@@ -186,7 +185,6 @@ const Rest = (module.exports = class Rest {
                     data += chunk;
                 });
                 res.on("end", () => {
-                    console.log(res)
                     if (res.statusCode !== 200)
                         reject(new RestError(this.hostname, path,res.statusCode,res.statusMessage,data));
                     

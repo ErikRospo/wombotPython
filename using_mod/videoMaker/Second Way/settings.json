@@ -1,11 +1,1 @@
-{
-  "style": 12,
-  "samplePath": "./lyrics_sample.txt",
-  "quiet": false,
-  "final": false,
-  "inter": false,
-  "logPrompts": false,
-  "weighting": 1,
-  "times": 1,
-  "tlq": false
-}
+{"style": 12, "samplePath": "./lyrics_sample.txt", "quiet": false, "final": false, "inter": false, "logPrompts": false, "weighting": 5, "times": 4, "tlq": false}

@@ -183,7 +183,6 @@ module.exports.task = async function runTask (
     try {
       task = await paintRest.get(taskPath, 'GET')
         
-      console.log(task.state)
     } catch (err) {
       console.log('Error while getting task')
     }
