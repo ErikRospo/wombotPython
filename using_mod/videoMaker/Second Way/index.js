@@ -7,7 +7,7 @@ const path = require('path');
 const { writeFile, writeFileSync } = require('fs');
 
 let paintRest = new Rest('paint.api.wombo.ai', 100)
-let imagePaintRest = new Rest('app.wombo.art', 100)
+let imagePaintRest = new Rest('www.wombo.art', 100)
 
 /**
  * @param {string} prompt
@@ -152,7 +152,7 @@ module.exports.task = async function runTask (
     }
   }
   let ti = 1000
-  console.log(`https://${paintRest.hostname}${taskPath}`)
+  //console.log(`https://${paintRest.hostname}${taskPath}`)
   while (!task) {
     try {
       task = await paintRest
@@ -183,7 +183,7 @@ module.exports.task = async function runTask (
     try {
       task = await paintRest.get(taskPath, 'GET')
         
-      console.log(task.state)
+      //console.log(task.state)
     } catch (err) {
       console.log('Error while getting task')
     }

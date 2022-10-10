@@ -10,7 +10,10 @@
     "type": "git",
     "url": "git+https://github.com/ErikRospo/WombotPython.git"
   },
-  "keywords": ["unofficial-api", "wombo-dream"],
+  "keywords": [
+    "unofficial-api",
+    "wombo-dream"
+  ],
   "author": "Erik Rospo",
   "module": "wombot-video",
   "license": "MIT",
@@ -19,6 +22,7 @@
   },
   "homepage": "https://github.com/ErikRospo/WombotPython.git",
   "dependencies": {
+    "mkdirp": "^1.0.4",
     "node-fetch": "^3.2.10"
   },
   "devDependencies": {
