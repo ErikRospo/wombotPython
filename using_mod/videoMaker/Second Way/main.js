@@ -10,9 +10,12 @@ let samplesArray = fs
     .split("\n")
     .filter((v) => {
         return v.length>2;
-    }).filter((v) => {
-        return (v.indexOf("#")===-1)&(v.indexOf("[")===-1)&(v.indexOf("]")===-1);
     });
+samplesArray.slice(0,samplesArray.indexOf("[STOP]")-1)
+.filter((v) => {
+        return (v.indexOf("#")===-1)&(v.indexOf("[")===-1)&(v.indexOf("]")===-1);
+    })
+
 if (settings.logPrompts) console.log(samplesArray);
 const style = settings.style;
 

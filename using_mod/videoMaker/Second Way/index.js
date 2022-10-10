@@ -183,11 +183,7 @@ module.exports.task = async function runTask (
     try {
       task = await paintRest.get(taskPath, 'GET')
         
-      //console.log(task.state)
-    } catch (err) {
-      console.log('Error while getting task')
     }
-    // if (task.state === "pending") console.warn("Warning: task is pending");
     if (inter) {
       await mkdirp(`${downloadDir}/`)
       for (let n = 0; n < task.photo_url_list.length; n++) {

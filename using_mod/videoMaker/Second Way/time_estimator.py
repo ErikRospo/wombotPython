@@ -11,6 +11,8 @@ def calculate_expected_time():
         prompts=f.readlines()
         x=0
         for n in prompts:
+            if n=="[STOP]":
+                break
             if len(n)>2 and "#" not in n and "[" not in n and "]" not in n:
                 x+=1
         numPrompts=x
