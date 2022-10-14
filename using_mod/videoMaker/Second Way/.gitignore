@@ -5,3 +5,4 @@ path.txt
 __pycache__
 *.bak
 old
+*.swp
