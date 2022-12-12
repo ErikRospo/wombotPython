@@ -8,19 +8,19 @@ Existing UI: [Replicate](https://replicate.com/stability-ai/stable-diffusion-inp
 ## idea
 To achieve inpainting, we can just use the existing implementation. For outpainting, we could scale down part of the image, then generate the new one with the scaled down part, then split the new one up into 4 parts, and inpaint those to re-upscale that. then we could merge it all back down to one image.
 
-alternatively, after splitting it, we could mask out a grid of pixels. e.g.
-xxxxxxxxxxxx
-xoxoxoxoxoxo
-xxxxxxxxxxxx
-xoxoxoxoxoxo
-xxxxxxxxxxxx
-xoxoxoxoxoxo
-xxxxxxxxxxxx
-xoxoxoxoxoxo
-then, inpaint.
-x= masked
-o= image
-^^ not sure how SD will react.
+alternatively, after splitting it, we could mask out a grid of pixels. e.g.  
+`xxxxxxxxxxxx`   
+`xoxoxoxoxoxo`  
+`xxxxxxxxxxxx`   
+`xoxoxoxoxoxo`   
+`xxxxxxxxxxxx`   
+`xoxoxoxoxoxo`  
+`xxxxxxxxxxxx`   
+`xoxoxoxoxoxo`  
+then, inpaint.  
+x= masked  
+o= image  
+^^ not sure how SD will react.  
 
 we could scale up the image by 2x on all sides.
 then, split it up into 4 images.
