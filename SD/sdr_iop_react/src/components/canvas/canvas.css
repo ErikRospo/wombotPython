@@ -1,0 +1,17 @@
+#canvas-canvas{
+    position: absolute;
+    top:0;
+    left:0;
+    z-index: 0;
+}
+#clickable-image{
+    z-index:-2;
+    position: absolute;
+    top:0;
+    left:0;
+    
+}
+#canvas-container{
+    background-color: grey;
+    
+}
