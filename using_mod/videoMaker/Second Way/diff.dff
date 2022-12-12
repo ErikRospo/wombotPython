@@ -1,0 +1,317 @@
+const Rest = require("./rest.js");			      |	/* eslint-disable no-constant-condition */
+const identify = require("./identify.js");		      |	const Rest = require('./rest.js')
+const download = require("./download.js");		      |	const identify = require('./identify.js')
+const mkdirp = require("mkdirp");			      |	const download = require('./download.js')
+const path = require("path");				      |	const mkdirp = require('mkdirp')
+const fs = require("fs");				      |	const path = require('path');
+							      >	const { writeFile, writeFileSync } = require('fs');
+
+let paint_rest = new Rest("paint.api.wombo.ai", 100);	      |	let paintRest = new Rest('paint.api.wombo.ai', 100)
+let image_paint_rest = new Rest("www.wombo.art", 100);	      |	let imagePaintRest = new Rest('www.wombo.art', 100)
+module.exports = async function task(			      |
+							      >	/**
+							      >	 * @param {string} prompt
+							      >	 * @param {number} style
+							      >	 * @param {function} updateFn
+							      >	 * @param {object} settings
+							      >	 * @param {object} inputImage
+							      >	 * @param {string} photoDownloads
+							      >	 * @param {string} _prefix
+							      >	 * @returns {object} task
+							      >	 */
+							      >	module.exports.task = async function runTask (
+	prompt,							  prompt,
+	style,							  style,
+	update_fn = () => {},				      |	  // eslint-disable-next-line no-empty-function
+							      >	  updateFn = () => {},
+	settings = {},						  settings = {},
+	inputImage = {},				      |	  inputImageArg = {},
+	photo_downloads = ""				      |	  _prefix = ''
+) {								) {
+	let { final = true, inter = false, download_dir = "./ |	  let { final = true, inter = false, downloadDir = './generat
+	let {							  let {
+		input_image = false,			      |	    inputImage = false,
+		media_suffix = null,			      |	    mediaSuffix = null,
+		image_weight = "HIGH"			      |	    imageWeight = 'HIGH'
+	} = inputImage;					      |	  } = inputImageArg
+	if (final || inter) mkdirp(download_dir);	      |	  let id
+							      |	  let prefix = _prefix
+	let id;						      <
+	try {							  try {
+		id = await identify();			      |	    id = await identify()
+	} catch (err) {						  } catch (err) {
+		console.error(err);			      |	    console.error(err)
+		throw new Error(				    throw new Error(
+			`Error while sending prompt:\n${err.t	      `Error while sending prompt:\n${err.toFriendly
+				? err.toFriendly()		        ? err.toFriendly()
+				: err.toString()}`		        : err.toString()}`
+		);					      |	    )
+	}							  }
+	let mediastoreid;				      |	  let mediastoreid
+	if (input_image) {				      |	  if (inputImage) {
+		image_paint_rest.custom_headers = {	      |	    imagePaintRest.customHeaders = {
+			Authorization: "bearer " + id,	      |	      Authorization: 'bearer ' + id,
+			Origin: "https://app.wombo.art",      |	      Origin: 'https://app.wombo.art',
+			Referer: "https://app.wombo.art/",    |	      Referer: 'https://app.wombo.art/',
+			"Cache-control": "no-cache",	      |	      'Cache-control': 'no-cache',
+			"Sec-fetch-mode": "cors",	      |	      'Sec-fetch-mode': 'cors',
+			"sec-fetch-site": "same-origin",      |	      'sec-fetch-site': 'same-origin',
+			"User-Agent":			      |	      'User-Agent':
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKi |	        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKi
+			Pragma: "no-cache",		      |	      Pragma: 'no-cache',
+			Accept: "*/*",			      |	      Accept: '*/*',
+			"Accept-encoding": "gzip, deflate, br |	      'Accept-encoding': 'gzip, deflate, br',
+			"Accept-language": "en-US,en;q=0.9",  |	      'Accept-language': 'en-US,en;q=0.9',
+			"Aontent-type": "text/plain;charset=U |	      'Aontent-type': 'text/plain;charset=UTF-8'
+		};					      |	    }
+		let created = Date.now();		      |	    let created = Date.now()
+		let expire = Date.now() + 960000;	      |	    let expire = Date.now() + 960000
+
+		// image_paint_rest.handle_cookies(`_dd_s=rum |	    imagePaintRest.cookies[
+		image_paint_rest.cookies[		      |	      '_dd_s'
+			"_dd_s"				      |	    ] = `rum=1&id=323368bd-45a7-4b9d-acf2-89cd59a16777&create
+		] = `rum=1&id=323368bd-45a7-4b9d-acf2-89cd59a |	    let paintRestPayload = `{"image":"${inputImage}","media_s
+		// image_paint_rest.cookies['expires']=String |	    let res = await imagePaintRest.post('/api/mediastore', pa
+		// image_paint_rest.cookies['created']=String |	    mediastoreid = res.mediastore_uid
+		// image_paint_rest.cookies['id']='323368bd-4 <
+		let paint_rest_payload = `{"image":"${input_i <
+		//task = await paint_rest.options("/api/tasks <
+		//.then(() => paint_rest.post("/api/tasks/",  <
+		let res = await image_paint_rest.post(	      <
+			"/api/mediastore",		      <
+			paint_rest_payload		      <
+		);					      <
+		mediastoreid = res.mediastore_uid;	      <
+	}							  }
+	paint_rest.custom_headers = {			      |	  paintRest.customHeaders = {
+		Authorization: "bearer " + id,		      |	    "accept": "*/*",
+		Origin: "https://app.wombo.art",	      |	    "accept-language": "en-US,en;q=0.9,en-GB-oxendict;q=0.8,e
+		Referer: "https://app.wombo.art/"	      |	    "authorization": `bearer ${id}`,
+	};						      |	    "cache-control": "no-cache",
+							      >	    "pragma": "no-cache",
+							      >	    "sec-ch-ua": "\"Chromium\";v=\"104\", \" Not A;Brand\";v=
+							      >	    "sec-ch-ua-mobile": "?0",
+							      >	    "sec-ch-ua-platform": "\"Windows\"",
+							      >	    "sec-fetch-dest": "empty",
+							      >	    "sec-fetch-mode": "cors",
+							      >	    "sec-fetch-site": "cross-site",
+							      >	    "x-app-version": "WEB-1.90.1",
+							      >	    "Referer": "https://app.wombo.art/",
+							      >	    "Referrer-Policy": "strict-origin-when-cross-origin",
+							      >	    "origin":"https://app.wombo.art/"
+							      >	  },
+
+	update_fn({					      |	  updateFn({
+		state: "authenticated",			      |	    state: 'authenticated',
+		id						    id
+	});						      |	  })
+
+	let task;					      |	  let task
+							      >	  let taskPath
+	try {							  try {
+		task = await paint_rest			      |	//     fetch("https://paint.api.wombo.ai/api/tasks/86c5f074-f
+			.options("/api/tasks/", "POST")	      |	//   "headers": {
+			.then(() => paint_rest.post("/api/tas |	//     "accept": "*/*",
+							      >	//     "accept-language": "en-US,en;q=0.9,en-GB-oxendict;q=0.
+							      >	//     "authorization": "bearer eyJhbGciOiJSUzI1NiIsImtpZCI6I
+							      >	//     "cache-control": "no-cache",
+							      >	//     "pragma": "no-cache",
+							      >	//     "sec-ch-ua": "\"Chromium\";v=\"104\", \" Not A;Brand\"
+							      >	//     "sec-ch-ua-mobile": "?0",
+							      >	//     "sec-ch-ua-platform": "\"Windows\"",
+							      >	//     "sec-fetch-dest": "empty",
+							      >	//     "sec-fetch-mode": "cors",
+							      >	//     "sec-fetch-site": "cross-site",
+							      >	//     "x-app-version": "WEB-1.90.1",
+							      >	//     "Referer": "https://app.wombo.art/",
+							      >	//     "Referrer-Policy": "strict-origin-when-cross-origin"
+							      >	//   },
+							      >	//   "body": null,
+							      >	//   "method": "GET"
+							      >	// });
+							      >	    task = await paintRest.post('/api/tasks/', { premium: fal
+							      >	    taskPath = '/api/tasks/' + task.id
+	} catch (err) {						  } catch (err) {
+		console.error(err);			      |	    console.log(err)
+		throw new Error(			      |	    return await runTask(prompt, style, updateFn, settings, i
+			`Error while allocating a new task:\n <
+				? err.toFriendly()	      <
+				: err.toString()}`	      <
+		);					      <
+	}							  }
+
+	let task_path = "/api/tasks/" + task.id;	      |	  updateFn({
+							      |	    state: 'allocated',
+	update_fn({					      <
+		state: "allocated",			      <
+		id,						    id,
+		task						    task
+	});						      |	  })
+	let input_object = {				      |
+							      >	  let inputObject = {
+							      >	    // eslint-disable-next-line camelcase
+		input_spec: {					    input_spec: {
+							      >	      // eslint-disable-next-line camelcase
+			display_freq: 10,			      display_freq: 10,
+			prompt,					      prompt,
+			style: +style				      style: +style
+		}						    }
+	};						      <
+	if (input_image) {				      <
+		input_object.input_spec.input_image = {	      <
+			weight: image_weight,		      <
+			mediastore_id: mediastoreid	      <
+		};					      <
+	}							  }
+
+	try {						      |	  if (inputImage) {
+		task = await paint_rest			      |	    // eslint-disable-next-line camelcase
+			.options(task_path, "PUT")	      |	    inputObject.input_spec.input_image = {
+			.then(() => paint_rest.put(task_path, |	      // eslint-disable-next-line camelcase
+	} catch (err) {					      |	      weight: imageWeight,
+		console.error(err);			      |	      // eslint-disable-next-line camelcase
+		throw new Error(			      |	      mediastore_id: mediastoreid
+			`Error while sending prompt:\n${err.t <
+				? err.toFriendly()	      <
+				: err.toString()}`	      <
+		);					      <
+	}							    }
+							      |	  }
+	update_fn({					      |	  let ti = 1000
+		state: "submitted",			      |	  //console.log(`https://${paintRest.hostname}${taskPath}`)
+							      >	  while (!task) {
+							      >	    try {
+							      >	      task = await paintRest
+							      >	        .options(taskPath, 'PUT')
+							      >	        .then(() => paintRest.put(taskPath, inputObject,{"con
+							      >	      updateFn({
+							      >	        state: 'submitted',
+		id,						        id,
+		task						        task
+	});						      |	      })
+							      |	    } catch (error) {
+	let inter_downloads = [];			      |	      updateFn({
+	let inter_paths = [];				      |	        state: 'error',
+	let inter_finished = [];			      |	        id,
+							      |	        task,
+	while (!task.result) {				      |	        message: error.toFriendly(),
+							      >	        times: ti
+							      >	      })
+							      >	      ti *= 2
+							      >	      await new Promise(res => setTimeout(res, ti))
+							      >	    }
+							      >	  }
+							      >	  // eslint-disable-next-line no-undefined
+							      >	  let interDownloads = []
+							      >	  let interPaths = []
+							      >	  let interFinished = []
+							      >	  while (task.result===null) {
+		try {						    try {
+			task = await paint_rest.get(task_path |	      task = await paintRest.get(taskPath, 'GET')
+							      >	        
+							      >	      //console.log(task.state)
+		} catch (err) {					    } catch (err) {
+			console.error(err);		      |	      console.log('Error while getting task')
+			throw new Error(		      <
+				`Error while fetching update: <
+					? err.toFriendly()    <
+					: err.toString()}`    <
+			);				      <
+		}						    }
+		// if (task.state === "pending") console.warn	    // if (task.state === "pending") console.warn("Warning: t
+								    if (inter) {
+		if (inter) {				      (
+			await mkdirp(`${download_dir}/${photo |	      await mkdirp(`${downloadDir}/`)
+			for (let n = 0; n < task.photo_url_li	      for (let n = 0; n < task.photo_url_list.length; n++) {
+				if (			      |	        if (interDownloads[n] || /\/final\.je?pg/i.exec(task.
+					inter_downloads[n] || <
+          /\/final\.je?pg/i.exec(task.photo_url_list[n])      <
+				)			      <
+					continue;	      <
+
+				inter_paths[n] = path.join(do |	        interPaths[n] = path.join(downloadDir, `${n}.jpg`)
+
+				inter_downloads[n] = download |	        interDownloads[n] = download(
+					task.photo_url_list[n	          task.photo_url_list[n],
+					inter_paths[n]	      |	          interPaths[n]
+				).then(() => {			        ).then(() => {
+					return (inter_finishe |	          return (interFinished[n] = interPaths[n])
+				});			      |	        })
+			}					      }
+		}						    }
+
+		update_fn({				      |	    updateFn({
+			state: "progress",		      |	      state: 'progress',
+			id,					      id,
+			task,					      task,
+			inter: inter_finished		      |	      inter: interFinished
+		});					      |	    })
+		await new Promise(res => setTimeout(res, 1000 |	    await new Promise(res => setTimeout(res, 1000))
+	}							  }
+							      |	  updateFn({
+	update_fn({					      |	    state: 'generated',
+		state: "generated",			      <
+		id,						    id,
+		task,						    task,
+		url: task.result.final,				    url: task.result.final,
+		inter: inter_finished			      |	    inter: interFinished
+	});						      |	  })
+	let download_path;				      |	  let downloadPath
+	if (final) {					      |	  if (!inter) {
+		download_path = path.join(download_dir, `${ph |	    downloadPath = downloadDir + '.jpg'
+		download_path = path.resolve(download_path);  <
+	}							  }
+	let wasError = true;				      <
+	while (wasError) {				      <
+		try {						  try {
+			await mkdirp(path.dirname(download_pa |	    let downloaded = !final
+			fs.writeFileSync(download_path, "", { |	    while (!downloaded) {
+			if (final) await download(task.result |	      await download(task.result.final, downloadPath)
+			if (inter) await Promise.all(inter_do |	        .catch(() => {
+			wasError = false;		      |	          console.log('Error while downloading final image')
+      							      |	          downloaded = false
+		} catch (err) {				      |	        })
+			wasError = true;		      |	        .then(() => {
+			// console.log(err);		      |	          downloaded = true
+							      >	        })
+		}						    }
+							      >	    if (inter) await Promise.all(interDownloads)
+							      >	  } catch (err) {
+							      >	    console.log(prefix)
+							      >	    console.error(err)
+							      >	    throw new Error(
+							      >	      `Error while downloading results:\n${err.toFriendly
+							      >	        ? err.toFriendly()
+							      >	        : err.toString()}`
+							      >	    )
+	}							  }
+							      |	  console.assert(task.result != null, `${prefix} task result 
+	update_fn({					      |	  updateFn({
+		state: "downloaded",			      |	    state: 'downloaded',
+		id,						    id,
+		task,						    task,
+		url: task.result.final,				    url: task.result.final,
+		path: final ? download_path : null,	      |	    path: final ? downloadPath : null,
+		inter: inter_finished			      |	    inter: interFinished
+	});						      |	  })
+
+	return {						  return {
+		state: "downloaded",			      |	    state: 'downloaded',
+		id,						    id,
+		task,						    task,
+		url: task.result.final,				    url: task.result.final,
+		path: final ? download_path : null,	      |	    path: final ? downloadPath : null,
+		inter: inter_finished			      |	    inter: interFinished
+	};						      |	  }
+};							      <
+							      <
+module.exports.styles = require("./styles.js");		      <
+module.exports.download = require("./download.js");	      <
+							      <
+// Make `node .` a shorthand for `node sequential.js`	      <
+if (require.main === module) {				      <
+	require("./sequential.js");			      <
+}								}
+							      >
+							      >	module.exports.styles = require('./styles.js')
+							      >	module.exports.download = require('./download.js')
