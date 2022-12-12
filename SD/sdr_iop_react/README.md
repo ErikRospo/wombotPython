@@ -2,6 +2,48 @@
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
+## idea
+To achieve inpainting, we can just use the existing implementation. For outpainting, we could scale down part of the image, then generate the new one with the scaled down part, then split the new one up into 4 parts, and inpaint those. then we could merge it all back down to one image.
+
+alternatively, after splitting it, we could mask out a grid of pixels. e.g.
+xxxxxxxxxxxx
+xoxoxoxoxoxo
+xxxxxxxxxxxx
+xoxoxoxoxoxo
+xxxxxxxxxxxx
+xoxoxoxoxoxo
+xxxxxxxxxxxx
+xoxoxoxoxoxo
+then, inpaint.
+x= masked
+o= image
+^^ not sure how SD will react.
+
+we could scale up the image by 2x on all sides.
+then, split it up into 4 images.
+
+then, because each tile is the same size as the original image, we can inpaint between it, to get a super-resolution effect.
+
+
+Possibly allow for multiple tiles to be generated simultaiously, if they do not share any edges.
+This seems like it would be a huge pain to implement, and is not a big priority.
+
+The other thing is saving large images.
+After a certain point, we should split them up.
+However, I'm not sure if the images we will generate will ever get that big. 
+We can cross that bridge when we get to it.
+
+
+We could do the actual requests to the `replicate.ai` server on the python `server.py`. this might be easier than doing it on the frontend.
+
+
+
+
+
+
+
+
+
 ## Available Scripts
 
 In the project directory, you can run:
