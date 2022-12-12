@@ -8,7 +8,7 @@ import requests
 import mimetypes,time
 
 from http.client import NO_CONTENT, NOT_FOUND, OK,METHOD_NOT_ALLOWED,BAD_REQUEST
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer,HTTPServer
 taskPoolIDS=[]
 if len(sys.argv)>1:
     serverPort=int(sys.argv[1])
@@ -90,17 +90,41 @@ class ReqHandler(BaseHTTPRequestHandler):
         self.send_header("Access-Control-Allow-Origin","*")
         self.end_headers()
         if self.path=="/new":
-            body=self.rfile.read().decode("utf-8")
+            content_length=int(self.headers["content-length"])
+            body=self.rfile.read(content_length).decode("utf-8")
+
+
             print(body)
+            
             bodyjson=json.loads(body)
             print(bodyjson)
             mask=bodyjson["mask"]
             image=bodyjson["image"]
             prompt=bodyjson["prompt"]
-            l={"num_outputs":bodyjson["num_outputs"]|1,"guidence_scale":bodyjson["guidence_scale"]|5,"prompt_strength":bodyjson["prompt_strength"]|0.8,"num_inference_steps":bodyjson["steps"]|50}
+            
+            l={"num_outputs":1,
+               "guidence_scale":5,
+               "prompt_strength":0.8,
+               "num_inference_steps":50}
+            try:
+                l["num_outputs"]=bodyjson["num_outputs"]
+            except:
+                pass
+            try:
+                l["guidence_scale"]=bodyjson["guidence_scale"]
+            except:
+                pass
+            try:
+                l["promt_strength"]=bodyjson["promt_strength"]
+            except:
+                pass
+            try:
+                l["num_inference_steps"]=bodyjson["num_inference_steps"]
+            except:
+                pass
             u=uuid.uuid4().hex
             bodyjson["uuidp"]=u
-            t=threading.Thread(target=do_image,args=(mask,image,prompt,u),kwargs=bodyjson)
+            t=threading.Thread(target=do_image,args=(mask,image,prompt,u),kwargs=l)
             t.start()
                         
             ts=Task(t)
