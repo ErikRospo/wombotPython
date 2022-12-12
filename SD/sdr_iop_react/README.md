@@ -2,8 +2,11 @@
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
+### notes
+Existing UI: [Replicate](https://replicate.com/stability-ai/stable-diffusion-inpainting)
+
 ## idea
-To achieve inpainting, we can just use the existing implementation. For outpainting, we could scale down part of the image, then generate the new one with the scaled down part, then split the new one up into 4 parts, and inpaint those. then we could merge it all back down to one image.
+To achieve inpainting, we can just use the existing implementation. For outpainting, we could scale down part of the image, then generate the new one with the scaled down part, then split the new one up into 4 parts, and inpaint those to re-upscale that. then we could merge it all back down to one image.
 
 alternatively, after splitting it, we could mask out a grid of pixels. e.g.
 xxxxxxxxxxxx
@@ -38,7 +41,7 @@ We could do the actual requests to the `replicate.ai` server on the python `serv
 
 
 
-
+We could also do outpainting by doing a slightly scaled down tile, but then by constructing the mask so that it just does the inside, then any edges that are present can be added in.
 
 
 
