@@ -1,14 +1,13 @@
 #!/usr/bin/python3
 import json
 import os
-import random
 import sys
 import threading,uuid
 import requests
 import mimetypes,time
 
-from http.client import NO_CONTENT, NOT_FOUND, OK,METHOD_NOT_ALLOWED,BAD_REQUEST
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer,HTTPServer
+from http.client import NOT_FOUND, OK,BAD_REQUEST
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 taskPoolIDS=[]
 if len(sys.argv)>1:
     serverPort=int(sys.argv[1])
@@ -31,7 +30,7 @@ def upload_image(path):
     res=requests.post(api_url,params={"content_type":content_type},headers=headers)
     serving_url=res.json()["serving_url"]
     upload_url=res.json()["upload_url"]
-    resp=requests.put(upload_url,data=cont,headers={"content-type":content_type})
+    requests.put(upload_url,data=cont,headers={"content-type":content_type})
     return serving_url
 def do_image(mask_path,image_path,prompt,uuidp,num_outputs=1,guidence_scale=5,prompt_strength=0.8,num_inference_steps=50):        
     mask_url=upload_image(mask_path)
@@ -65,21 +64,22 @@ class ReqHandler(BaseHTTPRequestHandler):
                 self.send_response(OK)
             else:
                 self.send_response_only(BAD_REQUEST)
+
         else:
             self.send_response(NOT_FOUND)
         self.send_header("Access-Control-Allow-Origin","*")
         self.end_headers()
         if self.path.startswith("/lookup"):
             if self.path.split("/lookup/")[1] in taskPoolIDS:
-                uud=self.path.split("/lookup/")[1]
+                uuid_in=self.path.split("/lookup/")[1]
                 for n in range(len(threads)):
-                    if uud==threads[n].uuid:
+                    if uuid_in==threads[n].uuid:
                         ind=n
                         break
                 if threads[ind].isactive():
                     self.wfile.write(b"TASK_IN_PROGRESS")
                 else:
-                    dat=outs[uud]
+                    dat=outs[uuid_in]
                     jd=bytes(json.dumps(dat),"utf-8")
                     self.wfile.write(jd)
     def do_POST(self):
@@ -122,13 +122,13 @@ class ReqHandler(BaseHTTPRequestHandler):
                 l["num_inference_steps"]=bodyjson["num_inference_steps"]
             except:
                 pass
-            u=uuid.uuid4().hex
-            bodyjson["uuidp"]=u
-            t=threading.Thread(target=do_image,args=(mask,image,prompt,u),kwargs=l)
+            uuid_new=uuid.uuid4().hex
+            bodyjson["uuidp"]=uuid_new
+            t=threading.Thread(target=do_image,args=(mask,image,prompt,uuid_new),kwargs=l)
             t.start()
                         
             ts=Task(t)
-            ts.uuid=u
+            ts.uuid=uuid_new
             threads.append(ts)
             taskPoolIDS.append(ts.uuid)
             self.wfile.write(bytes(ts.uuid,"utf-8"))

@@ -1,4 +1,4 @@
-import React, { BaseSyntheticEvent } from "react";
+import React from "react";
 import "./canvas.css";
 export default class Canvas extends React.Component {
   maskstate: Uint8ClampedArray;
@@ -57,13 +57,14 @@ export default class Canvas extends React.Component {
           id="clickable-image"
         />
         <canvas
-          onClick={(event:MouseEvent)=>{
-            let ctx=event.target.getContext("2d");
-            console.log(ctx);
-            console.log(event.target)
+          onClick={(event:any) => {
             console.log(event);
-            ctx.arc(event.clientX,event.clientY);
-        }}
+            console.log(event.target);
+            console.log(event.clientX,event.clientY)
+            let ctx:CanvasRenderingContext2D = event.target.getContext("2d");
+            console.log(ctx);
+            ctx.arc(event.clientX, event.clientY,15,0,360);
+          }}
           width={this.width}
           height={this.height}
           id="canvas-canvas"
