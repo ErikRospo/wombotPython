@@ -58,9 +58,9 @@ export default class Canvas extends React.Component {
   draw(event: any) {
     let ctx = event.target.getContext("2d");
     if (ctx) {
-      if (this.canvasState.tool == 0) {
+      if (this.canvasState.tool === 0) {
         ctx.fillStyle="black"
-      } else if (this.canvasState.tool == 1) {
+      } else if (this.canvasState.tool === 1) {
         ctx.fillStyle = "white";
       } else {
         ctx.fillStyle="none";
@@ -72,6 +72,15 @@ export default class Canvas extends React.Component {
   }
   handleKeypress(event:any){
       this.canvasState.keysdown.set(event.key,true)
+    switch()
+      this.canvasState.tool-=1
+        this.canvasState.tool=Math.max(this.canvasState.tool,0)
+        this.canvasState.tool+=1
+        this.canvasState.tool=Math.min(this.canvasState.tool,2)
+      this.canvasState.radius-=5
+        this.canvasState.radius=Math.max(this.canvasState.radius,0)
+      
+    }
   }
   handleKeyup(event:any){
     this.canvasState.keysdown.set(event.key,false)

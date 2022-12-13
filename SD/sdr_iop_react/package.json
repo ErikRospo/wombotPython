@@ -18,6 +18,9 @@
   },
   "scripts": {
     "start": "CHOKIDAR_USEPOLLING=true react-scripts start",
+    "dev": "CHOKIDAR_USEPOLLING=true react-scripts start",
+    "prod": "react-scripts build;npx run serve -s build/index.html",
+    
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
