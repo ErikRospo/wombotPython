@@ -64,7 +64,8 @@ class ReqHandler(BaseHTTPRequestHandler):
                 self.send_response(OK)
             else:
                 self.send_response_only(BAD_REQUEST)
-
+        elif self.path=="/inprogress":
+            self.send_response(OK)
         else:
             self.send_response(NOT_FOUND)
         self.send_header("Access-Control-Allow-Origin","*")
@@ -82,6 +83,8 @@ class ReqHandler(BaseHTTPRequestHandler):
                     dat=outs[uuid_in]
                     jd=bytes(json.dumps(dat),"utf-8")
                     self.wfile.write(jd)
+        elif self.path=="/inprogress":
+            self.wfile.write(bytes(json.dumps(outs),"utf-8"))
     def do_POST(self):
         if self.path=="/new":
             self.send_response(OK)

@@ -13,5 +13,9 @@
 }
 #canvas-container{
     background-color: grey;
-    z-index: 1;
+    z-index: 2;
+}
+#inprogress{
+    background-color: grey;
+    z-index: 1000;
 }

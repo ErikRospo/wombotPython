@@ -5,16 +5,24 @@ export default class Canvas extends React.Component {
   maskstate: Uint8ClampedArray;
   props: { width: number; height: number };
   state: { val: string; image: string };
-  canvasState:{
-  mouseDown: boolean;
-  tool: number;
-  keysdown:Map<string,boolean>
-  radius:number}
+  canvasState: {
+    mouseDown: boolean;
+    tool: number;
+    keysdown: Map<string, boolean>;
+    radius: number;
+  };
+  ids: String[];
+  getstatus?: NodeJS.Timer;
   constructor(props: any) {
     super(props);
     this.props = props;
-    this.canvasState={mouseDown: false,tool : -1,
-  keysdown:new Map<string,boolean>(),radius:15}
+    this.ids = [];
+    this.canvasState = {
+      mouseDown: false,
+      tool: -1,
+      keysdown: new Map<string, boolean>(),
+      radius: 15,
+    };
     this.state = {
       val: "EMPTY",
       image:
@@ -38,7 +46,17 @@ export default class Canvas extends React.Component {
 
   componentDidMount(): void {
     console.log(this);
-    // fetch("http://localhost:8080/new").then((value)=>{value.text().then((value1)=>{this.setState({val:value1})})})
+    this.getstatus = setInterval(() => {
+      fetch("http://localhost:8080/inprogress").then((value) => {
+        value.text().then((value1) => {
+          let inp=JSON.parse(value1)
+          this.setState({ val: value1 });
+        });
+      });
+    }, 1000);
+  }
+  componentWillUnmount(): void {
+    clearInterval(this.getstatus);
   }
   handleClick(event: {
     clientX: number;
@@ -59,38 +77,60 @@ export default class Canvas extends React.Component {
     let ctx = event.target.getContext("2d");
     if (ctx) {
       if (this.canvasState.tool === 0) {
-        ctx.fillStyle="black"
+        ctx.fillStyle = "black";
       } else if (this.canvasState.tool === 1) {
         ctx.fillStyle = "white";
       } else {
-        ctx.fillStyle="none";
+        ctx.fillStyle = "none";
       }
       ctx.beginPath();
       ctx.arc(event.clientX, event.clientY, this.canvasState.radius, 0, 360);
       ctx.fill();
     }
   }
-  handleKeypress(event:any){
-      this.canvasState.keysdown.set(event.key,true)
-      console.log(this.canvasState);
+  handleKeypress(event: any) {
+    this.canvasState.keysdown.set(event.key, true);
+    console.log(this.canvasState);
 
-      switch(event.key){
-     case "q":this.canvasState.tool-=1;this.canvasState.tool=Math.max(this.canvasState.tool,0);break
-        case "e":this.canvasState.tool+=1;this.canvasState.tool=Math.min(this.canvasState.tool,2);break
-      case "w":this.canvasState.radius-=5;this.canvasState.radius=Math.max(this.canvasState.radius,0);break
-      case "s":this.canvasState.radius+=5;this.canvasState.radius=Math.min(this.canvasState.radius,50);break
-      default:break
+    switch (event.key) {
+      case "q":
+        this.canvasState.tool -= 1;
+        this.canvasState.tool = Math.max(this.canvasState.tool, 0);
+        break;
+      case "e":
+        this.canvasState.tool += 1;
+        this.canvasState.tool = Math.min(this.canvasState.tool, 2);
+        break;
+      case "w":
+        this.canvasState.radius -= 5;
+        this.canvasState.radius = Math.max(this.canvasState.radius, 0);
+        break;
+      case "s":
+        this.canvasState.radius += 5;
+        this.canvasState.radius = Math.min(this.canvasState.radius, 50);
+        break;
+      default:
+        break;
     }
     console.log(this.canvasState);
-    console.log(this)
+    console.log(this);
     console.log(event);
   }
-  handleKeyup(event:any){
-    this.canvasState.keysdown.set(event.key,false)
+  handleKeyup(event: any) {
+    this.canvasState.keysdown.set(event.key, false);
   }
   render(): JSX.Element {
     return (
-      <div id="canvas-container">
+      <div
+        id="canvas-container"
+        onKeyDown={(event: any) => {
+          console.log(event);
+          this.handleKeypress(event);
+        }}
+        onKeyUp={(event: any) => {
+          this.handleKeyup(event);
+        }}
+      >
         <img
           src={this.state.image}
           alt=""
@@ -102,19 +142,11 @@ export default class Canvas extends React.Component {
         <canvas
           onMouseDown={(event: any) => {
             this.canvasState.mouseDown = event.buttons;
-            this.draw(event)
+            this.draw(event);
           }}
           //whenever a key is pressed, set its variable in a dict to true, and when it is released, set it to false
           // if it isn't in there already, add it to the dict.
-          
-          onKeyDown={(event:any)=>{
-            console.log(event)
-            this.handleKeypress(event)
-          }}
-          onKeyUp={(event:any)=>{
-            this.handleKeyup(event)
-            
-          }}
+
           onMouseUp={(event: any) => {
             this.canvasState.mouseDown = event.buttons;
           }}
@@ -128,8 +160,7 @@ export default class Canvas extends React.Component {
           id="canvas-canvas"
           onLoad={this.canvasLoad}
         ></canvas>
-        <p>this will be the canvas</p>
-        <p>{this.state.val}</p>
+        <p id="inprogress">In progress: {this.state.val}</p>
       </div>
     );
   }
