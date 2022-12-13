@@ -4,8 +4,8 @@ import './App.css';
 import Canvas from "./components/canvas/Canvas.tsx"
 function App() {
   return (
-    <div className="App">
-      <Canvas width={1080} height={720}></Canvas>
+    <div className="App" >
+      <Canvas width={window.innerWidth} height={window.innerHeight}></Canvas>
     </div>
   );
 }

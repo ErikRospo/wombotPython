@@ -1,12 +1,20 @@
 import React from "react";
 import "./canvas.css";
+
 export default class Canvas extends React.Component {
   maskstate: Uint8ClampedArray;
   props: { width: number; height: number };
   state: { val: string; image: string };
+  canvasState:{
+  mouseDown: boolean;
+  tool: number;
+  keysdown:Map<string,boolean>
+  radius:number}
   constructor(props: any) {
     super(props);
     this.props = props;
+    this.canvasState={mouseDown: false,tool : -1,
+  keysdown:new Map<string,boolean>(),radius:15}
     this.state = {
       val: "EMPTY",
       image:
@@ -43,8 +51,30 @@ export default class Canvas extends React.Component {
     // let relativeX=event.clientX
   }
   canvasLoad(el: any) {
-    console.log("canvasload")
+    console.log("canvasload");
     console.log(el);
+  }
+
+  draw(event: any) {
+    let ctx = event.target.getContext("2d");
+    if (ctx) {
+      if (this.canvasState.tool == 0) {
+        ctx.fillStyle="black"
+      } else if (this.canvasState.tool == 1) {
+        ctx.fillStyle = "white";
+      } else {
+        ctx.fillStyle="none";
+      }
+      ctx.beginPath();
+      ctx.arc(event.clientX, event.clientY, this.canvasState.radius, 0, 360);
+      ctx.fill();
+    }
+  }
+  handleKeypress(event:any){
+      this.canvasState.keysdown.set(event.key,true)
+  }
+  handleKeyup(event:any){
+    this.canvasState.keysdown.set(event.key,false)
   }
   render(): JSX.Element {
     return (
@@ -56,14 +86,29 @@ export default class Canvas extends React.Component {
           height={this.height}
           id="clickable-image"
         />
+
         <canvas
-          onClick={(event:any) => {
-            console.log(event);
-            console.log(event.target);
-            console.log(event.clientX,event.clientY)
-            let ctx:CanvasRenderingContext2D = event.target.getContext("2d");
-            console.log(ctx);
-            ctx.arc(event.clientX, event.clientY,15,0,360);
+          onMouseDown={(event: any) => {
+            this.canvasState.mouseDown = event.buttons;
+            this.draw(event)
+          }}
+          //whenever a key is pressed, set its variable in a dict to true, and when it is released, set it to false
+          // if it isn't in there already, add it to the dict.
+          
+          onKeyDown={(event:any)=>{
+            this.handleKeypress(event)
+          }}
+          onKeyUp={(event:any)=>{
+            this.handleKeyup(event)
+            
+          }}
+          onMouseUp={(event: any) => {
+            this.canvasState.mouseDown = event.buttons;
+          }}
+          onMouseMove={(event: any) => {
+            if (this.canvasState.mouseDown) {
+              this.draw(event);
+            }
           }}
           width={this.width}
           height={this.height}
