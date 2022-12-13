@@ -13,5 +13,5 @@
 }
 #canvas-container{
     background-color: grey;
-    
+    z-index: 1;
 }

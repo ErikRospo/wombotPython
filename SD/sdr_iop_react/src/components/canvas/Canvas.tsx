@@ -72,15 +72,18 @@ export default class Canvas extends React.Component {
   }
   handleKeypress(event:any){
       this.canvasState.keysdown.set(event.key,true)
-    switch()
-      this.canvasState.tool-=1
-        this.canvasState.tool=Math.max(this.canvasState.tool,0)
-        this.canvasState.tool+=1
-        this.canvasState.tool=Math.min(this.canvasState.tool,2)
-      this.canvasState.radius-=5
-        this.canvasState.radius=Math.max(this.canvasState.radius,0)
-      
+      console.log(this.canvasState);
+
+      switch(event.key){
+     case "q":this.canvasState.tool-=1;this.canvasState.tool=Math.max(this.canvasState.tool,0);break
+        case "e":this.canvasState.tool+=1;this.canvasState.tool=Math.min(this.canvasState.tool,2);break
+      case "w":this.canvasState.radius-=5;this.canvasState.radius=Math.max(this.canvasState.radius,0);break
+      case "s":this.canvasState.radius+=5;this.canvasState.radius=Math.min(this.canvasState.radius,50);break
+      default:break
     }
+    console.log(this.canvasState);
+    console.log(this)
+    console.log(event);
   }
   handleKeyup(event:any){
     this.canvasState.keysdown.set(event.key,false)
@@ -105,6 +108,7 @@ export default class Canvas extends React.Component {
           // if it isn't in there already, add it to the dict.
           
           onKeyDown={(event:any)=>{
+            console.log(event)
             this.handleKeypress(event)
           }}
           onKeyUp={(event:any)=>{
