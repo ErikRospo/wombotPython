@@ -2,7 +2,7 @@
     position: absolute;
     top:0;
     left:0;
-    z-index: 0;
+    z-index: -1;
 }
 #clickable-image{
     z-index:-2;
@@ -17,5 +17,12 @@
 }
 #inprogress{
     background-color: grey;
+    z-index: 1000;
+}
+#genmore {
+    z-index: 1000;
+    
+}
+#Prompt {
     z-index: 1000;
 }

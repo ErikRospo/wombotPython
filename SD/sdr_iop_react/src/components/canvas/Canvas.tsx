@@ -1,15 +1,17 @@
 import React from "react";
 import "./canvas.css";
-
+import { postData } from "../../utils";
 export default class Canvas extends React.Component {
   maskstate: Uint8ClampedArray;
   props: { width: number; height: number };
   state: { val: string; image: string };
   canvasState: {
+    ids_in_progress: Array<string>;
     mouseDown: boolean;
     tool: number;
     keysdown: Map<string, boolean>;
     radius: number;
+    preventEvents:boolean;
   };
   ids: String[];
   getstatus?: NodeJS.Timer;
@@ -22,6 +24,8 @@ export default class Canvas extends React.Component {
       tool: -1,
       keysdown: new Map<string, boolean>(),
       radius: 15,
+      ids_in_progress:new Array<string>(),
+      preventEvents:false
     };
     this.state = {
       val: "EMPTY",
@@ -43,17 +47,28 @@ export default class Canvas extends React.Component {
   public set height(v: number) {
     this.props.height = v;
   }
+  fetchInprogress() {
+    fetch("http://localhost:8080/inprogress").then((value) => {
+      value.text().then((value1) => {
+        let inp = JSON.parse(value1);
+        console.log(inp);
 
+        this.setState({ val: value1 });
+      });
+    });
+  }
+  fetchMine(){
+    for (let index = 0; index < this.canvasState.ids_in_progress.length; index++) {
+      const element = this.canvasState.ids_in_progress[index];
+     fetch("http://localhost:8080/lookup/"+element).then((resp)=>{console.log(resp)})
+      
+    }
+  }
   componentDidMount(): void {
     console.log(this);
     this.getstatus = setInterval(() => {
-      fetch("http://localhost:8080/inprogress").then((value) => {
-        value.text().then((value1) => {
-          let inp=JSON.parse(value1)
-          this.setState({ val: value1 });
-        });
-      });
-    }, 1000);
+      this.fetchInprogress();
+    }, 5000);
   }
   componentWillUnmount(): void {
     clearInterval(this.getstatus);
@@ -112,23 +127,34 @@ export default class Canvas extends React.Component {
       default:
         break;
     }
-    console.log(this.canvasState);
-    console.log(this);
-    console.log(event);
   }
   handleKeyup(event: any) {
     this.canvasState.keysdown.set(event.key, false);
+  }
+  makeNew(prompt: string) {
+    postData("http://localhost:8080/new", {
+      prompt: prompt,
+      mask: "./mask.jpg",
+      image: "./image.jpg",
+    }).then((response) => {
+      this.canvasState.ids_in_progress.push(response)
+      console.log(this.canvasState);
+    });
   }
   render(): JSX.Element {
     return (
       <div
         id="canvas-container"
         onKeyDown={(event: any) => {
-          console.log(event);
+          if (!this.canvasState.preventEvents){
           this.handleKeypress(event);
+        }
         }}
         onKeyUp={(event: any) => {
-          this.handleKeyup(event);
+          if (!this.canvasState.preventEvents){
+            this.handleKeyup(event);
+            
+          }
         }}
       >
         <img
@@ -161,6 +187,18 @@ export default class Canvas extends React.Component {
           onLoad={this.canvasLoad}
         ></canvas>
         <p id="inprogress">In progress: {this.state.val}</p>
+        <button
+          id="genmore"
+          onClick={() => {
+            let i = document.getElementById("Prompt");
+            if (i instanceof HTMLInputElement) {
+              this.makeNew(i.value);
+            }
+          }}
+        >
+          Generate
+        </button>
+        <input type="text" name="text" id="Prompt" onMouseOver={()=>{this.canvasState.preventEvents=true}} onMouseOut={()=>{this.canvasState.preventEvents=false}} />
       </div>
     );
   }
