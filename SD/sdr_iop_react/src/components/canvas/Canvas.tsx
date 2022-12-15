@@ -11,7 +11,7 @@ export default class Canvas extends React.Component {
     tool: number;
     keysdown: Map<string, boolean>;
     radius: number;
-    preventEvents:boolean;
+    preventEvents: boolean;
   };
   ids: String[];
   getstatus?: NodeJS.Timer;
@@ -24,9 +24,10 @@ export default class Canvas extends React.Component {
       tool: -1,
       keysdown: new Map<string, boolean>(),
       radius: 15,
-      ids_in_progress:new Array<string>(),
-      preventEvents:false
+      ids_in_progress: new Array<string>(),
+      preventEvents: false
     };
+    console.log(this.canvasState)
     this.state = {
       val: "EMPTY",
       image:
@@ -57,17 +58,29 @@ export default class Canvas extends React.Component {
       });
     });
   }
-  fetchMine(){
+  fetchMine(): void {
+    let Allmine:Promise<string|void>[]=[]
     for (let index = 0; index < this.canvasState.ids_in_progress.length; index++) {
       const element = this.canvasState.ids_in_progress[index];
-     fetch("http://localhost:8080/lookup/"+element).then((resp)=>{console.log(resp)})
       
+      Allmine.push(fetch("http://localhost:8080/lookup/" + element).then((value)=>{value.text()}))
     }
+    Promise.all(Allmine).then((values)=>{
+      let newText:string[]=[]
+      for (let index = 0; index < values.length; index++) {
+        const element_text = values[index];
+        if (element_text){
+          newText.push(element_text)
+        }
+      }
+      console.log(newText)
+    })
   }
   componentDidMount(): void {
     console.log(this);
     this.getstatus = setInterval(() => {
       this.fetchInprogress();
+      this.fetchMine();
     }, 5000);
   }
   componentWillUnmount(): void {
@@ -137,8 +150,15 @@ export default class Canvas extends React.Component {
       mask: "./mask.jpg",
       image: "./image.jpg",
     }).then((response) => {
-      this.canvasState.ids_in_progress.push(response)
-      console.log(this.canvasState);
+      console.log(this.canvasState.ids_in_progress)
+      if (response){
+        
+        this.canvasState.ids_in_progress.push(response)
+      }else{
+        console.error("RESPONSE IS EMPTY")
+      }
+      
+      console.log(this.canvasState.ids_in_progress);
     });
   }
   render(): JSX.Element {
@@ -146,14 +166,14 @@ export default class Canvas extends React.Component {
       <div
         id="canvas-container"
         onKeyDown={(event: any) => {
-          if (!this.canvasState.preventEvents){
-          this.handleKeypress(event);
-        }
+          if (!this.canvasState.preventEvents) {
+            this.handleKeypress(event);
+          }
         }}
         onKeyUp={(event: any) => {
-          if (!this.canvasState.preventEvents){
+          if (!this.canvasState.preventEvents) {
             this.handleKeyup(event);
-            
+
           }
         }}
       >
@@ -198,7 +218,7 @@ export default class Canvas extends React.Component {
         >
           Generate
         </button>
-        <input type="text" name="text" id="Prompt" onMouseOver={()=>{this.canvasState.preventEvents=true}} onMouseOut={()=>{this.canvasState.preventEvents=false}} />
+        <input type="text" name="text" id="Prompt" onMouseOver={() => { this.canvasState.preventEvents = true }} onMouseOut={() => { this.canvasState.preventEvents = false }} />
       </div>
     );
   }

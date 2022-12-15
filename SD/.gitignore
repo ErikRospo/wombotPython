@@ -1,3 +1,3 @@
 server/out/
-server/image.jpg
-server/mask.jpg
+server/*.jpg
+server/__pycache__/

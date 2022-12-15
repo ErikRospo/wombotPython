@@ -135,6 +135,7 @@ class ReqHandler(BaseHTTPRequestHandler):
             threads.append(ts)
             taskPoolIDS.append(ts.uuid)
             self.wfile.write(bytes(ts.uuid,"utf-8"))
+            print(ts.uuid)
                 # self.wfile.write(returned_values[self.path.split("/lookup/")[1]].content)
             
         

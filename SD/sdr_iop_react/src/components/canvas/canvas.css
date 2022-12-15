@@ -18,6 +18,7 @@
 #inprogress{
     background-color: grey;
     z-index: 1000;
+    user-select: none;
 }
 #genmore {
     z-index: 1000;
