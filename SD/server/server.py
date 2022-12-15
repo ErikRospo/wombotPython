@@ -1,12 +1,14 @@
 #!/usr/bin/python3
-import json
-import os
+import json 
+import os #for getting the current file path
 import sys
-import threading,uuid
-import requests
-import mimetypes,time
+import threading #multithreading and locking
+import uuid #identifying the tasks
+import requests # interacting with replicate servers
+import mimetypes # identifying files
+import time # waiting a certain amount of time
 
-from http.client import NOT_FOUND, OK,BAD_REQUEST
+from http.client import NOT_FOUND, OK, BAD_REQUEST
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 taskPoolIDS=[]
 if len(sys.argv)>1:
@@ -14,50 +16,56 @@ if len(sys.argv)>1:
 else:
     serverPort=8080
 hostName = "localhost"
-
-current_file=()
-more=None
-MAX_TRASH_ITEMS=10
+#nessicary headers for working with the api
 headers={"x-csrftoken":"rfU9sNVa303QtGhGx9jq1AemDXfoTxpV","origin":"https://replicate.com","referer":"https://replicate.com/stability-ai/stable-diffusion-inpainting","cookie":"csrftoken=rfU9sNVa303QtGhGx9jq1AemDXfoTxpV; replicate_anonymous_id=c3ab5d5e-283f-4233-8518-0d36df9e572c"}
-
+# output data
 outs={}
 outsLock=threading.Lock()
-
+# upload an image to replicate's server
 def upload_image(path):
     cont=bytes()
     with open(path,"rb") as f:
         cont=f.read()
         
-    name=os.path.split(path)[1]
-    content_type=mimetypes.guess_type(name)[0]
-    
-    api_url = "https://replicate.com/api/upload/"+name.replace(" ","_")
-    res=requests.post(api_url,params={"content_type":content_type},headers=headers)
+    name=os.path.split(path)[1] #what the name of the file is
+    content_type=mimetypes.guess_type(name)[0] #mime type
+        
+    api_url = "https://replicate.com/api/upload/"+name.replace(" ","_") #get the api url
+    res=requests.post(api_url,params={"content_type":content_type},headers=headers) #post the file type
+    #returns a serving url, where the content is served, and a upload url, where you upload the image.
 
-    serving_url=res.json()["serving_url"]
+    serving_url=res.json()["serving_url"]  #get them
     upload_url=res.json()["upload_url"]
-
+    #upload the image
     requests.put(upload_url,data=cont,headers={"content-type":content_type})
     return serving_url
 def do_image(mask_path,image_path,prompt,uuidp,num_outputs=1,guidence_scale=5,prompt_strength=0.8,num_inference_steps=50):        
+    #upload both the mask and the image itself
     mask_url=upload_image(mask_path)
     image_url=upload_image(image_path)
-    
+    #set up the data    
     jsondata={"inputs":{"prompt":prompt,"num_outputs":num_outputs,"guidance_scale":guidence_scale,"prompt_strength":prompt_strength,"num_inference_steps":num_inference_steps,"image":image_url,"mask":mask_url}}
-    
+    #set up the prediction
     pred=requests.post("https://replicate.com/api/models/stability-ai/stable-diffusion-inpainting/versions/e5a34f913de0adc560d20e002c45ad43a80031b62caacc3d84010c6b6a64870c/predictions",headers=headers,json=jsondata)
+    #get the task uuid
     task_uuid=pred.json()["uuid"]
     
     while True:
+        #get the status
         resp=requests.get("https://replicate.com/api/models/stability-ai/stable-diffusion-inpainting/versions/e5a34f913de0adc560d20e002c45ad43a80031b62caacc3d84010c6b6a64870c/predictions/"+task_uuid,headers=headers)
+        #if the status is succeeded, 
         if resp.json()["prediction"]["status"]=="succeeded":
-
+            #acquire the lock
             outsLock.acquire()
+            #set some stuff
             outs[uuidp]=resp.json()["prediction"]["output"]
+            #release
             outsLock.release()
-
+            #exit
             break
+        #otherwise, wait 2 seconds
         time.sleep(2)
+#utility Task class
 class Task:
     
     def __init__(self,thread:threading.Thread):
