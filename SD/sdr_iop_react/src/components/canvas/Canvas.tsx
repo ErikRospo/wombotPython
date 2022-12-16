@@ -260,20 +260,22 @@ export default class Canvas extends React.Component {
           onLoad={this.canvasLoad}
         ></canvas>
         <p id="inprogress">In progress: {this.state.val}</p>
-        <button
-          id="genmore"
-          onClick={() => {
-            let i = document.getElementById("Prompt");
-            if (i instanceof HTMLInputElement) {
-              this.makeNew(i.value);
-            }
-          }}
-        >
-          Generate
-        </button>
-        <input type="text" name="text" id="Prompt"
-          onMouseOver={() => { this.canvasState.preventEvents = true }}
-          onMouseOut={() => { this.canvasState.preventEvents = false }} />
+          <input type="text" name="text" id="Prompt"
+            onMouseOver={() => { this.canvasState.preventEvents = true }}
+            onMouseOut={() => { this.canvasState.preventEvents = false }} />
+          <input type="file" name="ImageFile" accept="image/*" id="ImageFile" />
+          <input type="button"
+            id="genmore"
+            onClick={() => {
+              let i = document.getElementById("Prompt");
+              if (i instanceof HTMLInputElement) {
+                this.makeNew(i.value);
+              }
+            }}
+
+              // Generate
+          />
+            
       </div>
     );
   }

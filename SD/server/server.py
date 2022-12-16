@@ -55,14 +55,14 @@ def do_image(mask_path,image_path,prompt,uuidp,num_outputs=1,guidence_scale=5,pr
     while True:
         #get the status
         resp=requests.get("https://replicate.com/api/models/stability-ai/stable-diffusion-inpainting/versions/e5a34f913de0adc560d20e002c45ad43a80031b62caacc3d84010c6b6a64870c/predictions/"+task_uuid,headers=headers)
-        #if the status is succeeded, 
+        #if the status is equal to 'succeeded',
         if resp.json()["prediction"]["status"]=="succeeded":
             #acquire the lock
             outsLock.acquire()
-            #set some stuff
+            #set the output variables.
             outs[uuidp]=resp.json()["prediction"]["output"]
-            #release
-            outsLock.release()
+            #release the lock
+            outsLock.release() 
             #exit
             break
         #otherwise, wait 2 seconds
@@ -71,15 +71,17 @@ def transparency_to_white(img):
     #modified from
     
     #https://stackoverflow.com/a/765829
-    from PIL import Image
 
-
+    #get the pixel values
     pixdata = img.load()
-
+    # get the size
     width, height = img.size
+    # loop through the image
     for y in range(height):
         for x in range(width):
+            #if the value is a transparent black, 
             if pixdata[x, y] == (0,0,0,0):
+                # set it to an opaque black.
                 pixdata[x, y] = (255, 255, 255, 255)
 
     return img
@@ -192,7 +194,12 @@ class ReqHandler(BaseHTTPRequestHandler):
                 # self.wfile.write(returned_values[self.path.split("/lookup/")[1]].content)
             
         
-            # json.loads(self.rfile.read().decode("utf-8"))            
+            # json.loads(self.rfile.read().decode("utf-8"))       
+        elif self.path=="/log":
+            content_length=int(self.headers["content-length"])
+            body=self.rfile.read(content_length)
+            with open("./body.txt","wb") as f:
+                f.write(body)                 
         elif self.path=="/upload/mask":
             content_length=int(self.headers["content-length"])
             body=self.rfile.read(content_length)
