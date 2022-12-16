@@ -7,7 +7,7 @@ export default class Canvas extends React.Component {
   state: { val: string; image: string };
   canvasState: {
     ids_in_progress: Array<string>;
-    mouseDown: boolean;
+    mouseDown: number;
     tool: number;
     keysdown: Map<string, boolean>;
     radius: number;
@@ -15,12 +15,13 @@ export default class Canvas extends React.Component {
   };
   ids: String[];
   getstatus?: NodeJS.Timer;
+  mousedown: boolean;
   constructor(props: any) {
     super(props);
     this.props = props;
     this.ids = [];
     this.canvasState = {
-      mouseDown: false,
+      mouseDown:0,
       tool: -1,
       keysdown: new Map<string, boolean>(),
       radius: 15,
@@ -33,7 +34,8 @@ export default class Canvas extends React.Component {
       image:
         "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAIAQMAAAD+wSzIAAAABlBMVEX///+/v7+jQ3Y5AAAADklEQVQI12P4AIX8EAgALgAD/aNpbtEAAAAASUVORK5CYII",
     };
-    this.maskstate = new Uint8ClampedArray(props.width * props.height);
+    this.mousedown = false
+    this.maskstate = new Uint8ClampedArray(props.width * props.height * 4);
   }
 
   public get width(): number {
@@ -186,19 +188,42 @@ export default class Canvas extends React.Component {
         />
 
         <canvas
-          onMouseDown={(event: any) => {
-            this.canvasState.mouseDown = event.buttons;
-            this.draw(event);
-          }}
-          //whenever a key is pressed, set its variable in a dict to true, and when it is released, set it to false
-          // if it isn't in there already, add it to the dict.
-
-          onMouseUp={(event: any) => {
-            this.canvasState.mouseDown = event.buttons;
-          }}
-          onMouseMove={(event: any) => {
-            if (this.canvasState.mouseDown) {
+          onMouseDown={
+            (event:any) => {
+              this.canvasState.mouseDown = event.buttons;
+              this.mousedown = true
               this.draw(event);
+              let ctx: CanvasRenderingContext2D | null = (event.target as HTMLCanvasElement).getContext("2d");
+              if (ctx) {
+                ctx.beginPath()
+              }
+              //set the mousedown property on the parent object, then unset it on mouseup.
+              //onmousemove, if the mousedown property is set, we draw the stuff.
+            }
+          }
+          onMouseUp={
+            (event) => {
+              this.mousedown = false
+              this.canvasState.mouseDown = event.buttons;
+              let ctx: CanvasRenderingContext2D | null = (event.target as HTMLCanvasElement).getContext("2d");
+              if (ctx) {
+                ctx.stroke()
+              
+              }
+            }
+          }
+
+          onMouseMove={(event) => {
+            let ctx: CanvasRenderingContext2D | null = (event.target as HTMLCanvasElement).getContext("2d");
+
+            if (this.mousedown) {
+              // const img = getImgFromArr(this.maskstate, this.width, this.height);x
+              if (ctx) {
+                ctx.fillStyle = "black"
+                ctx.arc(event.clientX, event.clientY, 15, 0, 360);
+                this.maskstate = ctx.getImageData(0, 0, this.width, this.height).data
+                // this.maskstate[event.clientX + event.clientY * this.width] = 255
+              }
             }
           }}
           width={this.width}
