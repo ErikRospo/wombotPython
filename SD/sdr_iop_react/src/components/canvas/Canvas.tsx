@@ -1,11 +1,13 @@
 import React from "react";
 import "./canvas.css";
 import { postData } from "../../utils";
+import { getDataUrlFromArr } from "../../utilities/array-to-image";
 export default class Canvas extends React.Component {
   maskstate: Uint8ClampedArray;
   props: { width: number; height: number };
   state: { val: string; image: string };
   canvasState: {
+    toclear: boolean;
     ids_in_progress: Array<string>;
     mouseDown: number;
     tool: number;
@@ -13,6 +15,7 @@ export default class Canvas extends React.Component {
     radius: number;
     preventEvents: boolean;
   };
+  ctx?: CanvasRenderingContext2D
   ids: String[];
   getstatus?: NodeJS.Timer;
   mousedown: boolean;
@@ -21,12 +24,13 @@ export default class Canvas extends React.Component {
     this.props = props;
     this.ids = [];
     this.canvasState = {
-      mouseDown:0,
+      mouseDown: 0,
       tool: -1,
       keysdown: new Map<string, boolean>(),
       radius: 15,
       ids_in_progress: new Array<string>(),
-      preventEvents: false
+      preventEvents: false,
+      toclear: true
     };
     console.log(this.canvasState)
     this.state = {
@@ -61,17 +65,17 @@ export default class Canvas extends React.Component {
     });
   }
   fetchMine(): void {
-    let Allmine:Promise<string|void>[]=[]
+    let Allmine: Promise<string | void>[] = []
     for (let index = 0; index < this.canvasState.ids_in_progress.length; index++) {
       const element = this.canvasState.ids_in_progress[index];
-      
-      Allmine.push(fetch("http://localhost:8080/lookup/" + element).then((value)=>{value.text()}))
+
+      Allmine.push(fetch("http://localhost:8080/lookup/" + element).then((value) => { value.text() }))
     }
-    Promise.all(Allmine).then((values)=>{
-      let newText:string[]=[]
+    Promise.all(Allmine).then((values) => {
+      let newText: string[] = []
       for (let index = 0; index < values.length; index++) {
         const element_text = values[index];
-        if (element_text){
+        if (element_text) {
           newText.push(element_text)
         }
       }
@@ -104,23 +108,22 @@ export default class Canvas extends React.Component {
   }
 
   draw(event: any) {
-    let ctx = event.target.getContext("2d");
-    if (ctx) {
+    if (this.ctx) {
       if (this.canvasState.tool === 0) {
-        ctx.fillStyle = "black";
+        this.ctx.fillStyle = "black";
       } else if (this.canvasState.tool === 1) {
-        ctx.fillStyle = "white";
+        this.ctx.fillStyle = "white";
       } else {
-        ctx.fillStyle = "none";
+        this.ctx.fillStyle = "none";
       }
-      ctx.beginPath();
-      ctx.arc(event.clientX, event.clientY, this.canvasState.radius, 0, 360);
-      ctx.fill();
+      this.ctx.beginPath();
+      this.ctx.arc(event.clientX, event.clientY, this.canvasState.radius, 0, 360);
+      this.ctx.fill();
     }
   }
   handleKeypress(event: any) {
     this.canvasState.keysdown.set(event.key, true);
-    console.log(this.canvasState);
+    console.log(event.key);
 
     switch (event.key) {
       case "q":
@@ -139,6 +142,9 @@ export default class Canvas extends React.Component {
         this.canvasState.radius += 5;
         this.canvasState.radius = Math.min(this.canvasState.radius, 50);
         break;
+      case "r":
+        this.canvasState.toclear = true;
+        break
       default:
         break;
     }
@@ -153,31 +159,28 @@ export default class Canvas extends React.Component {
       image: "./image.jpg",
     }).then((response) => {
       console.log(this.canvasState.ids_in_progress)
-      if (response){
-        
+      if (response) {
+
         this.canvasState.ids_in_progress.push(response)
-      }else{
+      } else {
         console.error("RESPONSE IS EMPTY")
       }
-      
+
       console.log(this.canvasState.ids_in_progress);
     });
+  }
+  updateCtx(event: any) {
+    if (!this.ctx) {
+      let ctx: CanvasRenderingContext2D | null = (event.target as HTMLCanvasElement).getContext("2d", { willReadFrequently: true });
+      if (ctx) {
+        this.ctx = ctx
+      }
+    }
   }
   render(): JSX.Element {
     return (
       <div
         id="canvas-container"
-        onKeyDown={(event: any) => {
-          if (!this.canvasState.preventEvents) {
-            this.handleKeypress(event);
-          }
-        }}
-        onKeyUp={(event: any) => {
-          if (!this.canvasState.preventEvents) {
-            this.handleKeyup(event);
-
-          }
-        }}
       >
         <img
           src={this.state.image}
@@ -188,14 +191,30 @@ export default class Canvas extends React.Component {
         />
 
         <canvas
+          onLoadStart={(event: any) => {
+
+            this.updateCtx(event)
+          }}
+          onKeyDown={(event: any) => {
+            if (!this.canvasState.preventEvents) {
+              this.handleKeypress(event);
+            }
+          }}
+          onKeyUp={(event: any) => {
+            if (!this.canvasState.preventEvents) {
+              this.handleKeyup(event);
+
+            }
+          }}
           onMouseDown={
-            (event:any) => {
+            (event: any) => {
               this.canvasState.mouseDown = event.buttons;
               this.mousedown = true
               this.draw(event);
-              let ctx: CanvasRenderingContext2D | null = (event.target as HTMLCanvasElement).getContext("2d");
-              if (ctx) {
-                ctx.beginPath()
+
+              this.updateCtx(event)
+              if (this.ctx) {
+                this.ctx.beginPath()
               }
               //set the mousedown property on the parent object, then unset it on mouseup.
               //onmousemove, if the mousedown property is set, we draw the stuff.
@@ -205,25 +224,34 @@ export default class Canvas extends React.Component {
             (event) => {
               this.mousedown = false
               this.canvasState.mouseDown = event.buttons;
-              let ctx: CanvasRenderingContext2D | null = (event.target as HTMLCanvasElement).getContext("2d");
-              if (ctx) {
-                ctx.stroke()
-              
+
+              this.updateCtx(event)
+              if (this.ctx) {
+                this.ctx.fill()
+                this.maskstate = this.ctx.getImageData(0, 0, this.width, this.height).data
+                let dataurl = getDataUrlFromArr(this.maskstate, this.width, this.height)
+
+                postData("http://localhost:8080/upload/mask", dataurl)
               }
             }
           }
 
           onMouseMove={(event) => {
-            let ctx: CanvasRenderingContext2D | null = (event.target as HTMLCanvasElement).getContext("2d");
-
+            this.updateCtx(event)
+            if (this.canvasState.toclear && this.ctx) {
+              if (this.ctx) {
+                this.ctx.clearRect(0, 0, this.width, this.height)
+                this.ctx?.getContextAttributes()
+              }
+              this.canvasState.toclear = false
+            }
             if (this.mousedown) {
               // const img = getImgFromArr(this.maskstate, this.width, this.height);x
-              if (ctx) {
-                ctx.fillStyle = "black"
-                ctx.arc(event.clientX, event.clientY, 15, 0, 360);
-                this.maskstate = ctx.getImageData(0, 0, this.width, this.height).data
-                // this.maskstate[event.clientX + event.clientY * this.width] = 255
-              }
+              this.draw(event)
+              // ctx.fillStyle = "black"
+              // ctx.arc(event.clientX, event.clientY, 15, 0, 360);
+
+              // this.maskstate[event.clientX + event.clientY * this.width] = 255
             }
           }}
           width={this.width}
@@ -243,7 +271,9 @@ export default class Canvas extends React.Component {
         >
           Generate
         </button>
-        <input type="text" name="text" id="Prompt" onMouseOver={() => { this.canvasState.preventEvents = true }} onMouseOut={() => { this.canvasState.preventEvents = false }} />
+        <input type="text" name="text" id="Prompt"
+          onMouseOver={() => { this.canvasState.preventEvents = true }}
+          onMouseOut={() => { this.canvasState.preventEvents = false }} />
       </div>
     );
   }

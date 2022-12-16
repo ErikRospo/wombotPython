@@ -7,7 +7,9 @@ import uuid #identifying the tasks
 import requests # interacting with replicate servers
 import mimetypes # identifying files
 import time # waiting a certain amount of time
-
+import base64 #for decoding images sent back from the Canvas.
+import numpy as np #for editing images.
+from PIL import Image
 from http.client import NOT_FOUND, OK, BAD_REQUEST
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 taskPoolIDS=[]
@@ -65,6 +67,22 @@ def do_image(mask_path,image_path,prompt,uuidp,num_outputs=1,guidence_scale=5,pr
             break
         #otherwise, wait 2 seconds
         time.sleep(2)
+def transparency_to_white(img):
+    #modified from
+    
+    #https://stackoverflow.com/a/765829
+    from PIL import Image
+
+
+    pixdata = img.load()
+
+    width, height = img.size
+    for y in range(height):
+        for x in range(width):
+            if pixdata[x, y] == (0,0,0,0):
+                pixdata[x, y] = (255, 255, 255, 255)
+
+    return img
 #utility Task class
 class Task:
     
@@ -117,7 +135,8 @@ class ReqHandler(BaseHTTPRequestHandler):
     def do_POST(self):
         if self.path=="/new":
             self.send_response(OK)
-            
+        elif self.path=="/upload/mask":
+            self.send_response(OK)
         else:
             self.send_response(NOT_FOUND)
             
@@ -174,6 +193,19 @@ class ReqHandler(BaseHTTPRequestHandler):
             
         
             # json.loads(self.rfile.read().decode("utf-8"))            
+        elif self.path=="/upload/mask":
+            content_length=int(self.headers["content-length"])
+            body=self.rfile.read(content_length)
+            body=body.removeprefix(b"\"data:image/png;base64,")
+            body=body.removesuffix(b'"')
+            body_binary=base64.b64decode(body + b'==')
+            with open("./mask.png","wb") as f:
+                f.write(body_binary)
+            img=Image.open("./mask.png")
+            img=transparency_to_white(img)
+            img=img.convert(mode="RGB")
+            img.save("./mask.png")
+                
 if __name__ == "__main__":        
     webServer = ThreadingHTTPServer((hostName, serverPort), ReqHandler)
     print("Server started http://%s:%s" % (hostName, serverPort))

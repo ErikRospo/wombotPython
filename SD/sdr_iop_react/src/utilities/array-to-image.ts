@@ -5,7 +5,7 @@
  * @param {int} h
  * @returns {string}
  */
-export function getDataUrlFromArr(arr: Uint8ClampedArray, w: number, h: number): string {
+export function getDataUrlFromArr(arr: Uint8ClampedArray, w?: number, h?: number): string {
   if(typeof w === 'undefined' || typeof h === 'undefined') {
     w = h = Math.sqrt(arr.length / 4);
   }
