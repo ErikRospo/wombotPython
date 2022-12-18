@@ -2,7 +2,8 @@
 import json 
 import os #for getting the current file path
 import sys
-import threading #multithreading and locking
+import threading
+from typing import List #multithreading and locking
 import uuid #identifying the tasks
 import requests # interacting with replicate servers
 import mimetypes # identifying files
@@ -94,7 +95,7 @@ class Task:
         self.thread=thread
     def isactive(self):
         return self.thread.is_alive()
-threads=[]
+threads:List[Task]=[]
 
 class ReqHandler(BaseHTTPRequestHandler):
     
@@ -110,6 +111,12 @@ class ReqHandler(BaseHTTPRequestHandler):
             self.send_response(OK)
         elif self.path.startswith("/log"):
             self.send_response(OK)
+        elif self.path.startswith("/delete/"):
+            if self.path.split("/delete/")[1] in taskPoolIDS:
+           
+                self.send_response(OK)
+            else:
+                self.send_response_only(BAD_REQUEST)
         else:
             self.send_response(NOT_FOUND)
        
@@ -121,7 +128,16 @@ class ReqHandler(BaseHTTPRequestHandler):
                     
         elif self.path=="/inprogress":
             self.wfile.write(bytes(json.dumps(outs),"utf-8"))
-
+        elif self.path.startswith("/delete/"):
+            self.run_delete()    
+    def run_delete(self):
+        if self.path.split("/delete/")[1] in taskPoolIDS:
+            uuid_in=self.path.split("/delete/")[1]
+            for n in range(len(threads)):
+                if uuid_in==threads[n].uuid:
+                    taskPoolIDS.remove(uuid_in)
+                    threads.remove(threads[n])
+                    break
     def run_lookup(self):
         if self.path.split("/lookup/")[1] in taskPoolIDS:
             uuid_in=self.path.split("/lookup/")[1]
@@ -142,6 +158,8 @@ class ReqHandler(BaseHTTPRequestHandler):
             self.send_response(OK)
         elif self.path=="/upload/mask":
             self.send_response(OK)
+        elif self.path=="/upload/image":
+            self.send_response(OK)
         elif self.path.startswith("/log"):
             self.send_response(OK)
         else:
@@ -160,26 +178,14 @@ class ReqHandler(BaseHTTPRequestHandler):
             self.run_log()             
         elif self.path=="/upload/mask":
             self.run_upload_mask()
-        elif self.path.startswith("/startnew"):
-            self.run_start_new()
+        elif self.path=="/upload/image":
+            self.run_upload_image()
     def run_log(self):
         content_length=int(self.headers["content-length"])
         body=self.rfile.read(content_length)
         with open("./body.txt","wb") as f:
             f.write(body)
-    def run_start_new(self):
-        content_length=int(self.headers["content-length"])
-        body=self.rfile.read(content_length)
-        print(self.headers)
-        boundary=self.headers["content-type"].split(";")[1].removeprefix(" boundary=").encode("utf-8")
-        
-        print(boundary)
-        # for part in parts:
-        #     print(part.get_payload(decode=True))
-        # print({
-        #     part.get_param('name', header='content-disposition'): part.get_payload(decode=True)
-        #     for part in msg.get_payload()
-        # })
+
     def run_upload_mask(self):
         content_length=int(self.headers["content-length"])
         body=self.rfile.read(content_length)
@@ -192,18 +198,27 @@ class ReqHandler(BaseHTTPRequestHandler):
         img=transparency_to_white(img)
         img=img.convert(mode="RGB")
         img.save("./mask.png")
-
+    def run_upload_image(self):
+        content_length=int(self.headers["content-length"])
+        body=self.rfile.read(content_length)
+        body=body.removeprefix(b"\"data:image/png;base64,")
+        body=body.removesuffix(b'"')
+        body_binary=base64.b64decode(body + b'==')
+        with open("./image.png","wb") as f:
+            f.write(body_binary)
+        img=Image.open("./image.png")
+        img=transparency_to_white(img)
+        img=img.convert(mode="RGB")
+        img.save("./image.png")
     def run_new(self):
         content_length=int(self.headers["content-length"])
         body=self.rfile.read(content_length).decode("utf-8")
 
 
-        print(body)
+        # print(body)
             
         bodyjson=json.loads(body)
-        print(bodyjson)
-        mask=bodyjson["mask"]
-        image=bodyjson["image"]
+        # print(bodyjson)
         prompt=bodyjson["prompt"]
             
         l={"num_outputs":1,
@@ -228,7 +243,7 @@ class ReqHandler(BaseHTTPRequestHandler):
             pass
         uuid_new=uuid.uuid4().hex
         bodyjson["uuidp"]=uuid_new
-        t=threading.Thread(target=do_image,args=(mask,image,prompt,uuid_new),kwargs=l)
+        t=threading.Thread(target=do_image,args=("./mask.png","./image.png",prompt,uuid_new),kwargs=l)
         t.start()
                         
         ts=Task(t)
@@ -236,9 +251,9 @@ class ReqHandler(BaseHTTPRequestHandler):
         threads.append(ts)
             
         taskPoolIDS.append(ts.uuid)
-            
+        
         self.wfile.write(bytes(ts.uuid,"utf-8"))
-        print(ts.uuid)
+        # print(ts.uuid)
                 
 if __name__ == "__main__":        
     webServer = ThreadingHTTPServer((hostName, serverPort), ReqHandler)

@@ -9,7 +9,7 @@
         [ ] fill
         [] etc
 [ ] send commands to backend.
-[ ] allow loading images as a starting point.
+[x] allow loading images as a starting point.
 [ ] allow just generating images with the SD api, without the inpainting/outpainting.
 [ ] allow for customizing options for stable diffusion.
     [ ] negative prompts.
@@ -17,6 +17,7 @@
     [ ] either the actual image scrolling
     [ ] or serverside.
         [ ] this seems like it would be hard, inefficent, and just straight up a bad idea.
+    [x] We may also be able to do a mix, where the image is split into chunks, on the backend and we can scroll around those on the frontend, and when we get far enough away, we switch chunks on the backend.
 ## backend
 [x] recive commands.
 [x] interact with filesystem
@@ -42,27 +43,29 @@
         2. upload prompt
         3. wait for response
 
-4. send completed images back to frontend.
-    1. Really long requests.
+[x] send completed images back to frontend.
+    [-] Really long requests.
         1. -Not ideal
         2. -bad practice
         3. +easy to implement
-    2. Continuous pinging the server for updates.
+    [x] Continuous pinging the server for updates.
 
         1. -requires more network activity
         2. +better practices
         3. +works in the real world.
         4. +may be easier to implement.
-    3. Web sockets
+    [-] Web sockets
         1. -Harder to implement
         2. -requires more libraries
         3. -not familiar with
         4. -may not be able to cope with multiple requests at once.
         5. -may not be able to handle large files being transfered.
         6. +actualy designed for long term comunication
-5. parse input from frontend.
-    [ ] multipart form
-    [ ] json object in request
+[x] parse input from frontend.
+    [-] multipart form
+        [-] prevent redirect/refresh, but continue request.
+    [x] json object in request
+
 ### basic idea
 
 

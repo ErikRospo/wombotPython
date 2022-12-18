@@ -2,6 +2,8 @@ import React from "react";
 import "./canvas.css";
 import { postData } from "../../utils";
 import { getDataUrlFromArr } from "../../utilities/array-to-image";
+import { SERVER_URL } from "../../constants";
+const nop = (): void => { }
 export default class Canvas extends React.Component {
   maskstate: Uint8ClampedArray;
   props: { width: number; height: number };
@@ -55,11 +57,15 @@ export default class Canvas extends React.Component {
     this.props.height = v;
   }
   fetchInprogress() {
-    fetch("http://localhost:8080/inprogress").then((value) => {
+    fetch(SERVER_URL + "/inprogress").then((value) => {
       value.text().then((value1) => {
         let inp = JSON.parse(value1);
-        console.log(inp);
-
+        for (const key in inp) {
+          let url=inp[key]
+          // console.log(url[0])
+          // this.setState({image:url})
+          // this.deleteKey(key)
+        }
         this.setState({ val: value1 });
       });
     });
@@ -69,7 +75,7 @@ export default class Canvas extends React.Component {
     for (let index = 0; index < this.canvasState.ids_in_progress.length; index++) {
       const element = this.canvasState.ids_in_progress[index];
 
-      Allmine.push(fetch("http://localhost:8080/lookup/" + element).then((value) => { value.text() }))
+      Allmine.push(fetch(SERVER_URL + "/lookup/" + element).then((value) => { value.text() }))
     }
     Promise.all(Allmine).then((values) => {
       let newText: string[] = []
@@ -77,9 +83,9 @@ export default class Canvas extends React.Component {
         const element_text = values[index];
         if (element_text) {
           newText.push(element_text)
+          this.setState({"val":newText.join("|||")})
         }
       }
-      console.log(newText)
     })
   }
   componentDidMount(): void {
@@ -92,16 +98,21 @@ export default class Canvas extends React.Component {
   componentWillUnmount(): void {
     clearInterval(this.getstatus);
   }
-  handleClick(event: {
-    clientX: number;
-    clientY: number;
-    pageX: number;
-    pageY: number;
-    screenX: number;
-    screenY: number;
-  }) {
-    // let relativeX=event.clientX
+  deleteKey(key:string){
+    fetch(SERVER_URL+"/delete/"+key).then(()=>{
+      this.fetchMine()
+    })
   }
+  // handleClick(event: {
+  //   clientX: number;
+  //   clientY: number;
+  //   pageX: number;
+  //   pageY: number;
+  //   screenX: number;
+  //   screenY: number;
+  // }) {
+  //   // let relativeX=event.clientX
+  // }
   canvasLoad(el: any) {
     console.log("canvasload");
     console.log(el);
@@ -153,20 +164,18 @@ export default class Canvas extends React.Component {
     this.canvasState.keysdown.set(event.key, false);
   }
   makeNew(prompt: string) {
-    postData("http://localhost:8080/new", {
+    postData(SERVER_URL + "/new", {
       prompt: prompt,
-      mask: "./mask.jpg",
-      image: "./image.jpg",
+      mask: "./mask.png",
+      image: "./image.png",
     }).then((response) => {
-      console.log(this.canvasState.ids_in_progress)
       if (response) {
 
         this.canvasState.ids_in_progress.push(response)
       } else {
-        console.error("RESPONSE IS EMPTY")
+        console.log("RESPONSE IS EMPTY:"+response)
       }
 
-      console.log(this.canvasState.ids_in_progress);
     });
   }
   updateCtx(event: any) {
@@ -177,10 +186,56 @@ export default class Canvas extends React.Component {
       }
     }
   }
+  onDragEnter(e: React.DragEvent<HTMLInputElement>): void {
+    e.stopPropagation();
+    e.preventDefault();
+  }
+  onDragOver(e: React.DragEvent<HTMLInputElement>): void {
+    e.stopPropagation();
+    e.preventDefault();
+  }
+  onDrop(e: React.DragEvent<HTMLInputElement>): void {
+    e.stopPropagation();
+    e.preventDefault();
+
+    const dt = e.dataTransfer;
+    const files = dt.files;
+
+    this.handleFiles(files, (e) => { console.log(e) });
+  }
+  handleFiles(files: FileList, onloaded: (e: string) => void): void {
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+
+      if (!file.type.startsWith('image/')) { continue }
+
+      // const img = document.createElement("img");
+      // img.classList.add("obj");
+      // img.file = file;
+      // preview.appendChild(img); // Assuming that "preview" is the div output where the content will be displayed.
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        // console.log(e)
+        this.setState({ "image": e.target?.result })
+        let res = e.target?.result
+        if (res) {
+          postData(SERVER_URL + "/upload/image", res.toString()).then(onloaded)
+        }
+
+      }
+      // reader.onload = (e) => { img.src = e.target?.result; };
+      reader.readAsDataURL(file);
+    }
+  }
   render(): JSX.Element {
     return (
       <div
         id="canvas-container"
+        onResize={(e) => {
+          this.width = window.innerWidth
+          this.height = window.innerHeight
+        }}
       >
         <img
           src={this.state.image}
@@ -231,7 +286,7 @@ export default class Canvas extends React.Component {
                 this.maskstate = this.ctx.getImageData(0, 0, this.width, this.height).data
                 let dataurl = getDataUrlFromArr(this.maskstate, this.width, this.height)
 
-                postData("http://localhost:8080/upload/mask", dataurl)
+                postData(SERVER_URL + "/upload/mask", dataurl)
               }
             }
           }
@@ -246,12 +301,7 @@ export default class Canvas extends React.Component {
               this.canvasState.toclear = false
             }
             if (this.mousedown) {
-              // const img = getImgFromArr(this.maskstate, this.width, this.height);x
               this.draw(event)
-              // ctx.fillStyle = "black"
-              // ctx.arc(event.clientX, event.clientY, 15, 0, 360);
-
-              // this.maskstate[event.clientX + event.clientY * this.width] = 255
             }
           }}
           width={this.width}
@@ -260,32 +310,49 @@ export default class Canvas extends React.Component {
           onLoad={this.canvasLoad}
         ></canvas>
         <p id="inprogress">In progress: {this.state.val}</p>
-        <form action="http://localhost:8080/startnew"  encType="multipart/form-data" onSubmit={(ev)=>{
-          console.log(ev)
-        }} method="post">
+        <div >
           <label htmlFor="Prompt">Prompt: </label>
           <input type="text" name="Prompt" id="Prompt"
             onMouseOver={() => { this.canvasState.preventEvents = true }}
             onMouseOut={() => { this.canvasState.preventEvents = false }} />
           <br />
-          <input type="file" name="ImageFile" accept="image/*" id="ImageFile" />
-          <input type="submit"
+          <input type="file" name="ImageFile" accept="image/png" id="ImageFile"
+            onDragEnter={(e) => { this.onDragEnter(e) }}
+            onDragOver={(e) => { this.onDragOver(e) }}
+            onDrop={(e) => { this.onDrop(e) }}
+            onChange={(e) => {
+              if (e.target.files) {
+                this.handleFiles(e.target.files, (s) => { })
+              }
+            }} />
+
+          <button
             id="genmore"
-            
+
             onClick={(evt) => {
               console.log(evt)
-              let i = document.getElementById("Prompt");
-              if (i instanceof HTMLInputElement) {
-                // this.makeNew(i.value);
-                
-              }
-              evt.stopPropagation()
-            }}
+              let prompt_elm = document.getElementById("Prompt");
+              let file_elm = document.getElementById("ImageFile")
+              // this.makeNew(i.value);
 
-              // Generate
-          />
-          </form>
-            
+              if (prompt_elm instanceof HTMLInputElement) {
+                if (file_elm instanceof HTMLInputElement) {
+                  if (file_elm.files) {
+                    this.handleFiles(file_elm.files, () => {
+                      console.log("files handled")
+                      this.makeNew((file_elm as HTMLInputElement).value)
+                    })
+                  }
+                }
+              }
+            }
+            }
+
+          >
+            Generate
+          </button>
+        </div>
+
       </div>
     );
   }
