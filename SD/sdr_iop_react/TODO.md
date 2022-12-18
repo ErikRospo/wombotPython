@@ -41,7 +41,7 @@
         1. upload image?
         2. upload prompt
         3. wait for response
-    
+
 4. send completed images back to frontend.
     1. Really long requests.
         1. -Not ideal
@@ -60,7 +60,9 @@
         4. -may not be able to cope with multiple requests at once.
         5. -may not be able to handle large files being transfered.
         6. +actualy designed for long term comunication
-
+5. parse input from frontend.
+    [ ] multipart form
+    [ ] json object in request
 ### basic idea
 
 

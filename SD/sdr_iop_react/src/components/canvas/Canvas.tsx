@@ -260,11 +260,11 @@ export default class Canvas extends React.Component {
           onLoad={this.canvasLoad}
         ></canvas>
         <p id="inprogress">In progress: {this.state.val}</p>
-        <form action="http://localhost:8080/log"  encType="multipart/form-data" onSubmit={(ev)=>{
+        <form action="http://localhost:8080/startnew"  encType="multipart/form-data" onSubmit={(ev)=>{
           console.log(ev)
-        }}>
+        }} method="post">
           <label htmlFor="Prompt">Prompt: </label>
-          <input type="text" name="text" id="Prompt"
+          <input type="text" name="Prompt" id="Prompt"
             onMouseOver={() => { this.canvasState.preventEvents = true }}
             onMouseOut={() => { this.canvasState.preventEvents = false }} />
           <br />

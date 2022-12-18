@@ -8,8 +8,8 @@ import requests # interacting with replicate servers
 import mimetypes # identifying files
 import time # waiting a certain amount of time
 import base64 #for decoding images sent back from the Canvas.
-import numpy as np #for editing images.
-from PIL import Image
+import email.parser# for decoding multipart forms.
+from PIL import Image # for image editing
 from http.client import NOT_FOUND, OK, BAD_REQUEST
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 taskPoolIDS=[]
@@ -40,6 +40,7 @@ def upload_image(path):
     upload_url=res.json()["upload_url"]
     #upload the image
     requests.put(upload_url,data=cont,headers={"content-type":content_type})
+ # type: ignore    
     return serving_url
 def do_image(mask_path,image_path,prompt,uuidp,num_outputs=1,guidence_scale=5,prompt_strength=0.8,num_inference_steps=50):        
     #upload both the mask and the image itself
@@ -120,8 +121,6 @@ class ReqHandler(BaseHTTPRequestHandler):
                     
         elif self.path=="/inprogress":
             self.wfile.write(bytes(json.dumps(outs),"utf-8"))
-        elif self.path.startswith("/log"):
-            self.run_log()
 
     def run_lookup(self):
         if self.path.split("/lookup/")[1] in taskPoolIDS:
@@ -129,16 +128,15 @@ class ReqHandler(BaseHTTPRequestHandler):
             for n in range(len(threads)):
                 if uuid_in==threads[n].uuid:
                     ind=n
+                    if threads[ind].isactive():
+                        self.wfile.write(b"TASK_IN_PROGRESS")
+                    else:
+                        dat=outs[uuid_in]
+                            
+                        jd=bytes(json.dumps(dat),"utf-8")
+                            
+                        self.wfile.write(jd)
                     break
- 
-            if threads[ind].isactive():
-                self.wfile.write(b"TASK_IN_PROGRESS")
-            else:
-                dat=outs[uuid_in]
-                    
-                jd=bytes(json.dumps(dat),"utf-8")
-                    
-                self.wfile.write(jd)
     def do_POST(self):
         if self.path=="/new":
             self.send_response(OK)
@@ -162,13 +160,26 @@ class ReqHandler(BaseHTTPRequestHandler):
             self.run_log()             
         elif self.path=="/upload/mask":
             self.run_upload_mask()
-
+        elif self.path.startswith("/startnew"):
+            self.run_start_new()
     def run_log(self):
         content_length=int(self.headers["content-length"])
         body=self.rfile.read(content_length)
         with open("./body.txt","wb") as f:
             f.write(body)
-
+    def run_start_new(self):
+        content_length=int(self.headers["content-length"])
+        body=self.rfile.read(content_length)
+        print(self.headers)
+        boundary=self.headers["content-type"].split(";")[1].removeprefix(" boundary=").encode("utf-8")
+        
+        print(boundary)
+        # for part in parts:
+        #     print(part.get_payload(decode=True))
+        # print({
+        #     part.get_param('name', header='content-disposition'): part.get_payload(decode=True)
+        #     for part in msg.get_payload()
+        # })
     def run_upload_mask(self):
         content_length=int(self.headers["content-length"])
         body=self.rfile.read(content_length)
