@@ -107,6 +107,8 @@ class ReqHandler(BaseHTTPRequestHandler):
         elif self.path=="/inprogress":
        
             self.send_response(OK)
+        elif self.path.startswith("/log"):
+            self.send_response(OK)
         else:
             self.send_response(NOT_FOUND)
        
@@ -114,30 +116,35 @@ class ReqHandler(BaseHTTPRequestHandler):
         self.end_headers()
        
         if self.path.startswith("/lookup"):
-            if self.path.split("/lookup/")[1] in taskPoolIDS:
-                
-                uuid_in=self.path.split("/lookup/")[1]
-                for n in range(len(threads)):
-       
-                    if uuid_in==threads[n].uuid:
-                        ind=n
-                        break
- 
-                if threads[ind].isactive():
-                    self.wfile.write(b"TASK_IN_PROGRESS")
-                else:
-                    dat=outs[uuid_in]
-                    
-                    jd=bytes(json.dumps(dat),"utf-8")
-                    
-                    self.wfile.write(jd)
+            self.run_lookup()
                     
         elif self.path=="/inprogress":
             self.wfile.write(bytes(json.dumps(outs),"utf-8"))
+        elif self.path.startswith("/log"):
+            self.run_log()
+
+    def run_lookup(self):
+        if self.path.split("/lookup/")[1] in taskPoolIDS:
+            uuid_in=self.path.split("/lookup/")[1]
+            for n in range(len(threads)):
+                if uuid_in==threads[n].uuid:
+                    ind=n
+                    break
+ 
+            if threads[ind].isactive():
+                self.wfile.write(b"TASK_IN_PROGRESS")
+            else:
+                dat=outs[uuid_in]
+                    
+                jd=bytes(json.dumps(dat),"utf-8")
+                    
+                self.wfile.write(jd)
     def do_POST(self):
         if self.path=="/new":
             self.send_response(OK)
         elif self.path=="/upload/mask":
+            self.send_response(OK)
+        elif self.path.startswith("/log"):
             self.send_response(OK)
         else:
             self.send_response(NOT_FOUND)
@@ -146,72 +153,81 @@ class ReqHandler(BaseHTTPRequestHandler):
         self.end_headers()
         
         if self.path=="/new":
-            content_length=int(self.headers["content-length"])
-            body=self.rfile.read(content_length).decode("utf-8")
-
-
-            print(body)
-            
-            bodyjson=json.loads(body)
-            print(bodyjson)
-            mask=bodyjson["mask"]
-            image=bodyjson["image"]
-            prompt=bodyjson["prompt"]
-            
-            l={"num_outputs":1,
-               "guidence_scale":5,
-               "prompt_strength":0.8,
-               "num_inference_steps":50}
-            try:
-                l["num_outputs"]=bodyjson["num_outputs"]
-            except:
-                pass
-            try:
-                l["guidence_scale"]=bodyjson["guidence_scale"]
-            except:
-                pass
-            try:
-                l["promt_strength"]=bodyjson["promt_strength"]
-            except:
-                pass
-            try:
-                l["num_inference_steps"]=bodyjson["num_inference_steps"]
-            except:
-                pass
-            uuid_new=uuid.uuid4().hex
-            bodyjson["uuidp"]=uuid_new
-            t=threading.Thread(target=do_image,args=(mask,image,prompt,uuid_new),kwargs=l)
-            t.start()
-                        
-            ts=Task(t)
-            ts.uuid=uuid_new
-            threads.append(ts)
-            
-            taskPoolIDS.append(ts.uuid)
-            
-            self.wfile.write(bytes(ts.uuid,"utf-8"))
-            print(ts.uuid)
+            self.run_new()
                 # self.wfile.write(returned_values[self.path.split("/lookup/")[1]].content)
             
         
             # json.loads(self.rfile.read().decode("utf-8"))       
-        elif self.path=="/log":
-            content_length=int(self.headers["content-length"])
-            body=self.rfile.read(content_length)
-            with open("./body.txt","wb") as f:
-                f.write(body)                 
+        elif self.path.startswith("/log"):
+            self.run_log()             
         elif self.path=="/upload/mask":
-            content_length=int(self.headers["content-length"])
-            body=self.rfile.read(content_length)
-            body=body.removeprefix(b"\"data:image/png;base64,")
-            body=body.removesuffix(b'"')
-            body_binary=base64.b64decode(body + b'==')
-            with open("./mask.png","wb") as f:
-                f.write(body_binary)
-            img=Image.open("./mask.png")
-            img=transparency_to_white(img)
-            img=img.convert(mode="RGB")
-            img.save("./mask.png")
+            self.run_upload_mask()
+
+    def run_log(self):
+        content_length=int(self.headers["content-length"])
+        body=self.rfile.read(content_length)
+        with open("./body.txt","wb") as f:
+            f.write(body)
+
+    def run_upload_mask(self):
+        content_length=int(self.headers["content-length"])
+        body=self.rfile.read(content_length)
+        body=body.removeprefix(b"\"data:image/png;base64,")
+        body=body.removesuffix(b'"')
+        body_binary=base64.b64decode(body + b'==')
+        with open("./mask.png","wb") as f:
+            f.write(body_binary)
+        img=Image.open("./mask.png")
+        img=transparency_to_white(img)
+        img=img.convert(mode="RGB")
+        img.save("./mask.png")
+
+    def run_new(self):
+        content_length=int(self.headers["content-length"])
+        body=self.rfile.read(content_length).decode("utf-8")
+
+
+        print(body)
+            
+        bodyjson=json.loads(body)
+        print(bodyjson)
+        mask=bodyjson["mask"]
+        image=bodyjson["image"]
+        prompt=bodyjson["prompt"]
+            
+        l={"num_outputs":1,
+               "guidence_scale":5,
+               "prompt_strength":0.8,
+               "num_inference_steps":50}
+        try:
+            l["num_outputs"]=bodyjson["num_outputs"]
+        except:
+            pass
+        try:
+            l["guidence_scale"]=bodyjson["guidence_scale"]
+        except:
+            pass
+        try:
+            l["promt_strength"]=bodyjson["promt_strength"]
+        except:
+            pass
+        try:
+            l["num_inference_steps"]=bodyjson["num_inference_steps"]
+        except:
+            pass
+        uuid_new=uuid.uuid4().hex
+        bodyjson["uuidp"]=uuid_new
+        t=threading.Thread(target=do_image,args=(mask,image,prompt,uuid_new),kwargs=l)
+        t.start()
+                        
+        ts=Task(t)
+        ts.uuid=uuid_new
+        threads.append(ts)
+            
+        taskPoolIDS.append(ts.uuid)
+            
+        self.wfile.write(bytes(ts.uuid,"utf-8"))
+        print(ts.uuid)
                 
 if __name__ == "__main__":        
     webServer = ThreadingHTTPServer((hostName, serverPort), ReqHandler)

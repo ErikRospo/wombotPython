@@ -260,21 +260,31 @@ export default class Canvas extends React.Component {
           onLoad={this.canvasLoad}
         ></canvas>
         <p id="inprogress">In progress: {this.state.val}</p>
+        <form action="http://localhost:8080/log"  encType="multipart/form-data" onSubmit={(ev)=>{
+          console.log(ev)
+        }}>
+          <label htmlFor="Prompt">Prompt: </label>
           <input type="text" name="text" id="Prompt"
             onMouseOver={() => { this.canvasState.preventEvents = true }}
             onMouseOut={() => { this.canvasState.preventEvents = false }} />
+          <br />
           <input type="file" name="ImageFile" accept="image/*" id="ImageFile" />
-          <input type="button"
+          <input type="submit"
             id="genmore"
-            onClick={() => {
+            
+            onClick={(evt) => {
+              console.log(evt)
               let i = document.getElementById("Prompt");
               if (i instanceof HTMLInputElement) {
-                this.makeNew(i.value);
+                // this.makeNew(i.value);
+                
               }
+              evt.stopPropagation()
             }}
 
               // Generate
           />
+          </form>
             
       </div>
     );
