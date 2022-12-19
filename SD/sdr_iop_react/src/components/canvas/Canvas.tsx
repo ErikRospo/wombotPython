@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import "./canvas.css";
 import { postData } from "../../utils";
 import { getDataUrlFromArr } from "../../utilities/array-to-image";
@@ -311,7 +311,7 @@ export default class Canvas extends React.Component {
         ></canvas>
         <p id="inprogress">In progress: {this.state.val}</p>
         <div >
-          <Toolbox closed={this.state.toolboxClosed} tool={this.state.tool} radius={this.state.radius} color={this.state.color} />
+          <Toolbox closed={this.state.toolboxClosed} tool={this.state.tool} radius={this.state.radius} color={this.state.color} parent={this} />
           <label htmlFor="Prompt">Prompt: </label>
           <input type="text" name="Prompt" id="Prompt"
             onMouseOver={() => { this.canvasState.preventEvents = true }}
