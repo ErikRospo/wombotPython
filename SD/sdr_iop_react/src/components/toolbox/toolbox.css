@@ -5,11 +5,16 @@
     width: 200px;
     height: 400px;
     background-color: slategray;
-    border: 2px grey  groove;
+    border: 2px grey groove;
+    transition: ease-in-out 500ms 0ms height;
+
 }
 
 #selector {
     text-align: start;
+    opacity: 100%;
+    transition: ease-in-out 500ms 0ms opacity;
+
 }
 
 .toggleButton {
@@ -20,4 +25,9 @@
     height: 2em;
     z-index: 20;
     cursor: pointer;
+    user-select: none;
+}
+
+.toolSelectorButton {
+    user-select: none;
 }

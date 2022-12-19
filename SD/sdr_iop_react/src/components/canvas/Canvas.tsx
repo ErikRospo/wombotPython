@@ -7,7 +7,7 @@ import { Toolbox } from "../toolbox/Toolbox";
 export default class Canvas extends React.Component {
   maskstate: Uint8ClampedArray;
   props: { width: number; height: number };
-  state: { val: string; image: string, tool: number, toolboxClosed: boolean ,color:string};
+  state: { val: string; image: string, tool: number, toolboxClosed: boolean, color: string };
   canvasState: {
     toclear: boolean;
     ids_in_progress: Array<string>;
@@ -38,7 +38,7 @@ export default class Canvas extends React.Component {
       tool: 1,
       toolboxClosed: false,
       val: "EMPTY",
-      color:"black",
+      color: "black",
       image:
         "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAIAQMAAAD+wSzIAAAABlBMVEX///+/v7+jQ3Y5AAAADklEQVQI12P4AIX8EAgALgAD/aNpbtEAAAAASUVORK5CYII",
     };
@@ -134,10 +134,10 @@ export default class Canvas extends React.Component {
 
     switch (event.key) {
       case "q":
-        this.setState({ tool: Math.max(this.state.tool-1, 0) })
+        this.setState({ tool: Math.max(this.state.tool - 1, 0) })
         break;
       case "e":
-        this.setState({ tool: Math.min(this.state.tool-1, 2) })
+        this.setState({ tool: Math.min(this.state.tool - 1, 2) })
         break;
       case "w":
         this.canvasState.radius -= 5;
@@ -305,7 +305,7 @@ export default class Canvas extends React.Component {
         ></canvas>
         <p id="inprogress">In progress: {this.state.val}</p>
         <div >
-          <Toolbox closed={this.state.toolboxClosed}  tool={this.state.tool}/>
+          <Toolbox closed={this.state.toolboxClosed} tool={this.state.tool} />
           <label htmlFor="Prompt">Prompt: </label>
           <input type="text" name="Prompt" id="Prompt"
             onMouseOver={() => { this.canvasState.preventEvents = true }}

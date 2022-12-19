@@ -1,32 +1,39 @@
-#canvas-canvas{
+#canvas-canvas {
     position: absolute;
-    top:0;
-    left:0;
+    top: 0;
+    left: 0;
     z-index: -1;
 }
-#clickable-image{
-    z-index:-2;
+
+#clickable-image {
+    z-index: -2;
     position: absolute;
-    top:0;
-    left:0;
-    
+    top: 0;
+    left: 0;
+
 }
-#canvas-container{
+
+#canvas-container {
     background-color: grey;
     z-index: 2;
-}
-#inprogress{
-    background-color: grey;
-    z-index: 1000;
     user-select: none;
 }
+
+#inprogress {
+    background-color: grey;
+    z-index: 1000;
+}
+
 #genmore {
     z-index: 1000;
-    
+
 }
+
 #Prompt {
     z-index: 1000;
 }
-#ImageFile{
+
+#ImageFile {
     z-index: 1000;
+
 }
