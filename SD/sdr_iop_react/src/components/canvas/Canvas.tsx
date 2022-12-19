@@ -1,9 +1,10 @@
-import React from "react";
+import React, { KeyboardEvent, MouseEvent } from "react";
 import "./canvas.css";
 import { postData } from "../../utils";
 import { getDataUrlFromArr } from "../../utilities/array-to-image";
 import { SERVER_URL } from "../../constants";
-import { Toolbox } from "../toolbox/Toolbox";
+import { BsEraserFill, BsPenFill } from 'react-icons/bs'
+import { TfiPaintBucket, TfiClose, TfiMenu } from 'react-icons/tfi'
 export default class Canvas extends React.Component {
   maskstate: Uint8ClampedArray;
   props: { width: number; height: number };
@@ -19,7 +20,6 @@ export default class Canvas extends React.Component {
     toclear: boolean;
     ids_in_progress: Array<string>;
     mouseDown: number;
-
     keysdown: Map<string, boolean>;
     preventEvents: boolean;
   };
@@ -126,12 +126,23 @@ export default class Canvas extends React.Component {
     console.log(el);
   }
 
-  draw(event: any) {
+  draw(event: MouseEvent<HTMLCanvasElement>) {
     if (this.ctx) {
-      this.ctx.fillStyle = this.state.color
-      this.ctx.beginPath();
-      this.ctx.arc(event.clientX, event.clientY, this.state.radius, 0, 360);
-      this.ctx.fill();
+      if (this.state.tool === 0) {
+        this.ctx.fillStyle = "white"
+        this.ctx.beginPath();
+        this.ctx.arc(event.clientX, event.clientY, this.state.radius, 0, 360);
+        this.ctx.fill();
+
+      }
+      else if (this.state.tool === 1) {
+        this.ctx.fillStyle = this.state.color
+        this.ctx.beginPath();
+        this.ctx.arc(event.clientX, event.clientY, this.state.radius, 0, 360);
+        this.ctx.fill();
+      } else if (this.state.tool === 2) {
+        this.canvas_fill(event)
+      }
     }
   }
   handleKeypress(event: any) {
@@ -227,6 +238,124 @@ export default class Canvas extends React.Component {
       reader.readAsDataURL(file);
     }
   }
+  toggleClose() {
+    this.setState({ toolboxClosed: !this.state.toolboxClosed })
+  }
+
+  setColor(ev: React.ChangeEvent<HTMLInputElement>) {
+    this.setState({ color: ev.target.value });
+  }
+
+  setRadius(ev: React.ChangeEvent<HTMLInputElement>) {
+    this.setState({ radius: ev.target.valueAsNumber });
+  }
+
+  setTool(tool: number): void {
+    this.setState({ 'tool': tool });
+  }
+  private floodFillAlgo(image: number[][], sr: number, sc: number, newColor: number): number[][] {
+    //Get the input which needs to be replaced.
+    const current = image[sr][sc];
+
+    //If the newColor is same as the existing 
+    //Then return the original image.
+    if (current === newColor) {
+      return image;
+    }
+
+    //Other wise call the fill function which will fill in the existing image.
+    this.fill(image, sr, sc, newColor, current);
+
+    //Return the image once it is filled
+    return image;
+  }
+
+  private fill(image: number[][], sr: number, sc: number, newColor: number, current: number): void {
+    //If row is less than 0
+    if (sr < 0) {
+      return;
+    }
+
+    //If column is less than 0
+    if (sc < 0) {
+      return;
+    }
+
+    //If row is greater than image length
+    if (sr > image.length - 1) {
+      return;
+    }
+
+    //If column is greater than image length
+    if (sc > image[sr].length - 1) {
+      return;
+    }
+
+    //If the current pixel is not which needs to be replaced
+    if (image[sr][sc] !== current) {
+      return;
+    }
+
+    //Update the new color
+    image[sr][sc] = newColor;
+
+
+    //Fill in all four directions
+    //Fill Prev row
+    this.fill(image, sr - 1, sc, newColor, current);
+
+    // //Fill Next row
+    // this.fill(image, sr + 1, sc, newColor, current);
+
+    // //Fill Prev col
+    // this.fill(image, sr, sc - 1, newColor, current);
+
+    // //Fill next col
+    // this.fill(image, sr, sc + 1, newColor, current);
+
+  }
+  canvas_fill(ev: MouseEvent<HTMLCanvasElement>): void {
+    let imagedata = this.ctx?.getImageData(0, 0, this.width, this.height)
+    if (imagedata) {
+      let transformed = this.transformImage(imagedata)
+      let ff = this.floodFillAlgo(transformed, ev.clientX, ev.clientY, 0)
+      let newimage = this.transformData(ff)
+      if (newimage) {
+        this.ctx?.putImageData(newimage, 0, 0)
+      }
+    }
+  }
+ 
+  transformImage(imagedata: ImageData): number[][] {
+    let imgarr: number[][] = []
+    let s = 0
+    
+    for (let x = 0; x < imagedata.width; x++) {
+      let temparr: number[] = [];
+      for (let y = 0; y < imagedata.height; y++) {
+        temparr.push(imagedata.data[(y*imagedata.width+x)*4])
+      }
+      imgarr.push(temparr)
+    }
+    console.log(s)
+    console.log(imgarr)
+    return imgarr
+  }
+  transformData(data: number[][]): ImageData | undefined {
+    let imagedata = this.ctx?.createImageData(data.length, data[0].length)
+    if (imagedata) {
+      let s = 0
+      for (let x = 0; x < imagedata.width; x++) {
+        for (let y = 0; y < imagedata.height; y++) {
+          imagedata.data[x + y * imagedata.height] = data[x][y]
+          s += data[x][y]
+        }
+      }
+      console.log(s)
+      console.log(imagedata)
+      return imagedata
+    }
+  }
   render(): JSX.Element {
 
     return (
@@ -235,6 +364,17 @@ export default class Canvas extends React.Component {
         onResize={(e) => {
           this.width = window.innerWidth
           this.height = window.innerHeight
+        }}
+        onKeyDown={(event: KeyboardEvent<HTMLDivElement>) => {
+          if (!this.canvasState.preventEvents) {
+            this.handleKeypress(event);
+          }
+        }}
+        onKeyUp={(event: KeyboardEvent<HTMLDivElement>) => {
+          if (!this.canvasState.preventEvents) {
+            this.handleKeyup(event);
+
+          }
         }}
       >
         <img
@@ -250,17 +390,7 @@ export default class Canvas extends React.Component {
 
             this.updateCtx(event)
           }}
-          onKeyDown={(event: any) => {
-            if (!this.canvasState.preventEvents) {
-              this.handleKeypress(event);
-            }
-          }}
-          onKeyUp={(event: any) => {
-            if (!this.canvasState.preventEvents) {
-              this.handleKeyup(event);
 
-            }
-          }}
           onMouseDown={
             (event: any) => {
               this.canvasState.mouseDown = event.buttons;
@@ -311,7 +441,50 @@ export default class Canvas extends React.Component {
         ></canvas>
         <p id="inprogress">In progress: {this.state.val}</p>
         <div >
-          <Toolbox closed={this.state.toolboxClosed} tool={this.state.tool} radius={this.state.radius} color={this.state.color} parent={this} />
+          <div id="toolbar-base" style={{ "height": (this.state.toolboxClosed ? "3em" : "400px") }}>
+            <div >
+              <div className="toggleButton" hidden={!this.state.toolboxClosed} onClick={(_ev) => this.toggleClose()}>
+                <TfiClose></TfiClose>
+              </div>
+              <div className="toggleButton" hidden={this.state.toolboxClosed} onClick={(_ev) => this.toggleClose()}>
+                <TfiMenu></TfiMenu>
+              </div>
+              <br />
+              <div id="selector" style={{ "opacity": (this.state.toolboxClosed ? "0%" : "100%") }}>
+
+                <div >
+                  <label>
+                    <input type="radio" name="Tool" className="toolSelectorButton" onChange={() => this.setTool(0)} onClick={() => this.setTool(0)} checked={this.state.tool === 0} />
+                    Eraser <BsEraserFill></BsEraserFill>
+                  </label>
+                  <br />
+                  <label>
+                    <input type="radio" name="Tool" className="toolSelectorButton" onChange={() => this.setTool(1)} onClick={() => this.setTool(1)} checked={this.state.tool === 1} />
+
+                    Pen <BsPenFill></BsPenFill>
+                  </label><br />
+                  <label>
+                    <input type="radio" name="Tool" className="toolSelectorButton" onChange={() => this.setTool(2)} onClick={() => this.setTool(2)} checked={this.state.tool === 2} />
+
+                    Fill <TfiPaintBucket></TfiPaintBucket>
+                  </label>
+                  <div></div>
+                </div>
+                <hr />
+                <section>
+                  <div id="Radius" >
+                    <label htmlFor="RadiusInput">Radius: </label>
+                    <input type="number" name="Radius" id="RadiusInput" onChange={(ev) => { this.setRadius(ev); }} defaultValue={this.state.radius} />
+                  </div>
+                  <br />
+                  <div id="Color" >
+                    <label htmlFor="ColorInput">Color: </label>
+                    <input type="color" name="Color" id="ColorInput" onChange={(ev) => { this.setColor(ev); }} />
+                  </div>
+                </section>
+              </div>
+            </div>
+          </div>
           <label htmlFor="Prompt">Prompt: </label>
           <input type="text" name="Prompt" id="Prompt"
             onMouseOver={() => { this.canvasState.preventEvents = true }}

@@ -37,3 +37,39 @@
     z-index: 1000;
 
 }
+#toolbar-base {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 200px;
+    height: 400px;
+    background-color: slategray;
+    border: 2px grey groove;
+    transition: ease-in-out 500ms 0ms height;
+
+}
+
+#selector {
+    text-align: start;
+    opacity: 100%;
+    transition: ease-in-out 500ms 0ms opacity;
+
+}
+
+.toggleButton {
+    position: absolute;
+    right: 10px;
+    top: 10px;
+    width: 2em;
+    height: 2em;
+    z-index: 20;
+    cursor: pointer;
+    user-select: none;
+}
+
+.toolSelectorButton {
+    user-select: none;
+}
+#RadiusInput{
+    width:5em;
+}
