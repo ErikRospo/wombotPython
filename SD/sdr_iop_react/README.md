@@ -46,7 +46,7 @@ We could also do outpainting by doing a slightly scaled down tile, but then by c
 
 
 
-
+[react icons](https://react-icons.github.io/react-icons/)
 ## Available Scripts
 
 In the project directory, you can run:
