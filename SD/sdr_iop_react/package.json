@@ -13,6 +13,7 @@
     "array-to-image": "^1.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-icons": "^4.7.1",
     "react-scripts": "5.0.1",
     "typescript": "^4.9.4",
     "web-vitals": "^2.1.4"
@@ -21,7 +22,6 @@
     "start": "CHOKIDAR_USEPOLLING=true react-scripts start",
     "dev": "CHOKIDAR_USEPOLLING=true react-scripts start",
     "prod": "react-scripts build;npx run serve -s build/index.html",
-    
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"

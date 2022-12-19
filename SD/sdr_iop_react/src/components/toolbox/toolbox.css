@@ -1,0 +1,23 @@
+#toolbar-base {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 200px;
+    height: 400px;
+    background-color: slategray;
+    border: 2px grey  groove;
+}
+
+#selector {
+    text-align: start;
+}
+
+.toggleButton {
+    position: absolute;
+    right: 10px;
+    top: 10px;
+    width: 2em;
+    height: 2em;
+    z-index: 20;
+    cursor: pointer;
+}

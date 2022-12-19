@@ -3,16 +3,16 @@ import "./canvas.css";
 import { postData } from "../../utils";
 import { getDataUrlFromArr } from "../../utilities/array-to-image";
 import { SERVER_URL } from "../../constants";
-const nop = (): void => { }
+import { Toolbox } from "../toolbox/Toolbox";
 export default class Canvas extends React.Component {
   maskstate: Uint8ClampedArray;
   props: { width: number; height: number };
-  state: { val: string; image: string };
+  state: { val: string; image: string, tool: number, toolboxClosed: boolean ,color:string};
   canvasState: {
     toclear: boolean;
     ids_in_progress: Array<string>;
     mouseDown: number;
-    tool: number;
+
     keysdown: Map<string, boolean>;
     radius: number;
     preventEvents: boolean;
@@ -27,7 +27,6 @@ export default class Canvas extends React.Component {
     this.ids = [];
     this.canvasState = {
       mouseDown: 0,
-      tool: -1,
       keysdown: new Map<string, boolean>(),
       radius: 15,
       ids_in_progress: new Array<string>(),
@@ -36,7 +35,10 @@ export default class Canvas extends React.Component {
     };
     console.log(this.canvasState)
     this.state = {
+      tool: 1,
+      toolboxClosed: false,
       val: "EMPTY",
+      color:"black",
       image:
         "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAIAQMAAAD+wSzIAAAABlBMVEX///+/v7+jQ3Y5AAAADklEQVQI12P4AIX8EAgALgAD/aNpbtEAAAAASUVORK5CYII",
     };
@@ -61,8 +63,8 @@ export default class Canvas extends React.Component {
       value.text().then((value1) => {
         let inp = JSON.parse(value1);
         for (const key in inp) {
-          let url=inp[key]
-          // console.log(url[0])
+          let url = inp[key]
+          console.log(url[0])
           // this.setState({image:url})
           // this.deleteKey(key)
         }
@@ -83,7 +85,7 @@ export default class Canvas extends React.Component {
         const element_text = values[index];
         if (element_text) {
           newText.push(element_text)
-          this.setState({"val":newText.join("|||")})
+          this.setState({ "val": newText.join("|||") })
         }
       }
     })
@@ -98,8 +100,8 @@ export default class Canvas extends React.Component {
   componentWillUnmount(): void {
     clearInterval(this.getstatus);
   }
-  deleteKey(key:string){
-    fetch(SERVER_URL+"/delete/"+key).then(()=>{
+  deleteKey(key: string) {
+    fetch(SERVER_URL + "/delete/" + key).then(() => {
       this.fetchMine()
     })
   }
@@ -120,13 +122,7 @@ export default class Canvas extends React.Component {
 
   draw(event: any) {
     if (this.ctx) {
-      if (this.canvasState.tool === 0) {
-        this.ctx.fillStyle = "black";
-      } else if (this.canvasState.tool === 1) {
-        this.ctx.fillStyle = "white";
-      } else {
-        this.ctx.fillStyle = "none";
-      }
+      this.ctx.fillStyle = this.state.color
       this.ctx.beginPath();
       this.ctx.arc(event.clientX, event.clientY, this.canvasState.radius, 0, 360);
       this.ctx.fill();
@@ -138,12 +134,10 @@ export default class Canvas extends React.Component {
 
     switch (event.key) {
       case "q":
-        this.canvasState.tool -= 1;
-        this.canvasState.tool = Math.max(this.canvasState.tool, 0);
+        this.setState({ tool: Math.max(this.state.tool-1, 0) })
         break;
       case "e":
-        this.canvasState.tool += 1;
-        this.canvasState.tool = Math.min(this.canvasState.tool, 2);
+        this.setState({ tool: Math.min(this.state.tool-1, 2) })
         break;
       case "w":
         this.canvasState.radius -= 5;
@@ -173,7 +167,7 @@ export default class Canvas extends React.Component {
 
         this.canvasState.ids_in_progress.push(response)
       } else {
-        console.log("RESPONSE IS EMPTY:"+response)
+        console.log("RESPONSE IS EMPTY:" + response)
       }
 
     });
@@ -311,6 +305,7 @@ export default class Canvas extends React.Component {
         ></canvas>
         <p id="inprogress">In progress: {this.state.val}</p>
         <div >
+          <Toolbox closed={this.state.toolboxClosed}  tool={this.state.tool}/>
           <label htmlFor="Prompt">Prompt: </label>
           <input type="text" name="Prompt" id="Prompt"
             onMouseOver={() => { this.canvasState.preventEvents = true }}
