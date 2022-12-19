@@ -38,7 +38,6 @@ export default class Canvas extends React.Component {
       preventEvents: false,
       toclear: true
     };
-    console.log(this.canvasState)
     this.state = {
       radius: 15,
       tool: 1,
@@ -264,13 +263,13 @@ export default class Canvas extends React.Component {
     }
 
     //Other wise call the fill function which will fill in the existing image.
-    this.fill(image, sr, sc, newColor, current);
+    this.fill(image, sr, sc, newColor, current,0);
 
     //Return the image once it is filled
     return image;
   }
 
-  private fill(image: number[][], sr: number, sc: number, newColor: number, current: number): void {
+  private fill(image: number[][], sr: number, sc: number, newColor: number, current: number,depth:number): void {
     //If row is less than 0
     if (sr < 0) {
       return;
@@ -298,47 +297,51 @@ export default class Canvas extends React.Component {
 
     //Update the new color
     image[sr][sc] = newColor;
-
+    if (depth>10){
+      return;
+    }
 
     //Fill in all four directions
     //Fill Prev row
-    this.fill(image, sr - 1, sc, newColor, current);
+    this.fill(image, sr - 1, sc, newColor, current,depth+1);
 
-    // //Fill Next row
-    // this.fill(image, sr + 1, sc, newColor, current);
+    //Fill Next row
+    this.fill(image, sr + 1, sc, newColor, current,depth+1);
 
-    // //Fill Prev col
-    // this.fill(image, sr, sc - 1, newColor, current);
+    //Fill Prev col
+    this.fill(image, sr, sc - 1, newColor, current,depth+1);
 
-    // //Fill next col
-    // this.fill(image, sr, sc + 1, newColor, current);
+    //Fill next col
+    this.fill(image, sr, sc + 1, newColor, current,depth+1);
 
   }
   canvas_fill(ev: MouseEvent<HTMLCanvasElement>): void {
     let imagedata = this.ctx?.getImageData(0, 0, this.width, this.height)
     if (imagedata) {
       let transformed = this.transformImage(imagedata)
-      let ff = this.floodFillAlgo(transformed, ev.clientX, ev.clientY, 0)
+      let ff = this.floodFillAlgo(transformed, ev.screenX, ev.screenY, 0)
       let newimage = this.transformData(ff)
       if (newimage) {
         this.ctx?.putImageData(newimage, 0, 0)
       }
     }
   }
- 
+
   transformImage(imagedata: ImageData): number[][] {
     let imgarr: number[][] = []
     let s = 0
-    
+
     for (let x = 0; x < imagedata.width; x++) {
       let temparr: number[] = [];
       for (let y = 0; y < imagedata.height; y++) {
-        temparr.push(imagedata.data[(y*imagedata.width+x)*4])
+        
+        temparr.push(imagedata.data[(y * imagedata.width + x)*4])
       }
       imgarr.push(temparr)
     }
     console.log(s)
     console.log(imgarr)
+  
     return imgarr
   }
   transformData(data: number[][]): ImageData | undefined {
@@ -347,7 +350,10 @@ export default class Canvas extends React.Component {
       let s = 0
       for (let x = 0; x < imagedata.width; x++) {
         for (let y = 0; y < imagedata.height; y++) {
-          imagedata.data[x + y * imagedata.height] = data[x][y]
+          imagedata.data[(x + y * imagedata.width)*4] = 255-data[x][y]
+          imagedata.data[(x + y * imagedata.width)*4+1] = 255-data[x][y]
+          imagedata.data[(x + y * imagedata.width)*4+2] = 255-data[x][y]
+          imagedata.data[(x + y * imagedata.width)*4+3] = data[x][y]
           s += data[x][y]
         }
       }
