@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import "./canvas.css";
 import { postData } from "../../utils";
 import { getDataUrlFromArr } from "../../utilities/array-to-image";
@@ -7,14 +7,20 @@ import { Toolbox } from "../toolbox/Toolbox";
 export default class Canvas extends React.Component {
   maskstate: Uint8ClampedArray;
   props: { width: number; height: number };
-  state: { val: string; image: string, tool: number, toolboxClosed: boolean, color: string };
+  state: {
+    val: string;
+    image: string;
+    tool: number;
+    toolboxClosed: boolean;
+    color: string
+    radius: number;
+  };
   canvasState: {
     toclear: boolean;
     ids_in_progress: Array<string>;
     mouseDown: number;
 
     keysdown: Map<string, boolean>;
-    radius: number;
     preventEvents: boolean;
   };
   ctx?: CanvasRenderingContext2D
@@ -28,13 +34,13 @@ export default class Canvas extends React.Component {
     this.canvasState = {
       mouseDown: 0,
       keysdown: new Map<string, boolean>(),
-      radius: 15,
       ids_in_progress: new Array<string>(),
       preventEvents: false,
       toclear: true
     };
     console.log(this.canvasState)
     this.state = {
+      radius: 15,
       tool: 1,
       toolboxClosed: false,
       val: "EMPTY",
@@ -124,7 +130,7 @@ export default class Canvas extends React.Component {
     if (this.ctx) {
       this.ctx.fillStyle = this.state.color
       this.ctx.beginPath();
-      this.ctx.arc(event.clientX, event.clientY, this.canvasState.radius, 0, 360);
+      this.ctx.arc(event.clientX, event.clientY, this.state.radius, 0, 360);
       this.ctx.fill();
     }
   }
@@ -140,12 +146,11 @@ export default class Canvas extends React.Component {
         this.setState({ tool: Math.min(this.state.tool - 1, 2) })
         break;
       case "w":
-        this.canvasState.radius -= 5;
-        this.canvasState.radius = Math.max(this.canvasState.radius, 0);
+        this.setState({ radius: Math.max(this.state.radius - 5, 0) })
         break;
       case "s":
-        this.canvasState.radius += 5;
-        this.canvasState.radius = Math.min(this.canvasState.radius, 50);
+        this.setState({ radius: Math.min(this.state.radius + 5, 50) })
+
         break;
       case "r":
         this.canvasState.toclear = true;
@@ -223,6 +228,7 @@ export default class Canvas extends React.Component {
     }
   }
   render(): JSX.Element {
+
     return (
       <div
         id="canvas-container"
@@ -305,7 +311,7 @@ export default class Canvas extends React.Component {
         ></canvas>
         <p id="inprogress">In progress: {this.state.val}</p>
         <div >
-          <Toolbox closed={this.state.toolboxClosed} tool={this.state.tool} />
+          <Toolbox closed={this.state.toolboxClosed} tool={this.state.tool} radius={this.state.radius} color={this.state.color} />
           <label htmlFor="Prompt">Prompt: </label>
           <input type="text" name="Prompt" id="Prompt"
             onMouseOver={() => { this.canvasState.preventEvents = true }}

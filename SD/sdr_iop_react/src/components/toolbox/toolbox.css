@@ -31,3 +31,6 @@
 .toolSelectorButton {
     user-select: none;
 }
+#RadiusInput{
+    width:5em;
+}

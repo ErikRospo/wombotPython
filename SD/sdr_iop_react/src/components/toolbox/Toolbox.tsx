@@ -3,12 +3,14 @@ import { BsEraserFill, BsPenFill } from 'react-icons/bs'
 import { TfiPaintBucket, TfiClose, TfiMenu } from 'react-icons/tfi'
 import './toolbox.css'
 export class Toolbox extends React.Component {
-    state: { closed: boolean, tool: number }
-    props: { closed: boolean, tool: number }
-    constructor(props: { closed: boolean, tool: number }) {
+    state: { closed: boolean, tool: number, radius: number, color: string }
+    props: { closed: boolean, tool: number, radius: number, color: string }
+
+    constructor(props: { closed: boolean, tool: number, radius: number, color: string }) {
         super(props)
-        this.props = props
-        this.state = { closed: props.closed, tool: props.tool }
+        this.props = props;
+        this.state = props;
+
     }
     toggleClose() {
         this.setState({ closed: !this.state.closed })
@@ -42,7 +44,20 @@ export class Toolbox extends React.Component {
 
                             Fill <TfiPaintBucket></TfiPaintBucket>
                         </label>
+                        <div></div>
                     </div>
+                    <hr />
+                    <section>
+                        <div id="Radius" >
+                            <label htmlFor="RadiusInput">Radius: </label>
+                            <input type="number" name="Radius" id="RadiusInput" onChange={(ev) => { this.setState({ radius: ev.target.valueAsNumber }); }} defaultValue={this.state.radius} />
+                        </div>
+                        <br />
+                        <div id="Color" >
+                            <label htmlFor="ColorInput">Color: </label>
+                            <input type="color" name="Color" id="ColorInput" onChange={(ev) => { this.setState({ color: ev.target.value }) }} />
+                        </div>
+                    </section>
                 </div>
             </div>
         )
