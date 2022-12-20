@@ -45,14 +45,14 @@
     height: 400px;
     background-color: slategray;
     border: 2px grey groove;
-    transition: ease-in-out 500ms 0ms height;
+    transition: ease-out 500ms 0ms height;
 
 }
 
 #selector {
     text-align: start;
     opacity: 100%;
-    transition: ease-in-out 500ms 0ms opacity;
+    transition: ease-out 500ms 0ms opacity;
 
 }
 

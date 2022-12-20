@@ -1,10 +1,12 @@
 import React, { KeyboardEvent, MouseEvent } from "react";
 import "./canvas.css";
 import { postData } from "../../utils";
-import { getDataUrlFromArr } from "../../utilities/array-to-image";
+import { getDataUrlFromArr, transformImage, transformData } from "../../utilities/array-to-image";
 import { SERVER_URL } from "../../constants";
 import { BsEraserFill, BsPenFill } from 'react-icons/bs'
 import { TfiPaintBucket, TfiClose, TfiMenu } from 'react-icons/tfi'
+import { GrClearOption } from 'react-icons/gr'
+import { floodFill } from "../../utilities/floodFill";
 export default class Canvas extends React.Component {
   maskstate: Uint8ClampedArray;
   props: { width: number; height: number };
@@ -163,12 +165,36 @@ export default class Canvas extends React.Component {
 
         break;
       case "r":
-        this.canvasState.toclear = true;
+        this.clearCanvas();
         break
       default:
         break;
     }
   }
+
+  public get w(): number {
+    return this.width;
+  }
+  public set w(v: number) {
+    this.width = v;
+  }
+  public get h(): number {
+    return this.height;
+  }
+  public set h(v: number) {
+    this.height = v;
+  }
+
+  clearCanvas() {
+    console.log("Attempting to clear")
+    if (this.ctx) {
+      this.ctx.clearRect(0, 0, this.width, this.height)
+      this.ctx.fillStyle = "#ffffff00";
+      this.ctx.fillRect(0, 0, this.width, this.height);
+
+    };
+  }
+
   handleKeyup(event: any) {
     this.canvasState.keysdown.set(event.key, false);
   }
@@ -252,116 +278,20 @@ export default class Canvas extends React.Component {
   setTool(tool: number): void {
     this.setState({ 'tool': tool });
   }
-  private floodFillAlgo(image: number[][], sr: number, sc: number, newColor: number): number[][] {
-    //Get the input which needs to be replaced.
-    const current = image[sr][sc];
 
-    //If the newColor is same as the existing 
-    //Then return the original image.
-    if (current === newColor) {
-      return image;
-    }
-
-    //Other wise call the fill function which will fill in the existing image.
-    this.fill(image, sr, sc, newColor, current,0);
-
-    //Return the image once it is filled
-    return image;
-  }
-
-  private fill(image: number[][], sr: number, sc: number, newColor: number, current: number,depth:number): void {
-    //If row is less than 0
-    if (sr < 0) {
-      return;
-    }
-
-    //If column is less than 0
-    if (sc < 0) {
-      return;
-    }
-
-    //If row is greater than image length
-    if (sr > image.length - 1) {
-      return;
-    }
-
-    //If column is greater than image length
-    if (sc > image[sr].length - 1) {
-      return;
-    }
-
-    //If the current pixel is not which needs to be replaced
-    if (image[sr][sc] !== current) {
-      return;
-    }
-
-    //Update the new color
-    image[sr][sc] = newColor;
-    if (depth>10){
-      return;
-    }
-
-    //Fill in all four directions
-    //Fill Prev row
-    this.fill(image, sr - 1, sc, newColor, current,depth+1);
-
-    //Fill Next row
-    this.fill(image, sr + 1, sc, newColor, current,depth+1);
-
-    //Fill Prev col
-    this.fill(image, sr, sc - 1, newColor, current,depth+1);
-
-    //Fill next col
-    this.fill(image, sr, sc + 1, newColor, current,depth+1);
-
-  }
   canvas_fill(ev: MouseEvent<HTMLCanvasElement>): void {
     let imagedata = this.ctx?.getImageData(0, 0, this.width, this.height)
     if (imagedata) {
-      let transformed = this.transformImage(imagedata)
-      let ff = this.floodFillAlgo(transformed, ev.screenX, ev.screenY, 0)
-      let newimage = this.transformData(ff)
+      let transformed = transformImage(imagedata)
+      let ff = floodFill(transformed, ev.screenX, ev.screenY, 0)
+      let newimage = transformData(ff)
       if (newimage) {
         this.ctx?.putImageData(newimage, 0, 0)
       }
     }
   }
 
-  transformImage(imagedata: ImageData): number[][] {
-    let imgarr: number[][] = []
-    let s = 0
 
-    for (let x = 0; x < imagedata.width; x++) {
-      let temparr: number[] = [];
-      for (let y = 0; y < imagedata.height; y++) {
-        
-        temparr.push(imagedata.data[(y * imagedata.width + x)*4])
-      }
-      imgarr.push(temparr)
-    }
-    console.log(s)
-    console.log(imgarr)
-  
-    return imgarr
-  }
-  transformData(data: number[][]): ImageData | undefined {
-    let imagedata = this.ctx?.createImageData(data.length, data[0].length)
-    if (imagedata) {
-      let s = 0
-      for (let x = 0; x < imagedata.width; x++) {
-        for (let y = 0; y < imagedata.height; y++) {
-          imagedata.data[(x + y * imagedata.width)*4] = 255-data[x][y]
-          imagedata.data[(x + y * imagedata.width)*4+1] = 255-data[x][y]
-          imagedata.data[(x + y * imagedata.width)*4+2] = 255-data[x][y]
-          imagedata.data[(x + y * imagedata.width)*4+3] = data[x][y]
-          s += data[x][y]
-        }
-      }
-      console.log(s)
-      console.log(imagedata)
-      return imagedata
-    }
-  }
   render(): JSX.Element {
 
     return (
@@ -416,26 +346,12 @@ export default class Canvas extends React.Component {
               this.mousedown = false
               this.canvasState.mouseDown = event.buttons;
 
-              this.updateCtx(event)
-              if (this.ctx) {
-                this.ctx.fill()
-                this.maskstate = this.ctx.getImageData(0, 0, this.width, this.height).data
-                let dataurl = getDataUrlFromArr(this.maskstate, this.width, this.height)
-
-                postData(SERVER_URL + "/upload/mask", dataurl)
-              }
+              this.postMask(event);
             }
           }
 
           onMouseMove={(event) => {
             this.updateCtx(event)
-            if (this.canvasState.toclear && this.ctx) {
-              if (this.ctx) {
-                this.ctx.clearRect(0, 0, this.width, this.height)
-                this.ctx?.getContextAttributes()
-              }
-              this.canvasState.toclear = false
-            }
             if (this.mousedown) {
               this.draw(event)
             }
@@ -488,6 +404,12 @@ export default class Canvas extends React.Component {
                     <input type="color" name="Color" id="ColorInput" onChange={(ev) => { this.setColor(ev); }} />
                   </div>
                 </section>
+                <hr />
+                <section>
+                  <div id="clear">
+                    <button id="clearButton" onClick={() => { this.clearCanvas();this.postMask() }}> Clear <GrClearOption></GrClearOption></button>
+                  </div>
+                </section>
               </div>
             </div>
           </div>
@@ -535,5 +457,22 @@ export default class Canvas extends React.Component {
 
       </div>
     );
+  }
+
+  postMask(event?: React.MouseEvent<HTMLCanvasElement, globalThis.MouseEvent>): boolean {
+    if (event) {
+      this.updateCtx(event);
+    }
+    if (this.ctx) {
+      this.ctx.fill();
+      this.maskstate = this.ctx.getImageData(0, 0, this.width, this.height).data;
+      let dataurl = getDataUrlFromArr(this.maskstate, this.width, this.height);
+
+      postData(SERVER_URL + "/upload/mask", dataurl);
+      return true
+    }
+    else{
+      return false
+    }
   }
 }
