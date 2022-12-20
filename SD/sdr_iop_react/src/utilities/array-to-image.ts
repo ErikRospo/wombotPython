@@ -61,7 +61,7 @@ export function transformImage(imagedata: ImageData): number[][] {
 
   return imgarr
 }
-export function transformData(data: number[][],transparency?:number): ImageData | undefined {
+export function transformData(data: number[][]): ImageData | undefined {
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
   if (ctx) {

@@ -1,13 +1,19 @@
 # todo
 
 ## frontend
-1. display current image.
+[ ] display current image.
 
-2. have a working masking tool
-    1. Implement basic image editing tools.
+[ ] have a working masking tool
+    [ ] Implement basic image editing tools.
         [x] pencil
         [ ] fill
-        [] etc
+            [ ] Clientside
+            [ ] Serverside
+        [ ] eraser
+            [x] erases mask
+            [ ] erases to transparency
+                [ ] a kinda bad idea would be to send the mask to the server, have the server erase it, and send it back.
+        [x] clear
 [ ] send commands to backend.
 [x] allow loading images as a starting point.
 [ ] allow just generating images with the SD api, without the inpainting/outpainting.
@@ -17,7 +23,8 @@
     [ ] either the actual image scrolling
     [ ] or serverside.
         [ ] this seems like it would be hard, inefficent, and just straight up a bad idea.
-    [x] We may also be able to do a mix, where the image is split into chunks, on the backend and we can scroll around those on the frontend, and when we get far enough away, we switch chunks on the backend.
+    [ ] We may also be able to do a mix, where the image is split into chunks, on the backend and we can scroll around those on the frontend, and when we get far enough away, we switch chunks on the backend.
+
 ## backend
 [x] recive commands.
 [x] interact with filesystem
@@ -45,22 +52,22 @@
 
 [x] send completed images back to frontend.
     [-] Really long requests.
-        1. -Not ideal
-        2. -bad practice
-        3. +easy to implement
+        * -Not ideal
+        * -bad practice
+        * +easy to implement
     [x] Continuous pinging the server for updates.
 
-        1. -requires more network activity
-        2. +better practices
-        3. +works in the real world.
-        4. +may be easier to implement.
+        * -requires more network activity
+        * +better practices
+        * +know that it works in the real world.
+        * +may be easier to implement.
     [-] Web sockets
-        1. -Harder to implement
-        2. -requires more libraries
-        3. -not familiar with
-        4. -may not be able to cope with multiple requests at once.
-        5. -may not be able to handle large files being transfered.
-        6. +actualy designed for long term comunication
+        * -Harder to implement
+        * -requires more libraries
+        * -not familiar with
+        * -may not be able to cope with multiple requests at once.
+        * -may not be able to handle large files being transfered.
+        * +actualy designed for long term comunication
 [x] parse input from frontend.
     [-] multipart form
         [-] prevent redirect/refresh, but continue request.
@@ -75,6 +82,3 @@ with
 
 then we get the uuid by {}.uuid.
 after that, we continiously GET `https://replicate.com/api/models/stability-ai/stable-diffusion-inpainting/versions/e5a34f913de0adc560d20e002c45ad43a80031b62caacc3d84010c6b6a64870c/predictions`+uuid
-
-
-[GFG for uploading a file to a server](https://www.geeksforgeeks.org/how-to-add-file-uploads-function-to-a-webpage-in-html/), may not work for me, but worth a look.
