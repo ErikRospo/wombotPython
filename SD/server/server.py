@@ -206,10 +206,6 @@ class ReqHandler(BaseHTTPRequestHandler):
         body_binary=base64.b64decode(body + b'==')
         with open("./image.png","wb") as f:
             f.write(body_binary)
-        img=Image.open("./image.png")
-        img=transparency_to_white(img)
-        img=img.convert(mode="RGB")
-        img.save("./image.png")
     def run_new(self):
         content_length=int(self.headers["content-length"])
         body=self.rfile.read(content_length).decode("utf-8")

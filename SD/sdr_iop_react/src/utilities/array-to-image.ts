@@ -6,7 +6,7 @@
  * @returns {string}
  */
 export function getDataUrlFromArr(arr: Uint8ClampedArray, w?: number, h?: number): string {
-  if(typeof w === 'undefined' || typeof h === 'undefined') {
+  if (typeof w === 'undefined' || typeof h === 'undefined') {
     w = h = Math.sqrt(arr.length / 4);
   }
 
@@ -15,10 +15,10 @@ export function getDataUrlFromArr(arr: Uint8ClampedArray, w?: number, h?: number
 
   canvas.width = w;
   canvas.height = h;
-  if (ctx){
-  const imgData = ctx.createImageData(w, h);
-  imgData.data.set(arr);
-  ctx.putImageData(imgData, 0, 0);
+  if (ctx) {
+    const imgData = ctx.createImageData(w, h);
+    imgData.data.set(arr);
+    ctx.putImageData(imgData, 0, 0);
   }
   return canvas.toDataURL();
 }
@@ -49,12 +49,12 @@ export function transformImage(imagedata: ImageData): number[][] {
   let s = 0
 
   for (let x = 0; x < imagedata.width; x++) {
-      let temparr: number[] = [];
-      for (let y = 0; y < imagedata.height; y++) {
+    let temparr: number[] = [];
+    for (let y = 0; y < imagedata.height; y++) {
 
-          temparr.push(imagedata.data[(y * imagedata.width + x) * 4])
-      }
-      imgarr.push(temparr)
+      temparr.push(imagedata.data[(y * imagedata.width + x) * 4+3])
+    }
+    imgarr.push(temparr)
   }
   console.log(s)
   console.log(imgarr)
@@ -65,19 +65,20 @@ export function transformData(data: number[][]): ImageData | undefined {
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
   if (ctx) {
-      let imagedata = ctx.createImageData(data.length, data[0].length)
-      let s = 0
-      for (let x = 0; x < imagedata.width; x++) {
-          for (let y = 0; y < imagedata.height; y++) {
-              imagedata.data[(x + y * imagedata.width) * 4] = data[x][y]
-              imagedata.data[(x + y * imagedata.width) * 4 + 1] =data[x][y]
-              imagedata.data[(x + y * imagedata.width) * 4 + 2] =data[x][y]
-              imagedata.data[(x + y * imagedata.width) * 4 + 3] = 255
-              s += data[x][y]
-          }
+    let imagedata = ctx.createImageData(data.length, data[0].length)
+    let s = 0
+    for (let x = 0; x < imagedata.width; x++) {
+      for (let y = 0; y < imagedata.height; y++) {
+        const ArrIndex = (x + (y * imagedata.width)) * 4;
+        imagedata.data[ArrIndex] = 0
+        imagedata.data[ArrIndex + 1] = 0
+        imagedata.data[ArrIndex + 2] = 0 
+        imagedata.data[ArrIndex + 3] = data[x][y]
+        s += data[x][y]
       }
-      console.log(s)
-      console.log(imagedata)
-      return imagedata
+    }
+    console.log(s)
+    console.log(imagedata)
+    return imagedata
   }
 }

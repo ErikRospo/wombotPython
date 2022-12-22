@@ -1,4 +1,4 @@
-import React from 'react';
+// import React from 'react';
 import './App.css';
 // @ts-expect-error 2691
 import Canvas from "./components/canvas/Canvas.tsx"

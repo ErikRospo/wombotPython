@@ -283,7 +283,7 @@ export default class Canvas extends React.Component {
     let imagedata = this.ctx?.getImageData(0, 0, this.width, this.height)
     if (imagedata) {
       let transformed = transformImage(imagedata)
-      let ff = floodFill(transformed, ev.screenX, ev.screenY, 0)
+      let ff = floodFill(transformed, ev.clientX, ev.clientY, 0)
       let newimage = transformData(ff)
       if (newimage) {
         this.ctx?.putImageData(newimage, 0, 0)
