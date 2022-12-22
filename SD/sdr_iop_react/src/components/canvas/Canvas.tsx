@@ -146,7 +146,7 @@ export default class Canvas extends React.Component {
           if (imgd.data[index] > 0 &&
             imgd.data[index + 1] > 0 &&
             imgd.data[index + 2] > 0 &&
-            imgd.data[index + 3] >= 127) {
+            imgd.data[index + 3] > 0) {
             imgd.data[index + 3] = 0;
             n += 1;
           }
@@ -172,7 +172,6 @@ export default class Canvas extends React.Component {
         break;
       case "s":
         this.setState({ radius: Math.min(this.state.radius + 5, 50) })
-
         break;
       case "r":
         this.clearCanvas();
@@ -227,8 +226,6 @@ export default class Canvas extends React.Component {
     if (!this.ctx) {
       let ctx: CanvasRenderingContext2D | null = (event.target as HTMLCanvasElement).getContext("2d", { willReadFrequently: true });
       if (ctx) {
-        ctx.imageSmoothingEnabled = false;
-        ctx.imageSmoothingQuality = "low"
         this.ctx = ctx
 
       }
@@ -338,8 +335,6 @@ export default class Canvas extends React.Component {
               this.updateCtx(event)
               this.ctx?.beginPath()
 
-              //set the mousedown property on the parent object, then unset it on mouseup.
-              //onmousemove, if the mousedown property is set, we draw the stuff.
             }
           }
           onMouseUp={
