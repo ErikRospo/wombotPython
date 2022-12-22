@@ -6,7 +6,7 @@
 [ ] have a working masking tool
     [ ] Implement basic image editing tools.
         [x] pencil
-        [ ] fill
+        [-] fill
             [ ] Clientside
             [ ] Serverside
         [ ] eraser

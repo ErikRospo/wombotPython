@@ -6,6 +6,8 @@ import { SERVER_URL } from "../../constants";
 import { BsEraserFill, BsPenFill } from 'react-icons/bs'
 import { TfiClose, TfiMenu } from 'react-icons/tfi'
 import { GrClearOption } from 'react-icons/gr'
+import { BBox } from "../../utilities/pointUtils";
+
 export default class Canvas extends React.Component {
   maskstate: Uint8ClampedArray;
   props: { width: number; height: number };
@@ -14,7 +16,6 @@ export default class Canvas extends React.Component {
     image: string;
     tool: number;
     toolboxClosed: boolean;
-    color: string
     radius: number;
   };
   canvasState: {
@@ -28,6 +29,7 @@ export default class Canvas extends React.Component {
   ids: String[];
   getstatus?: NodeJS.Timer;
   mousedown: boolean;
+  bbox: BBox
   constructor(props: any) {
     super(props);
     this.props = props;
@@ -44,10 +46,10 @@ export default class Canvas extends React.Component {
       tool: 1,
       toolboxClosed: false,
       val: "EMPTY",
-      color: "black",
-      image:
-        "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAIAQMAAAD+wSzIAAAABlBMVEX///+/v7+jQ3Y5AAAADklEQVQI12P4AIX8EAgALgAD/aNpbtEAAAAASUVORK5CYII",
+      image: ""
+      // "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAIAQMAAAD+wSzIAAAABlBMVEX///+/v7+jQ3Y5AAAADklEQVQI12P4AIX8EAgALgAD/aNpbtEAAAAASUVORK5CYII",
     };
+    this.bbox = new BBox()
     this.mousedown = false
     this.maskstate = new Uint8ClampedArray(props.width * props.height * 4);
   }
@@ -124,26 +126,45 @@ export default class Canvas extends React.Component {
   canvasLoad(el: any) {
     console.log("canvasload");
     console.log(el);
+
   }
 
   draw(event: MouseEvent<HTMLCanvasElement>) {
     if (this.ctx) {
-      if (this.state.tool === 0) {
-        this.ctx.fillStyle = "white"
-        this.ctx.beginPath();
-        this.ctx.arc(event.clientX, event.clientY, this.state.radius, 0, 360);
-        this.ctx.fill();
-
-      }
-      else if (this.state.tool === 1) {
-        this.ctx.fillStyle = this.state.color
-        this.ctx.beginPath();
-        this.ctx.arc(event.clientX, event.clientY, this.state.radius, 0, 360);
-        this.ctx.fill();
+      switch (this.state.tool) {
+        case 0:
+          this.ctx.fillStyle = "#ffffffff"
+          this.ctx.beginPath();
+          this.ctx.arc(event.clientX, event.clientY, this.state.radius, 0, 360);
+          this.ctx.fill();
+          break
+        case 1:
+          this.ctx.fillStyle = "#000000ff"
+          this.ctx.beginPath();
+          this.ctx.arc(event.clientX, event.clientY, this.state.radius, 0, 360);
+          this.ctx.fill();
+          break
       }
     }
   }
-  handleKeypress(event: any) {
+  white2transparency(): void {
+    if (this.ctx) {
+      let index = 0
+      let imgd = this.ctx.getImageData(this.bbox.tl.x-this.state.radius, this.bbox.tl.y-this.state.radius, this.bbox.width+2*this.state.radius, this.bbox.height+2*this.state.radius);
+      for (let i = 0; i < imgd.height; i++) {
+        for (let j = 0; j < imgd.width; j++) {
+          index = ((i * (imgd.width * 4)) + (j * 4))
+          if (imgd.data[index] === 255 &&
+            imgd.data[index + 1] === 255 &&
+            imgd.data[index + 2] === 255 &&
+            imgd.data[index + 3] === 255)
+            imgd.data[index + 3] = 0;
+        }
+      }
+      this.ctx.putImageData(imgd, this.bbox.tl.x-this.state.radius, this.bbox.tl.y-this.state.radius);//put image data back
+    }
+  }
+  handleKeypress(event: any): void {
     this.canvasState.keysdown.set(event.key, true);
     console.log(event.key);
 
@@ -214,6 +235,7 @@ export default class Canvas extends React.Component {
     if (!this.ctx) {
       let ctx: CanvasRenderingContext2D | null = (event.target as HTMLCanvasElement).getContext("2d", { willReadFrequently: true });
       if (ctx) {
+        ctx.imageSmoothingEnabled = false;
         this.ctx = ctx
       }
     }
@@ -277,7 +299,12 @@ export default class Canvas extends React.Component {
   }
 
 
-
+  UpdateBBox(x: number, y: number) {
+    this.bbox.br.x = Math.max(this.bbox.br.x, x)
+    this.bbox.br.y = Math.max(this.bbox.br.y, y)
+    this.bbox.tl.x = Math.min(this.bbox.tl.x, x)
+    this.bbox.tl.y = Math.min(this.bbox.tl.y, y)
+  }
 
   render(): JSX.Element {
 
@@ -321,9 +348,8 @@ export default class Canvas extends React.Component {
               this.draw(event);
 
               this.updateCtx(event)
-              if (this.ctx) {
-                this.ctx.beginPath()
-              }
+              this.ctx?.beginPath()
+
               //set the mousedown property on the parent object, then unset it on mouseup.
               //onmousemove, if the mousedown property is set, we draw the stuff.
             }
@@ -332,14 +358,20 @@ export default class Canvas extends React.Component {
             (event) => {
               this.mousedown = false
               this.canvasState.mouseDown = event.buttons;
-
-              this.postMask(event);
+              if (this.state.tool === 1) {
+                console.log(this)
+                this.white2transparency()
+                
+              } else {
+                this.postMask(event);
+              }
             }
           }
 
           onMouseMove={(event) => {
             this.updateCtx(event)
             if (this.mousedown) {
+              this.UpdateBBox(event.clientX, event.clientY)
               this.draw(event)
             }
           }}
@@ -381,15 +413,11 @@ export default class Canvas extends React.Component {
                     <input type="number" name="Radius" id="RadiusInput" onChange={(ev) => { this.setRadius(ev); }} defaultValue={this.state.radius} />
                   </div>
                   <br />
-                  <div id="Color" >
-                    <label htmlFor="ColorInput">Color: </label>
-                    <input type="color" name="Color" id="ColorInput" onChange={(ev) => { this.setColor(ev); }} />
-                  </div>
                 </section>
                 <hr />
                 <section>
                   <div id="clear">
-                    <button id="clearButton" onClick={() => { this.clearCanvas();this.postMask() }}> Clear <GrClearOption></GrClearOption></button>
+                    <button id="clearButton" onClick={() => { this.clearCanvas(); this.postMask() }}> Clear <GrClearOption></GrClearOption></button>
                   </div>
                 </section>
               </div>
@@ -453,7 +481,7 @@ export default class Canvas extends React.Component {
       postData(SERVER_URL + "/upload/mask", dataurl);
       return true
     }
-    else{
+    else {
       return false
     }
   }
