@@ -2,12 +2,10 @@ import React, { KeyboardEvent, MouseEvent } from "react";
 import "./canvas.css";
 import { postData } from "../../utils";
 import { getDataUrlFromArr } from "../../utilities/array-to-image";
-import { SERVER_URL } from "../../constants";
+import { SERVER_URL, Tools } from "../../constants";
 import { BsEraserFill, BsPenFill } from 'react-icons/bs'
 import { TfiClose, TfiMenu } from 'react-icons/tfi'
 import { GrClearOption } from 'react-icons/gr'
-import { BBox } from "../../utilities/pointUtils";
-
 export default class Canvas extends React.Component {
   maskstate: Uint8ClampedArray;
   props: { width: number; height: number };
@@ -29,7 +27,6 @@ export default class Canvas extends React.Component {
   ids: String[];
   getstatus?: NodeJS.Timer;
   mousedown: boolean;
-  bbox: BBox
   constructor(props: any) {
     super(props);
     this.props = props;
@@ -49,7 +46,6 @@ export default class Canvas extends React.Component {
       image: ""
       // "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAIAQMAAAD+wSzIAAAABlBMVEX///+/v7+jQ3Y5AAAADklEQVQI12P4AIX8EAgALgAD/aNpbtEAAAAASUVORK5CYII",
     };
-    this.bbox = new BBox()
     this.mousedown = false
     this.maskstate = new Uint8ClampedArray(props.width * props.height * 4);
   }
@@ -113,16 +109,7 @@ export default class Canvas extends React.Component {
       this.fetchMine()
     })
   }
-  // handleClick(event: {
-  //   clientX: number;
-  //   clientY: number;
-  //   pageX: number;
-  //   pageY: number;
-  //   screenX: number;
-  //   screenY: number;
-  // }) {
-  //   // let relativeX=event.clientX
-  // }
+
   canvasLoad(el: any) {
     console.log("canvasload");
     console.log(el);
@@ -132,13 +119,13 @@ export default class Canvas extends React.Component {
   draw(event: MouseEvent<HTMLCanvasElement>) {
     if (this.ctx) {
       switch (this.state.tool) {
-        case 0:
+        case Tools.ERASER:
           this.ctx.fillStyle = "#ffffffff"
           this.ctx.beginPath();
           this.ctx.arc(event.clientX, event.clientY, this.state.radius, 0, 360);
           this.ctx.fill();
           break
-        case 1:
+        case Tools.PEN:
           this.ctx.fillStyle = "#000000ff"
           this.ctx.beginPath();
           this.ctx.arc(event.clientX, event.clientY, this.state.radius, 0, 360);
@@ -150,18 +137,23 @@ export default class Canvas extends React.Component {
   white2transparency(): void {
     if (this.ctx) {
       let index = 0
-      let imgd = this.ctx.getImageData(this.bbox.tl.x-this.state.radius, this.bbox.tl.y-this.state.radius, this.bbox.width+2*this.state.radius, this.bbox.height+2*this.state.radius);
+      console.log("starting to modify the canvas")
+      let n = 0;
+      let imgd = this.ctx.getImageData(0, 0, this.width, this.height);
       for (let i = 0; i < imgd.height; i++) {
         for (let j = 0; j < imgd.width; j++) {
           index = ((i * (imgd.width * 4)) + (j * 4))
-          if (imgd.data[index] === 255 &&
-            imgd.data[index + 1] === 255 &&
-            imgd.data[index + 2] === 255 &&
-            imgd.data[index + 3] === 255)
+          if (imgd.data[index] > 0 &&
+            imgd.data[index + 1] > 0 &&
+            imgd.data[index + 2] > 0 &&
+            imgd.data[index + 3] >= 127) {
             imgd.data[index + 3] = 0;
+            n += 1;
+          }
         }
       }
-      this.ctx.putImageData(imgd, this.bbox.tl.x-this.state.radius, this.bbox.tl.y-this.state.radius);//put image data back
+      this.ctx.putImageData(imgd, 0, 0);//put image data back
+      console.log("done modifying canvas, " + n.toString() + " Modifications")
     }
   }
   handleKeypress(event: any): void {
@@ -236,7 +228,9 @@ export default class Canvas extends React.Component {
       let ctx: CanvasRenderingContext2D | null = (event.target as HTMLCanvasElement).getContext("2d", { willReadFrequently: true });
       if (ctx) {
         ctx.imageSmoothingEnabled = false;
+        ctx.imageSmoothingQuality = "low"
         this.ctx = ctx
+
       }
     }
   }
@@ -299,12 +293,6 @@ export default class Canvas extends React.Component {
   }
 
 
-  UpdateBBox(x: number, y: number) {
-    this.bbox.br.x = Math.max(this.bbox.br.x, x)
-    this.bbox.br.y = Math.max(this.bbox.br.y, y)
-    this.bbox.tl.x = Math.min(this.bbox.tl.x, x)
-    this.bbox.tl.y = Math.min(this.bbox.tl.y, y)
-  }
 
   render(): JSX.Element {
 
@@ -358,10 +346,10 @@ export default class Canvas extends React.Component {
             (event) => {
               this.mousedown = false
               this.canvasState.mouseDown = event.buttons;
-              if (this.state.tool === 1) {
+              if (this.state.tool === Tools.ERASER) {
                 console.log(this)
                 this.white2transparency()
-                
+
               } else {
                 this.postMask(event);
               }
@@ -371,7 +359,6 @@ export default class Canvas extends React.Component {
           onMouseMove={(event) => {
             this.updateCtx(event)
             if (this.mousedown) {
-              this.UpdateBBox(event.clientX, event.clientY)
               this.draw(event)
             }
           }}
@@ -395,12 +382,12 @@ export default class Canvas extends React.Component {
 
                 <div >
                   <label>
-                    <input type="radio" name="Tool" className="toolSelectorButton" onChange={() => this.setTool(0)} onClick={() => this.setTool(0)} checked={this.state.tool === 0} />
+                    <input type="radio" name="Tool" className="toolSelectorButton" onChange={() => this.setTool(Tools.ERASER)} onClick={() => this.setTool(Tools.ERASER)} checked={this.state.tool === Tools.ERASER} />
                     Eraser <BsEraserFill></BsEraserFill>
                   </label>
                   <br />
                   <label>
-                    <input type="radio" name="Tool" className="toolSelectorButton" onChange={() => this.setTool(1)} onClick={() => this.setTool(1)} checked={this.state.tool === 1} />
+                    <input type="radio" name="Tool" className="toolSelectorButton" onChange={() => this.setTool(Tools.PEN)} onClick={() => this.setTool(Tools.PEN)} checked={this.state.tool === Tools.PEN} />
 
                     Pen <BsPenFill></BsPenFill>
                   </label><br />
