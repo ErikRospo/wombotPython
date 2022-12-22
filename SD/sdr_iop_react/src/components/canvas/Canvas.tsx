@@ -1,12 +1,11 @@
 import React, { KeyboardEvent, MouseEvent } from "react";
 import "./canvas.css";
 import { postData } from "../../utils";
-import { getDataUrlFromArr, transformImage, transformData } from "../../utilities/array-to-image";
+import { getDataUrlFromArr } from "../../utilities/array-to-image";
 import { SERVER_URL } from "../../constants";
 import { BsEraserFill, BsPenFill } from 'react-icons/bs'
-import { TfiPaintBucket, TfiClose, TfiMenu } from 'react-icons/tfi'
+import { TfiClose, TfiMenu } from 'react-icons/tfi'
 import { GrClearOption } from 'react-icons/gr'
-import { floodFill } from "../../utilities/floodFill";
 export default class Canvas extends React.Component {
   maskstate: Uint8ClampedArray;
   props: { width: number; height: number };
@@ -141,8 +140,6 @@ export default class Canvas extends React.Component {
         this.ctx.beginPath();
         this.ctx.arc(event.clientX, event.clientY, this.state.radius, 0, 360);
         this.ctx.fill();
-      } else if (this.state.tool === 2) {
-        this.canvas_fill(event)
       }
     }
   }
@@ -279,17 +276,7 @@ export default class Canvas extends React.Component {
     this.setState({ 'tool': tool });
   }
 
-  canvas_fill(ev: MouseEvent<HTMLCanvasElement>): void {
-    let imagedata = this.ctx?.getImageData(0, 0, this.width, this.height)
-    if (imagedata) {
-      let transformed = transformImage(imagedata)
-      let ff = floodFill(transformed, ev.clientX, ev.clientY, 0)
-      let newimage = transformData(ff)
-      if (newimage) {
-        this.ctx?.putImageData(newimage, 0, 0)
-      }
-    }
-  }
+
 
 
   render(): JSX.Element {
@@ -385,12 +372,7 @@ export default class Canvas extends React.Component {
 
                     Pen <BsPenFill></BsPenFill>
                   </label><br />
-                  <label>
-                    <input type="radio" name="Tool" className="toolSelectorButton" onChange={() => this.setTool(2)} onClick={() => this.setTool(2)} checked={this.state.tool === 2} />
 
-                    Fill <TfiPaintBucket></TfiPaintBucket>
-                  </label>
-                  <div></div>
                 </div>
                 <hr />
                 <section>
