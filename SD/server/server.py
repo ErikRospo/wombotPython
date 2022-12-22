@@ -24,6 +24,8 @@ headers={"x-csrftoken":"rfU9sNVa303QtGhGx9jq1AemDXfoTxpV","origin":"https://repl
 # output data
 outs={}
 outsLock=threading.Lock()
+imgwidth=0
+imgheight=0
 # upload an image to replicate's server
 def upload_image(path):
     cont=bytes()
@@ -192,13 +194,17 @@ class ReqHandler(BaseHTTPRequestHandler):
         body=body.removeprefix(b"\"data:image/png;base64,")
         body=body.removesuffix(b'"')
         body_binary=base64.b64decode(body + b'==')
+        
         with open("./mask.png","wb") as f:
             f.write(body_binary)
         img=Image.open("./mask.png")
         img=transparency_to_white(img)
+        
         img=img.convert(mode="RGB")
         img.save("./mask.png")
+        img.close()
     def run_upload_image(self):
+        global imgwidth,imgheight
         content_length=int(self.headers["content-length"])
         body=self.rfile.read(content_length)
         body=body.removeprefix(b"\"data:image/png;base64,")
@@ -206,6 +212,8 @@ class ReqHandler(BaseHTTPRequestHandler):
         body_binary=base64.b64decode(body + b'==')
         with open("./image.png","wb") as f:
             f.write(body_binary)
+        img=Image.open("./image.png")
+        img.close()
     def run_new(self):
         content_length=int(self.headers["content-length"])
         body=self.rfile.read(content_length).decode("utf-8")

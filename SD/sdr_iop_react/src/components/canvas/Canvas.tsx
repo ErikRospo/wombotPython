@@ -159,7 +159,6 @@ export default class Canvas extends React.Component {
   handleKeypress(event: any): void {
     this.canvasState.keysdown.set(event.key, true);
     console.log(event.key);
-
     switch (event.key) {
       case "q":
         this.setState({ tool: Math.max(this.state.tool - 1, 0) })
@@ -178,7 +177,8 @@ export default class Canvas extends React.Component {
         break
       default:
         break;
-    }
+
+      }
   }
 
   public get w(): number {

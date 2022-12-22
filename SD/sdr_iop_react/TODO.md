@@ -9,10 +9,10 @@
         [-] fill
             [ ] Clientside
             [ ] Serverside
-        [ ] eraser
+        [x] eraser
             [x] erases mask
-            [ ] erases to transparency
-                [ ] a kinda bad idea would be to send the mask to the server, have the server erase it, and send it back.
+            [x] erases to transparency
+                [-] a kinda bad idea would be to send the mask to the server, have the server erase it, and send it back.
         [x] clear
 [ ] send commands to backend.
 [x] allow loading images as a starting point.
@@ -24,7 +24,7 @@
     [ ] or serverside.
         [ ] this seems like it would be hard, inefficent, and just straight up a bad idea.
     [ ] We may also be able to do a mix, where the image is split into chunks, on the backend and we can scroll around those on the frontend, and when we get far enough away, we switch chunks on the backend.
-
+[ ] Actually prevent keystrokes in the keyhandler while typing in the `prompt` input box.
 ## backend
 [x] recive commands.
 [x] interact with filesystem
