@@ -1,5 +1,6 @@
 #!/usr/bin/python3
-import json 
+import json
+import math 
 import os #for getting the current file path
 import sys
 import threading
@@ -9,7 +10,8 @@ import requests # interacting with replicate servers
 import mimetypes # identifying files
 import time # waiting a certain amount of time
 import base64 #for decoding images sent back from the Canvas.
-import email.parser# for decoding multipart forms.
+from io import BytesIO #for b64 encoding operations.
+
 from PIL import Image # for image editing
 from http.client import NOT_FOUND, OK, BAD_REQUEST
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -98,9 +100,8 @@ class Task:
     def isactive(self):
         return self.thread.is_alive()
 threads:List[Task]=[]
-
+myimages:List[List[bytes]]=[]
 class ReqHandler(BaseHTTPRequestHandler):
-    
     def do_GET(self):
         if self.path.startswith("/lookup"):
             if self.path.split("/lookup/")[1] in taskPoolIDS:
@@ -119,6 +120,9 @@ class ReqHandler(BaseHTTPRequestHandler):
                 self.send_response(OK)
             else:
                 self.send_response_only(BAD_REQUEST)
+        elif self.path.startswith("/imggrid"):
+            self.send_response(OK)
+            self.send_header("cache-control","no-store")
         else:
             self.send_response(NOT_FOUND)
        
@@ -132,6 +136,12 @@ class ReqHandler(BaseHTTPRequestHandler):
             self.wfile.write(bytes(json.dumps(outs),"utf-8"))
         elif self.path.startswith("/delete/"):
             self.run_delete()    
+        elif self.path.startswith('/imggrid'):
+            self.run_grid()
+    def run_grid(self):
+        x=int(self.path.split("/")[2])
+        y=int(self.path.split("/")[3])
+        self.wfile.write(myimages[x][y])
     def run_delete(self):
         if self.path.split("/delete/")[1] in taskPoolIDS:
             uuid_in=self.path.split("/delete/")[1]
@@ -164,6 +174,8 @@ class ReqHandler(BaseHTTPRequestHandler):
             self.send_response(OK)
         elif self.path.startswith("/log"):
             self.send_response(OK)
+        elif self.path.startswith("/splitimages"):
+            self.send_response(OK)
         else:
             self.send_response(NOT_FOUND)
             
@@ -182,11 +194,61 @@ class ReqHandler(BaseHTTPRequestHandler):
             self.run_upload_mask()
         elif self.path=="/upload/image":
             self.run_upload_image()
+        elif self.path.startswith("/splitimages"):
+            self.run_splitimages()
     def run_log(self):
         content_length=int(self.headers["content-length"])
         body=self.rfile.read(content_length)
         with open("./body.txt","wb") as f:
             f.write(body)
+    def run_splitimages(self):
+        global myimages
+        content_length=int(self.headers["content-length"])
+        body=self.rfile.read(content_length)
+        bodyjson=json.loads(body)
+        # print(bodyjson)
+        imagewidth=bodyjson["imagesWidth"]
+        imageheight=bodyjson["imagesHeight"]
+        width=bodyjson["width"]
+        height=bodyjson["height"]
+        endwidth=width//imagewidth
+        endheight=height//imageheight
+        image=bodyjson["image"]
+        old=bodyjson["oldImage"]
+        if image.startswith("http"):
+            resp=requests.get(image)
+            fn="temp."+image.split(".")[-1]
+            with open(fn,"wb") as f:
+                f.write(resp.content)
+            image=Image.open(fn)
+        else: 
+            fn="temp."+image.split("/")[1].split(";")[0]
+            image=image.removeprefix(b"\"data:image:/png;base64,")
+            image=image.removesuffix(b"'")
+            imgbytes=base64.b64decode(image + b'==')
+        
+            with open(fn,"wb") as f:
+                f.write(imgbytes)
+            image=Image.open(fn)
+        images=[]
+        for x in range(endwidth):
+            temp=[]
+            for y in range(endheight):
+                oldone=old[x][y]
+                # print((oldone["x"],oldone["y"],oldone["x"]+oldone["width"],oldone["y"]+oldone["height"]))
+                cropped=image.crop((oldone["x"],oldone["y"],oldone["x"]+oldone["width"],oldone["y"]+oldone["height"]))
+                im_file=BytesIO()
+                cropped.save(im_file,format="png")
+                im_bytes=im_file.getvalue()
+                # im_b64="data:image:/png;base64,"+base64.b64encode(im_bytes).decode("utf-8")
+                
+                temp.append(im_bytes)
+            images.append(temp)
+        myimages=images
+        # encoded=json.dumps(images).encode("utf-8")
+        # print(len(encoded))
+        # self.wfile.write(encoded)
+        self.wfile.write(b"OK")
 
     def run_upload_mask(self):
         content_length=int(self.headers["content-length"])

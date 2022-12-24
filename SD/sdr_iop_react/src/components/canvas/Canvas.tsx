@@ -6,6 +6,8 @@ import { SERVER_URL, Tools } from "../../constants";
 import { BsEraserFill, BsPenFill } from 'react-icons/bs'
 import { TfiClose, TfiMenu } from 'react-icons/tfi'
 import { GrClearOption } from 'react-icons/gr'
+import { Rectangle, ImageRectangle, createImageTile } from '../../utilities/imagetile'
+import { grid } from "../../utilities/general";
 export default class Canvas extends React.Component {
   maskstate: Uint8ClampedArray;
   props: { width: number; height: number };
@@ -15,6 +17,8 @@ export default class Canvas extends React.Component {
     tool: number;
     toolboxClosed: boolean;
     radius: number;
+    imageGenRect: Rectangle;
+    gridOffset: { x: number, y: number }
   };
   canvasState: {
     toclear: boolean;
@@ -27,10 +31,13 @@ export default class Canvas extends React.Component {
   ids: String[];
   getstatus?: NodeJS.Timer;
   mousedown: boolean;
+  imageGridSize: { width: number, height: number }
+  imageGrid: ImageRectangle[][]
   constructor(props: any) {
     super(props);
     this.props = props;
     this.ids = [];
+    this.imageGridSize = { width: 50, height: 50 }
     this.canvasState = {
       mouseDown: 0,
       keysdown: new Map<string, boolean>(),
@@ -38,12 +45,22 @@ export default class Canvas extends React.Component {
       preventEvents: false,
       toclear: true
     };
+    let tempgrid: string[][] = grid(this.width / this.imageGridSize.width, this.height / this.imageGridSize.height, "https://i.imgur.com/NuUoA9Z.jpeg");
+    this.imageGrid = createImageTile(this.imageGridSize.width, this.imageGridSize.height, tempgrid)
+    //todo: actually display the image grid.
+    //todo: when clicking, get the current image grid, and do stuff with it.
     this.state = {
       radius: 15,
       tool: 1,
       toolboxClosed: false,
       val: "EMPTY",
-      image: ""
+      image: "https://i.imgur.com/NuUoA9Z.jpeg",
+      imageGenRect: { x: 0, y: 0, width: this.imageGridSize.width, height: this.imageGridSize.height },
+
+      gridOffset: { x: 0, y: 0 }
+
+
+      // grey and white 2x2 checkerboard image.
       // "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAIAQMAAAD+wSzIAAAABlBMVEX///+/v7+jQ3Y5AAAADklEQVQI12P4AIX8EAgALgAD/aNpbtEAAAAASUVORK5CYII",
     };
     this.mousedown = false
@@ -54,6 +71,7 @@ export default class Canvas extends React.Component {
     return this.props.width;
   }
   public set width(v: number) {
+
     this.props.width = v;
   }
   public get height(): number {
@@ -62,6 +80,19 @@ export default class Canvas extends React.Component {
   public set height(v: number) {
     this.props.height = v;
   }
+  public get w(): number {
+    return this.width;
+  }
+  public set w(v: number) {
+    this.width = v;
+  }
+  public get h(): number {
+    return this.height;
+  }
+  public set h(v: number) {
+    this.height = v;
+  }
+
   fetchInprogress() {
     fetch(SERVER_URL + "/inprogress").then((value) => {
       value.text().then((value1) => {
@@ -69,9 +100,9 @@ export default class Canvas extends React.Component {
         for (const key in inp) {
           let url = inp[key]
           console.log(url[0])
-          // this.setState({image:url})
           // this.deleteKey(key)
         }
+        // this.setState({image:createImageTile(this.width,this.height,)})
         this.setState({ val: value1 });
       });
     });
@@ -178,21 +209,9 @@ export default class Canvas extends React.Component {
       default:
         break;
 
-      }
+    }
   }
 
-  public get w(): number {
-    return this.width;
-  }
-  public set w(v: number) {
-    this.width = v;
-  }
-  public get h(): number {
-    return this.height;
-  }
-  public set h(v: number) {
-    this.height = v;
-  }
 
   clearCanvas() {
     console.log("Attempting to clear")
@@ -289,6 +308,21 @@ export default class Canvas extends React.Component {
     this.setState({ 'tool': tool });
   }
 
+  getNewImage() {
+    
+    postData(`${SERVER_URL}/splitimages`,
+      {
+        "width": this.width,
+        "height": this.height,
+        "imagesWidth": this.imageGridSize.width,
+        "imagesHeight": this.imageGridSize.height,
+        "image": this.state.image,
+        "oldImage":this.imageGrid
+      }).then((value) => {
+        console.log(value.length)
+      }).then(()=>{
+      })
+  }
 
 
   render(): JSX.Element {
@@ -312,13 +346,14 @@ export default class Canvas extends React.Component {
           }
         }}
       >
-        <img
+        {/* <img
           src={this.state.image}
           alt=""
           width={this.width}
           height={this.height}
           id="clickable-image"
-        />
+        /> */}
+        {this.drawImageGrid()}
 
         <canvas
           onLoadStart={(event: any) => {
@@ -402,6 +437,9 @@ export default class Canvas extends React.Component {
                     <button id="clearButton" onClick={() => { this.clearCanvas(); this.postMask() }}> Clear <GrClearOption></GrClearOption></button>
                   </div>
                 </section>
+                <section>
+                  <button id="testButton" onClick={() => { this.getNewImage() }}>TEST</button>
+                </section>
               </div>
             </div>
           </div>
@@ -449,6 +487,21 @@ export default class Canvas extends React.Component {
 
       </div>
     );
+  }
+  drawImageGrid(): React.ReactNode {
+    let images = []
+    for (let x = 0; x < this.imageGrid.length; x++) {
+      for (let y = 0; y < this.imageGrid[x].length; y++) {
+        let ImRectEl = this.imageGrid[x][y];
+        let img = <img src={`${SERVER_URL}/imggrid/${x}/${y}`}
+          width={ImRectEl.width}
+          height={ImRectEl.width}
+          style={{ "top": ImRectEl.y, "left": ImRectEl.x }}
+          className="image-grid-element" alt="" key={y*this.imageGrid.length+x}/>
+        images.push(img)
+      }
+    }
+    return images
   }
 
   postMask(event?: React.MouseEvent<HTMLCanvasElement, globalThis.MouseEvent>): boolean {

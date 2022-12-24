@@ -12,7 +12,11 @@
     left: 0;
 
 }
-
+.image-grid-element{
+    z-index: -2;
+    position: absolute;
+    overflow: hidden;
+}
 #canvas-container {
     background-color: grey;
     z-index: 2;
