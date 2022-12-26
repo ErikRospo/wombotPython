@@ -6,6 +6,7 @@ import { SERVER_URL, Tools } from "../../constants";
 import { BsEraserFill, BsPenFill } from 'react-icons/bs'
 import { TfiClose, TfiMenu } from 'react-icons/tfi'
 import { GrClearOption } from 'react-icons/gr'
+import { FaMagic } from 'react-icons/fa'
 import { Rectangle, ImageRectangle, createImageTile } from '../../utilities/imagetile'
 import { grid } from "../../utilities/general";
 export default class Canvas extends React.Component {
@@ -147,7 +148,7 @@ export default class Canvas extends React.Component {
 
   }
 
-  draw(event: MouseEvent<HTMLCanvasElement>) {
+  draw(event: MouseEvent<HTMLCanvasElement>): void {
     if (this.ctx) {
       switch (this.state.tool) {
         case Tools.ERASER:
@@ -162,8 +163,17 @@ export default class Canvas extends React.Component {
           this.ctx.arc(event.clientX, event.clientY, this.state.radius, 0, 360);
           this.ctx.fill();
           break
+        case Tools.GENERATE:
+          this.generate(event.clientX, event.clientY)
+          break
+        default:
+          break
       }
     }
+  }
+  generate(x: number, y: number) {
+    postData(SERVER_URL + "/log", { x: x, y: y })
+    console.log({ x: x, y: y })
   }
   white2transparency(): void {
     if (this.ctx) {
@@ -309,7 +319,7 @@ export default class Canvas extends React.Component {
   }
 
   getNewImage() {
-    
+
     postData(`${SERVER_URL}/splitimages`,
       {
         "width": this.width,
@@ -317,14 +327,56 @@ export default class Canvas extends React.Component {
         "imagesWidth": this.imageGridSize.width,
         "imagesHeight": this.imageGridSize.height,
         "image": this.state.image,
-        "oldImage":this.imageGrid
+        "oldImage": this.imageGrid
       }).then((value) => {
         console.log(value.length)
-      }).then(()=>{
+      }).then(() => {
       })
   }
+  postStats() {
+    postData(`${SERVER_URL}/stats`,
+      {
+        "width": this.width,
+        "height": this.height,
+        "imagesWidth": this.imageGridSize.width,
+        "imagesHeight": this.imageGridSize.height,
+      }).then((value) => {
+        console.log(value.length)
+      }).then(() => {
+      })
+  }
+  // drawImageGrid(): React.ReactNode {
+  //   let images = []
+  //   for (let x = 0; x < this.imageGrid.length; x++) {
+  //     for (let y = 0; y < this.imageGrid[x].length; y++) {
+  //       let ImRectEl = this.imageGrid[x][y];
+  //       let img = <img src={`${SERVER_URL}/imggrid/${x}/${y}`}
+  //         width={ImRectEl.width}
+  //         height={ImRectEl.width}
+  //         style={{ "top": ImRectEl.y, "left": ImRectEl.x }}
+  //         className="image-grid-element" alt="" key={y * this.imageGrid.length + x} />
+  //       images.push(img)
+  //     }
+  //   }
+  //   return images
+  // }
 
+  postMask(event?: React.MouseEvent<HTMLCanvasElement, globalThis.MouseEvent>): boolean {
+    if (event) {
+      this.updateCtx(event);
+    }
+    if (this.ctx) {
+      this.ctx.fill();
+      this.maskstate = this.ctx.getImageData(0, 0, this.width, this.height).data;
+      let dataurl = getDataUrlFromArr(this.maskstate, this.width, this.height);
 
+      postData(SERVER_URL + "/upload/mask", dataurl);
+      return true
+    }
+    else {
+      return false
+    }
+  }
   render(): JSX.Element {
 
     return (
@@ -346,14 +398,14 @@ export default class Canvas extends React.Component {
           }
         }}
       >
-        {/* <img
+        <img
           src={this.state.image}
           alt=""
           width={this.width}
           height={this.height}
           id="clickable-image"
-        /> */}
-        {this.drawImageGrid()}
+        />
+        {/* {this.drawImageGrid()} */}
 
         <canvas
           onLoadStart={(event: any) => {
@@ -420,7 +472,14 @@ export default class Canvas extends React.Component {
                     <input type="radio" name="Tool" className="toolSelectorButton" onChange={() => this.setTool(Tools.PEN)} onClick={() => this.setTool(Tools.PEN)} checked={this.state.tool === Tools.PEN} />
 
                     Pen <BsPenFill></BsPenFill>
-                  </label><br />
+                  </label>
+                  <br />
+                  <label>
+                    <input type="radio" name="Tool" className="toolSelectorButton" onChange={() => this.setTool(Tools.GENERATE)} onClick={() => this.setTool(Tools.GENERATE)} checked={this.state.tool === Tools.GENERATE} />
+
+                    Generate <FaMagic></FaMagic>
+                  </label>
+                  <br />
 
                 </div>
                 <hr />
@@ -438,7 +497,10 @@ export default class Canvas extends React.Component {
                   </div>
                 </section>
                 <section>
-                  <button id="testButton" onClick={() => { this.getNewImage() }}>TEST</button>
+                  <button onClick={() => { this.getNewImage() }}>this.getNewImage()</button>
+                </section>
+                <section>
+                  <button onClick={() => { this.postStats() }}>this.postStats()</button>
                 </section>
               </div>
             </div>
@@ -488,36 +550,5 @@ export default class Canvas extends React.Component {
       </div>
     );
   }
-  drawImageGrid(): React.ReactNode {
-    let images = []
-    for (let x = 0; x < this.imageGrid.length; x++) {
-      for (let y = 0; y < this.imageGrid[x].length; y++) {
-        let ImRectEl = this.imageGrid[x][y];
-        let img = <img src={`${SERVER_URL}/imggrid/${x}/${y}`}
-          width={ImRectEl.width}
-          height={ImRectEl.width}
-          style={{ "top": ImRectEl.y, "left": ImRectEl.x }}
-          className="image-grid-element" alt="" key={y*this.imageGrid.length+x}/>
-        images.push(img)
-      }
-    }
-    return images
-  }
 
-  postMask(event?: React.MouseEvent<HTMLCanvasElement, globalThis.MouseEvent>): boolean {
-    if (event) {
-      this.updateCtx(event);
-    }
-    if (this.ctx) {
-      this.ctx.fill();
-      this.maskstate = this.ctx.getImageData(0, 0, this.width, this.height).data;
-      let dataurl = getDataUrlFromArr(this.maskstate, this.width, this.height);
-
-      postData(SERVER_URL + "/upload/mask", dataurl);
-      return true
-    }
-    else {
-      return false
-    }
-  }
 }

@@ -25,6 +25,8 @@
         [ ] this seems like it would be hard, inefficent, and just straight up a bad idea.
     [ ] We may also be able to do a mix, where the image is split into chunks, on the backend and we can scroll around those on the frontend, and when we get far enough away, we switch chunks on the backend.
 [ ] Actually prevent keystrokes in the keyhandler while typing in the `prompt` input box.
+[ ] When we click the image with the `generate` tool, send something to the server to tell it to calculate the position, and generate the new one.
+
 ## backend
 [x] recive commands.
 [x] interact with filesystem
@@ -72,7 +74,10 @@
     [-] multipart form
         [-] prevent redirect/refresh, but continue request.
     [x] json object in request
-
+[ ] replace image on frontend with new one after generating
+    [ ] if it is initialy a url, GET it, and download it to local machine,
+    [ ] then, whenever we get a request to say `/getimage`, we would get the image
+    [ ] however, once generated, we could replace parts of the image with a new section.
 ### basic idea
 
 

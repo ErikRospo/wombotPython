@@ -141,7 +141,11 @@ class ReqHandler(BaseHTTPRequestHandler):
     def run_grid(self):
         x=int(self.path.split("/")[2])
         y=int(self.path.split("/")[3])
-        self.wfile.write(myimages[x][y])
+        try:
+            self.wfile.write(myimages[x][y])
+        except IndexError:
+            # a png image made out of a single white pixel.
+            self.wfile.write(b"\x89PNG\r\n\x1a\n\0\0\0\rIHDR\0\0\0\x80\0\0\0\x02\b\x06\0\0\0\x90F\xd4\x18\0\0\0\x16IDATx\x01c\xf8\x0f\x05\f\xa3`D\x02&\x86Q0\xa2\x01\0\xd5\xe9\x07\xfb_\xd4D\xfe\0\0\0\0IEND\xaeB`\x82")
     def run_delete(self):
         if self.path.split("/delete/")[1] in taskPoolIDS:
             uuid_in=self.path.split("/delete/")[1]
@@ -176,6 +180,8 @@ class ReqHandler(BaseHTTPRequestHandler):
             self.send_response(OK)
         elif self.path.startswith("/splitimages"):
             self.send_response(OK)
+        elif self.path.startswith("/stats"):
+            self.send_response(OK)
         else:
             self.send_response(NOT_FOUND)
             
@@ -196,6 +202,8 @@ class ReqHandler(BaseHTTPRequestHandler):
             self.run_upload_image()
         elif self.path.startswith("/splitimages"):
             self.run_splitimages()
+        elif self.path.startswith("/stats"):
+            self.run_stats()
     def run_log(self):
         content_length=int(self.headers["content-length"])
         body=self.rfile.read(content_length)
@@ -249,6 +257,18 @@ class ReqHandler(BaseHTTPRequestHandler):
         # print(len(encoded))
         # self.wfile.write(encoded)
         self.wfile.write(b"OK")
+    def run_stats(self):
+        global myimages
+        content_length=int(self.headers["content-length"])
+        body=self.rfile.read(content_length)
+        bodyjson=json.loads(body)
+        imagewidth=bodyjson["imagesWidth"]
+        imageheight=bodyjson["imagesHeight"]
+        width=bodyjson["width"]
+        height=bodyjson["height"]
+        endwidth=width//imagewidth
+        endheight=height//imageheight
+        print(imagewidth,imageheight,width,height,endwidth,endheight)
 
     def run_upload_mask(self):
         content_length=int(self.headers["content-length"])
