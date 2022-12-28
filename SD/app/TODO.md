@@ -78,12 +78,3 @@
     [ ] if it is initialy a url, GET it, and download it to local machine,
     [ ] then, whenever we get a request to say `/getimage`, we would get the image
     [ ] however, once generated, we could replace parts of the image with a new section.
-### basic idea
-
-
-POST to `https://replicate.com/api/models/stability-ai/stable-diffusion-inpainting/versions/e5a34f913de0adc560d20e002c45ad43a80031b62caacc3d84010c6b6a64870c/predictions`
-with 
-`{"inputs":{"prompt":"Face of a yellow cat, high resolution, sitting on a park bench","num_outputs":1,"guidance_scale":7.5,"prompt_strength":0.8,"num_inference_steps":25,"mask":"https://replicate.delivery/pbxt/HtGQBqO9MtVbPm0G0K43nsvvjBB0E0PaWOhuNRrRBBT4ttbf/mask.png","image":"https://replicate.delivery/pbxt/HtGQBfA5TrqFYZBf0UL18NTqHrzt8UiSIsAkUuMHtjvFDO6p/overture-creations-5sI6fQgYIuo.png"}}`
-
-then we get the uuid by {}.uuid.
-after that, we continiously GET `https://replicate.com/api/models/stability-ai/stable-diffusion-inpainting/versions/e5a34f913de0adc560d20e002c45ad43a80031b62caacc3d84010c6b6a64870c/predictions`+uuid

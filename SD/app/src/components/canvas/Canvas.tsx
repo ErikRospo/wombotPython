@@ -22,6 +22,7 @@ export default class Canvas extends React.Component {
     gridOffset: { x: number, y: number }
   };
   canvasState: {
+    hasGenerated: boolean;
     toclear: boolean;
     ids_in_progress: Array<string>;
     mouseDown: number;
@@ -41,6 +42,7 @@ export default class Canvas extends React.Component {
     this.imageGridSize = { width: 50, height: 50 }
     this.canvasState = {
       mouseDown: 0,
+      hasGenerated: false,
       keysdown: new Map<string, boolean>(),
       ids_in_progress: new Array<string>(),
       preventEvents: false,
@@ -128,10 +130,10 @@ export default class Canvas extends React.Component {
   }
   componentDidMount(): void {
     console.log(this);
-    this.getstatus = setInterval(() => {
-      this.fetchInprogress();
-      this.fetchMine();
-    }, 5000);
+    // this.getstatus = setInterval(() => {
+    //   this.fetchInprogress();
+    //   this.fetchMine();
+    // }, 5000);
   }
   componentWillUnmount(): void {
     clearInterval(this.getstatus);
@@ -164,7 +166,10 @@ export default class Canvas extends React.Component {
           this.ctx.fill();
           break
         case Tools.GENERATE:
-          this.generate(event.clientX, event.clientY)
+          if (!this.canvasState.hasGenerated) {
+            this.generate(event.clientX, event.clientY)
+            this.canvasState.hasGenerated = true;
+          }
           break
         default:
           break
@@ -172,8 +177,21 @@ export default class Canvas extends React.Component {
     }
   }
   generate(x: number, y: number) {
-    postData(SERVER_URL + "/log", { x: x, y: y })
-    console.log({ x: x, y: y })
+
+    postData(`${SERVER_URL}/click`, {
+      x: x,
+      y: y,
+      "width": this.width,
+      "height": this.height,
+      "imagesWidth": this.imageGridSize.width,
+      "imagesHeight": this.imageGridSize.height,
+    }).then((v: Response) => {
+      return v.json()
+
+    }).then((v: any) => {
+      console.log(v)
+    })
+
   }
   white2transparency(): void {
     if (this.ctx) {
@@ -243,8 +261,10 @@ export default class Canvas extends React.Component {
       image: "./image.png",
     }).then((response) => {
       if (response) {
+        response.text().then((text: string) => {
+          this.canvasState.ids_in_progress.push(text)
 
-        this.canvasState.ids_in_progress.push(response)
+        })
       } else {
         console.log("RESPONSE IS EMPTY:" + response)
       }
@@ -294,7 +314,7 @@ export default class Canvas extends React.Component {
         this.setState({ "image": e.target?.result })
         let res = e.target?.result
         if (res) {
-          postData(SERVER_URL + "/upload/image", res.toString()).then(onloaded)
+          postData(SERVER_URL + "/upload/image", res.toString()).then((r) => { r.text().then(onloaded) })
         }
 
       }
@@ -328,9 +348,10 @@ export default class Canvas extends React.Component {
         "imagesHeight": this.imageGridSize.height,
         "image": this.state.image,
         "oldImage": this.imageGrid
-      }).then((value) => {
+      }).then((v) =>
+        v.text()
+      ).then((value) => {
         console.log(value.length)
-      }).then(() => {
       })
   }
   postStats() {
@@ -340,9 +361,9 @@ export default class Canvas extends React.Component {
         "height": this.height,
         "imagesWidth": this.imageGridSize.width,
         "imagesHeight": this.imageGridSize.height,
-      }).then((value) => {
+      }).then((v:Response): Promise<string> => v.text()
+      ).then((value:string) => {
         console.log(value.length)
-      }).then(() => {
       })
   }
   // drawImageGrid(): React.ReactNode {
@@ -428,6 +449,7 @@ export default class Canvas extends React.Component {
             (event) => {
               this.mousedown = false
               this.canvasState.mouseDown = event.buttons;
+              this.canvasState.hasGenerated = false;
               if (this.state.tool === Tools.ERASER) {
                 console.log(this)
                 this.white2transparency()
@@ -484,7 +506,7 @@ export default class Canvas extends React.Component {
                 </div>
                 <hr />
                 <section>
-                  <div id="Radius" >
+                  <div id="Radius" hidden={!(this.state.tool===Tools.ERASER||this.state.tool===Tools.PEN)} >
                     <label htmlFor="RadiusInput">Radius: </label>
                     <input type="number" name="Radius" id="RadiusInput" onChange={(ev) => { this.setRadius(ev); }} defaultValue={this.state.radius} />
                   </div>

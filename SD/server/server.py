@@ -182,6 +182,9 @@ class ReqHandler(BaseHTTPRequestHandler):
             self.send_response(OK)
         elif self.path.startswith("/stats"):
             self.send_response(OK)
+        elif self.path.startswith("/click"):
+            self.send_response(OK)
+            self.send_header("content-type","text/plain")
         else:
             self.send_response(NOT_FOUND)
             
@@ -204,6 +207,33 @@ class ReqHandler(BaseHTTPRequestHandler):
             self.run_splitimages()
         elif self.path.startswith("/stats"):
             self.run_stats()
+        elif self.path.startswith("/click"):
+            self.run_click()
+    def run_click(self):
+        bodyjson = self.read_bodyjson()
+        # print(bodyjson)
+        imagewidth=bodyjson["imagesWidth"]
+        imageheight=bodyjson["imagesHeight"]
+        width=bodyjson["width"]
+        height=bodyjson["height"]
+        endwidth=width//imagewidth
+        endheight=height//imageheight
+        x=bodyjson["x"]
+        y=bodyjson["y"]
+        x_prop=x/width
+        y_prop=y/height
+        grid_x=endwidth*x_prop
+        grid_y=endheight*y_prop
+        
+        print("imagewidth imageheight width height endwidth endheight x y grid_x grid_y")
+        print(imagewidth,imageheight,width,height,endwidth,endheight,x,y,grid_x,grid_y)
+        newRect={"x":math.floor(grid_x),"y":math.floor(grid_y),"w":imagewidth,"h":imageheight}
+        self.wfile.write(str(newRect).replace("'",'"').encode("utf-8"))
+    def read_bodyjson(self):
+        content_length=int(self.headers["content-length"])
+        body=self.rfile.read(content_length)
+        bodyjson=json.loads(body)
+        return bodyjson
     def run_log(self):
         content_length=int(self.headers["content-length"])
         body=self.rfile.read(content_length)
@@ -211,9 +241,7 @@ class ReqHandler(BaseHTTPRequestHandler):
             f.write(body)
     def run_splitimages(self):
         global myimages
-        content_length=int(self.headers["content-length"])
-        body=self.rfile.read(content_length)
-        bodyjson=json.loads(body)
+        bodyjson=self.read_bodyjson()
         # print(bodyjson)
         imagewidth=bodyjson["imagesWidth"]
         imageheight=bodyjson["imagesHeight"]
@@ -259,9 +287,7 @@ class ReqHandler(BaseHTTPRequestHandler):
         self.wfile.write(b"OK")
     def run_stats(self):
         global myimages
-        content_length=int(self.headers["content-length"])
-        body=self.rfile.read(content_length)
-        bodyjson=json.loads(body)
+        bodyjson=self.read_bodyjson()
         imagewidth=bodyjson["imagesWidth"]
         imageheight=bodyjson["imagesHeight"]
         width=bodyjson["width"]
