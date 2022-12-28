@@ -361,26 +361,12 @@ export default class Canvas extends React.Component {
         "height": this.height,
         "imagesWidth": this.imageGridSize.width,
         "imagesHeight": this.imageGridSize.height,
-      }).then((v:Response): Promise<string> => v.text()
-      ).then((value:string) => {
+      }).then((v: Response): Promise<string> => v.text()
+      ).then((value: string) => {
         console.log(value.length)
       })
   }
-  // drawImageGrid(): React.ReactNode {
-  //   let images = []
-  //   for (let x = 0; x < this.imageGrid.length; x++) {
-  //     for (let y = 0; y < this.imageGrid[x].length; y++) {
-  //       let ImRectEl = this.imageGrid[x][y];
-  //       let img = <img src={`${SERVER_URL}/imggrid/${x}/${y}`}
-  //         width={ImRectEl.width}
-  //         height={ImRectEl.width}
-  //         style={{ "top": ImRectEl.y, "left": ImRectEl.x }}
-  //         className="image-grid-element" alt="" key={y * this.imageGrid.length + x} />
-  //       images.push(img)
-  //     }
-  //   }
-  //   return images
-  // }
+
 
   postMask(event?: React.MouseEvent<HTMLCanvasElement, globalThis.MouseEvent>): boolean {
     if (event) {
@@ -426,7 +412,6 @@ export default class Canvas extends React.Component {
           height={this.height}
           id="clickable-image"
         />
-        {/* {this.drawImageGrid()} */}
 
         <canvas
           onLoadStart={(event: any) => {
@@ -451,7 +436,6 @@ export default class Canvas extends React.Component {
               this.canvasState.mouseDown = event.buttons;
               this.canvasState.hasGenerated = false;
               if (this.state.tool === Tools.ERASER) {
-                console.log(this)
                 this.white2transparency()
 
               } else {
@@ -506,7 +490,7 @@ export default class Canvas extends React.Component {
                 </div>
                 <hr />
                 <section>
-                  <div id="Radius" hidden={!(this.state.tool===Tools.ERASER||this.state.tool===Tools.PEN)} >
+                  <div id="Radius" hidden={!(this.state.tool === Tools.ERASER || this.state.tool === Tools.PEN)} >
                     <label htmlFor="RadiusInput">Radius: </label>
                     <input type="number" name="Radius" id="RadiusInput" onChange={(ev) => { this.setRadius(ev); }} defaultValue={this.state.radius} />
                   </div>
