@@ -26,7 +26,8 @@
     [ ] We may also be able to do a mix, where the image is split into chunks, on the backend and we can scroll around those on the frontend, and when we get far enough away, we switch chunks on the backend.
 [ ] Actually prevent keystrokes in the keyhandler while typing in the `prompt` input box.
 [ ] When we click the image with the `generate` tool, send something to the server to tell it to calculate the position, and generate the new one.
-
+[ ] Be able to drag the toolbox around.
+    [ ] onclick of the header, we set a transformation property on it, and update it based on the mouse position.
 ## backend
 [x] recive commands.
 [x] interact with filesystem

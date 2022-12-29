@@ -22,3 +22,9 @@ export function nullGrid(width:number,height:number): null[][]{
     }
     return t
 }
+export function roundto(value:number,base:number):number{
+    return Math.round(value/base)*base
+}
+export function round(value:number,places:number):number{
+    return roundto(value,10**places)
+}

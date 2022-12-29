@@ -8,7 +8,8 @@ import { TfiClose, TfiMenu } from 'react-icons/tfi'
 import { GrClearOption } from 'react-icons/gr'
 import { FaMagic } from 'react-icons/fa'
 import { Rectangle, ImageRectangle, createImageTile } from '../../utilities/imagetile'
-import { grid } from "../../utilities/general";
+import { grid, roundto } from "../../utilities/general";
+const floor=Math.floor
 export default class Canvas extends React.Component {
   maskstate: Uint8ClampedArray;
   props: { width: number; height: number };
@@ -167,7 +168,7 @@ export default class Canvas extends React.Component {
           break
         case Tools.GENERATE:
           if (!this.canvasState.hasGenerated) {
-            this.generate(event.clientX, event.clientY)
+            this.generate(event.clientX, event.clientY,event)
             this.canvasState.hasGenerated = true;
           }
           break
@@ -176,21 +177,38 @@ export default class Canvas extends React.Component {
       }
     }
   }
-  generate(x: number, y: number) {
+  generate(x: number, y: number,ev:MouseEvent<HTMLCanvasElement>) {
+    let endwidth=floor(this.width/this.imageGridSize.width);
+    let endheight=floor(this.height/this.imageGridSize.height);
+    let x_prop=x/this.width;
+    let y_prop=y/this.height;
+    let gridx=endwidth*x_prop*this.imageGridSize.width
+    let gridy=endheight*y_prop*this.imageGridSize.height
+    if (this.ctx){
+      let aagridx=roundto(gridx,this.imageGridSize.width)
+      let aagridy=roundto(gridy,this.imageGridSize.height)
+      console.log([endwidth,endheight,x_prop,y_prop,gridx,gridy,aagridx,aagridy,this.imageGridSize])
+      this.ctx.strokeStyle="black"
+      this.ctx.lineWidth=2
+      this.ctx.strokeRect(aagridx,aagridy,this.imageGridSize.width,this.imageGridSize.height)
+      this.postMask(ev)
+    }
 
-    postData(`${SERVER_URL}/click`, {
-      x: x,
-      y: y,
-      "width": this.width,
-      "height": this.height,
-      "imagesWidth": this.imageGridSize.width,
-      "imagesHeight": this.imageGridSize.height,
-    }).then((v: Response) => {
-      return v.json()
+    
+    
+    // postData(`${SERVER_URL}/click`, {
+    //   x: x,
+    //   y: y,
+    //   "width": this.width,
+    //   "height": this.height,
+    //   "imagesWidth": this.imageGridSize.width,
+    //   "imagesHeight": this.imageGridSize.height,
+    // }).then((v: Response) => {
+    //   return v.json()
 
-    }).then((v: any) => {
-      console.log(v)
-    })
+    // }).then((v: any) => {
+    //   console.log(v)
+    // })
 
   }
   white2transparency(): void {
