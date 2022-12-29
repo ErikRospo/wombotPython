@@ -31,6 +31,7 @@ export default class Canvas extends React.Component {
     preventEvents: boolean;
   };
   ctx?: CanvasRenderingContext2D
+  ctx2?: CanvasRenderingContext2D
   ids: String[];
   getstatus?: NodeJS.Timer;
   mousedown: boolean;
@@ -148,6 +149,7 @@ export default class Canvas extends React.Component {
   canvasLoad(el: any) {
     console.log("canvasload");
     console.log(el);
+    
 
   }
 
@@ -168,7 +170,7 @@ export default class Canvas extends React.Component {
           break
         case Tools.GENERATE:
           if (!this.canvasState.hasGenerated) {
-            this.generate(event.clientX, event.clientY,event)
+            this.generate(event.clientX, event.clientY)
             this.canvasState.hasGenerated = true;
           }
           break
@@ -177,38 +179,21 @@ export default class Canvas extends React.Component {
       }
     }
   }
-  generate(x: number, y: number,ev:MouseEvent<HTMLCanvasElement>) {
+  generate(x: number, y: number) {
     let endwidth=floor(this.width/this.imageGridSize.width);
     let endheight=floor(this.height/this.imageGridSize.height);
     let x_prop=x/this.width;
     let y_prop=y/this.height;
     let gridx=endwidth*x_prop*this.imageGridSize.width
     let gridy=endheight*y_prop*this.imageGridSize.height
-    if (this.ctx){
+    if (this.ctx2){
       let aagridx=roundto(gridx,this.imageGridSize.width)
       let aagridy=roundto(gridy,this.imageGridSize.height)
-      console.log([endwidth,endheight,x_prop,y_prop,gridx,gridy,aagridx,aagridy,this.imageGridSize])
-      this.ctx.strokeStyle="black"
-      this.ctx.lineWidth=2
-      this.ctx.strokeRect(aagridx,aagridy,this.imageGridSize.width,this.imageGridSize.height)
-      this.postMask(ev)
+      this.ctx2.strokeStyle="black"
+      this.ctx2.lineWidth=2
+      this.ctx2.strokeRect(aagridx,aagridy,this.imageGridSize.width,this.imageGridSize.height)
     }
 
-    
-    
-    // postData(`${SERVER_URL}/click`, {
-    //   x: x,
-    //   y: y,
-    //   "width": this.width,
-    //   "height": this.height,
-    //   "imagesWidth": this.imageGridSize.width,
-    //   "imagesHeight": this.imageGridSize.height,
-    // }).then((v: Response) => {
-    //   return v.json()
-
-    // }).then((v: any) => {
-    //   console.log(v)
-    // })
 
   }
   white2transparency(): void {
@@ -294,6 +279,15 @@ export default class Canvas extends React.Component {
       let ctx: CanvasRenderingContext2D | null = (event.target as HTMLCanvasElement).getContext("2d", { willReadFrequently: true });
       if (ctx) {
         this.ctx = ctx
+
+      }
+    }
+  }
+  updateCtx2(event: any) {
+    if (!this.ctx2) {
+      let ctx: CanvasRenderingContext2D | null = (event.target as HTMLCanvasElement).getContext("2d");
+      if (ctx) {
+        this.ctx2 = ctx
 
       }
     }
@@ -432,9 +426,10 @@ export default class Canvas extends React.Component {
         />
 
         <canvas
-          onLoadStart={(event: any) => {
-
+          onLoadCapture={(event: any) => {
             this.updateCtx(event)
+            console.log("MaskCanvas Loaded")
+
           }}
 
           onMouseDown={
@@ -470,8 +465,19 @@ export default class Canvas extends React.Component {
           }}
           width={this.width}
           height={this.height}
-          id="canvas-canvas"
+          id="mask-canvas"
           onLoad={this.canvasLoad}
+        ></canvas>
+        <canvas
+          onLoadStart={(event:any ): void => {
+            console.log(event);
+            console.log("GridCanvas Loaded")
+            this.updateCtx2(event)
+            console.log(this.ctx2)
+          }}
+          width={this.width}
+          height={this.height}
+          id="grid-canvas"
         ></canvas>
         <p id="inprogress">In progress: {this.state.val}</p>
         <div >

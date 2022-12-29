@@ -1,8 +1,14 @@
-#canvas-canvas {
+#grid-canvas {
     position: absolute;
     top: 0;
     left: 0;
     z-index: -1;
+}
+#mask-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 2;
 }
 
 #clickable-image {
@@ -49,6 +55,7 @@
     height: 400px;
     background-color: slategray;
     border: 2px grey groove;
+    z-index: 15;
     transition: ease-out 500ms 0ms height;
 
 }
