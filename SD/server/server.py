@@ -182,7 +182,7 @@ class ReqHandler(BaseHTTPRequestHandler):
             self.send_response(OK)
         elif self.path.startswith("/stats"):
             self.send_response(OK)
-        elif self.path.startswith("/click"):
+        elif self.path.startswith("/crop"):
             self.send_response(OK)
             self.send_header("content-type","text/plain")
         else:
@@ -207,8 +207,23 @@ class ReqHandler(BaseHTTPRequestHandler):
             self.run_splitimages()
         elif self.path.startswith("/stats"):
             self.run_stats()
+        elif self.path.startswith("/crop"):
+            self.run_crop()
 
-
+    def run_crop(self):
+        bodyjson=self.read_bodyjson()
+        print(bodyjson)
+        image=bodyjson["image"]
+        if image.startswith("http"):
+            r=requests.get(image)
+            with open("./temp2."+image.split(".")[-1],"wb") as f:
+                f.write(r.content)
+            i=Image.open("./temp2"+image.split(".")[-1])
+            cropped=i.crop([(bodyjson["pos"]["x"],bodyjson["pos"]["y"],bodyjson["pos"]["x"]+bodyjson["w"]),bodyjson["pos"]["y"]+bodyjson["h"]])
+            cropped.save("./temp2.png")
+            with open("./temp2.png","rb") as f:
+                b=f.read()
+                self.wfile.write(b)
     def read_bodyjson(self):
         content_length=int(self.headers["content-length"])
         body=self.rfile.read(content_length)

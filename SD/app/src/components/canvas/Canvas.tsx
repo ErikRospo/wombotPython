@@ -132,10 +132,20 @@ export default class Canvas extends React.Component {
   }
   componentDidMount(): void {
     console.log(this);
-    // this.getstatus = setInterval(() => {
-    //   this.fetchInprogress();
-    //   this.fetchMine();
-    // }, 5000);
+      if (!this.ctx) {
+        let ctx: CanvasRenderingContext2D | null = (document.getElementById("mask-canvas") as HTMLCanvasElement)?.getContext("2d", { willReadFrequently: true });
+        if (ctx) {
+          this.ctx = ctx
+  
+        }
+      }
+      if (!this.ctx2) {
+        let ctx: CanvasRenderingContext2D | null = (document.getElementById("grid-canvas") as HTMLCanvasElement)?.getContext("2d");
+        if (ctx) {
+          this.ctx2 = ctx
+  
+        }
+      }
   }
   componentWillUnmount(): void {
     clearInterval(this.getstatus);
@@ -148,7 +158,8 @@ export default class Canvas extends React.Component {
 
   canvasLoad(el: any) {
     console.log("canvasload");
-    console.log(el);
+    this.updateCtx(el)
+    console.log("MaskCanvas Loaded")
     
 
   }
@@ -191,7 +202,12 @@ export default class Canvas extends React.Component {
       let aagridy=roundto(gridy,this.imageGridSize.height)
       this.ctx2.strokeStyle="black"
       this.ctx2.lineWidth=2
+      this.ctx2.clearRect(0,0,this.w,this.h)
       this.ctx2.strokeRect(aagridx,aagridy,this.imageGridSize.width,this.imageGridSize.height)
+      if (this.ctx){
+        postData(`${SERVER_URL}/crop`,{image:this.state.image,pos:{x:aagridx,y:aagridy,w:this.imageGridSize.width,h:this.imageGridSize.height}})
+        
+      }
     }
 
 
@@ -426,11 +442,7 @@ export default class Canvas extends React.Component {
         />
 
         <canvas
-          onLoadCapture={(event: any) => {
-            this.updateCtx(event)
-            console.log("MaskCanvas Loaded")
 
-          }}
 
           onMouseDown={
             (event: any) => {
@@ -466,15 +478,15 @@ export default class Canvas extends React.Component {
           width={this.width}
           height={this.height}
           id="mask-canvas"
-          onLoad={this.canvasLoad}
+          // onLoad={()=>this.canvasLoad()}
         ></canvas>
         <canvas
-          onLoadStart={(event:any ): void => {
-            console.log(event);
-            console.log("GridCanvas Loaded")
-            this.updateCtx2(event)
-            console.log(this.ctx2)
-          }}
+          // onLoadStart={(event:any ): void => {
+          //   console.log(event);
+          //   console.log("GridCanvas Loaded")
+          //   this.updateCtx2(event)
+          //   console.log(this.ctx2)
+          // }}
           width={this.width}
           height={this.height}
           id="grid-canvas"
