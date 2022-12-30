@@ -9,7 +9,7 @@ import { GrClearOption } from 'react-icons/gr'
 import { FaMagic } from 'react-icons/fa'
 import { Rectangle, ImageRectangle, createImageTile } from '../../utilities/imagetile'
 import { grid, roundto } from "../../utilities/general";
-const floor=Math.floor
+const floor = Math.floor
 export default class Canvas extends React.Component {
   maskstate: Uint8ClampedArray;
   props: { width: number; height: number };
@@ -132,20 +132,20 @@ export default class Canvas extends React.Component {
   }
   componentDidMount(): void {
     console.log(this);
-      if (!this.ctx) {
-        let ctx: CanvasRenderingContext2D | null = (document.getElementById("mask-canvas") as HTMLCanvasElement)?.getContext("2d", { willReadFrequently: true });
-        if (ctx) {
-          this.ctx = ctx
-  
-        }
+    if (!this.ctx) {
+      let ctx: CanvasRenderingContext2D | null = (document.getElementById("mask-canvas") as HTMLCanvasElement)?.getContext("2d", { willReadFrequently: true });
+      if (ctx) {
+        this.ctx = ctx
+
       }
-      if (!this.ctx2) {
-        let ctx: CanvasRenderingContext2D | null = (document.getElementById("grid-canvas") as HTMLCanvasElement)?.getContext("2d");
-        if (ctx) {
-          this.ctx2 = ctx
-  
-        }
+    }
+    if (!this.ctx2) {
+      let ctx: CanvasRenderingContext2D | null = (document.getElementById("grid-canvas") as HTMLCanvasElement)?.getContext("2d");
+      if (ctx) {
+        this.ctx2 = ctx
+
       }
+    }
   }
   componentWillUnmount(): void {
     clearInterval(this.getstatus);
@@ -160,7 +160,7 @@ export default class Canvas extends React.Component {
     console.log("canvasload");
     this.updateCtx(el)
     console.log("MaskCanvas Loaded")
-    
+
 
   }
 
@@ -191,27 +191,50 @@ export default class Canvas extends React.Component {
     }
   }
   generate(x: number, y: number) {
-    let endwidth=floor(this.width/this.imageGridSize.width);
-    let endheight=floor(this.height/this.imageGridSize.height);
-    let x_prop=x/this.width;
-    let y_prop=y/this.height;
-    let gridx=endwidth*x_prop*this.imageGridSize.width
-    let gridy=endheight*y_prop*this.imageGridSize.height
-    if (this.ctx2){
-      let aagridx=roundto(gridx,this.imageGridSize.width)
-      let aagridy=roundto(gridy,this.imageGridSize.height)
-      this.ctx2.strokeStyle="black"
-      this.ctx2.lineWidth=2
-      this.ctx2.clearRect(0,0,this.w,this.h)
-      this.ctx2.strokeRect(aagridx,aagridy,this.imageGridSize.width,this.imageGridSize.height)
-      if (this.ctx){
-        postData(`${SERVER_URL}/crop`,{image:this.state.image,pos:{x:aagridx,y:aagridy,w:this.imageGridSize.width,h:this.imageGridSize.height}})
-        
+
+    if (this.ctx2) {
+      this.ctx2.strokeStyle = "black"
+      this.ctx2.lineWidth = 2
+      this.ctx2.clearRect(0, 0, this.w, this.h)
+      let { x: aagridx, y: aagridy } = this.toLocalCoordinates(x, y)
+      this.ctx2.strokeRect(aagridx, aagridy, this.imageGridSize.width, this.imageGridSize.height)
+      if (this.ctx) {
+        let jdata = {
+          image: this.state.image,
+          pos_original: this.toLocalCoordinates(x, y),
+          pos_px: this.toLocalCoordinates(x, y, { "x": 1 }),
+          pos_nx: this.toLocalCoordinates(x, y, { "x": -1 }),
+          pos_py: this.toLocalCoordinates(x, y, { "y": 1 }),
+          pos_ny: this.toLocalCoordinates(x, y, { "y": -1 }),
+          current: {
+            w: this.width,
+            h: this.height
+          },
+          grid: {
+            w: this.imageGridSize.width,
+            h: this.imageGridSize.height
+          }
+        }
+        postData(`${SERVER_URL}/crop`, jdata)
+
       }
     }
 
 
   }
+  private toLocalCoordinates(xi: number, yi: number, offset?: { x?: number, y?: number }): { x: number; y: number; } {
+    let endwidth = floor(this.width / this.imageGridSize.width);
+    let endheight = floor(this.height / this.imageGridSize.height);
+    let x_prop = (xi + ((offset?.x || 0) * this.imageGridSize.width)) / this.width;
+    let y_prop = (yi + ((offset?.x || 0) * this.imageGridSize.width)) / this.height;
+
+    let gridx = endwidth * x_prop * this.imageGridSize.width;
+    let gridy = endheight * y_prop * this.imageGridSize.height;
+    let x = roundto(gridx, this.imageGridSize.width);
+    let y = roundto(gridy, this.imageGridSize.height);
+    return { x, y };
+  }
+
   white2transparency(): void {
     if (this.ctx) {
       let index = 0
@@ -478,7 +501,7 @@ export default class Canvas extends React.Component {
           width={this.width}
           height={this.height}
           id="mask-canvas"
-          // onLoad={()=>this.canvasLoad()}
+        // onLoad={()=>this.canvasLoad()}
         ></canvas>
         <canvas
           // onLoadStart={(event:any ): void => {

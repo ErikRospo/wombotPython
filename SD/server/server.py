@@ -218,12 +218,29 @@ class ReqHandler(BaseHTTPRequestHandler):
             r=requests.get(image)
             with open("./temp2."+image.split(".")[-1],"wb") as f:
                 f.write(r.content)
-            i=Image.open("./temp2"+image.split(".")[-1])
-            cropped=i.crop([(bodyjson["pos"]["x"],bodyjson["pos"]["y"],bodyjson["pos"]["x"]+bodyjson["w"]),bodyjson["pos"]["y"]+bodyjson["h"]])
-            cropped.save("./temp2.png")
-            with open("./temp2.png","rb") as f:
-                b=f.read()
-                self.wfile.write(b)
+            width=bodyjson["grid"]["w"]
+            height=bodyjson["grid"]["h"]
+            imagewidth=bodyjson['current']["w"]
+            imageheight=bodyjson['current']["h"]
+            names = ["pos_original","pos_px","pos_py","pos_nx","pos_ny"]
+            for n in names:
+                x=bodyjson[n]["x"]
+                y=bodyjson[n]["y"]
+                self.__grid_gen(width,height,x,y,imagewidth,imageheight,image.split(".")[-1],"./"+n+".png")
+            ni=Image.new("RGBA",(width*3,height*3))
+            ni.paste(Image.open(names[0]+".png"),[width,0])              
+            ni.paste(Image.open(names[1]+".png"),[0,height])              
+            ni.paste(Image.open(names[2]+".png"),[2*width,height])              
+            ni.paste(Image.open(names[2]+".png"),[width,2*height])           
+            ni.save("./ni.png")   
+    def __grid_gen(self, w,h,x,y,imagewidth,imageheight,exten,path):
+        i=Image.open("./temp2."+exten)
+        cropped=i.resize([imagewidth,imageheight]).crop([x,y,x+w,y+h])
+        cropped.save(path)
+        # with open(path,"rb") as f:
+            # b=f.read()
+            # self.wfile.write(b)
+        i.close()
     def read_bodyjson(self):
         content_length=int(self.headers["content-length"])
         body=self.rfile.read(content_length)
