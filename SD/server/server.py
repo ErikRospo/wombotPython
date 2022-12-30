@@ -36,6 +36,8 @@ class Task:
     thread:threading.Thread
     width:Union[int,float] 
     height:Union[int,float] 
+    x:Union[int,float] 
+    y:Union[int,float] 
     def __init__(self,thread:threading.Thread):
         self.uuid=uuid.uuid4().hex
         self.thread=thread
@@ -56,10 +58,8 @@ def checkObjects():
                     
                 i=Image.open("./outfile.png")
                 i.crop([n.width,n.height,n.width*2,n.height*2])
-                i.save("./outfile2.png")
-                with open("./outfile2.png","rb") as f:                
     
-                    return_values[n.uuid]=f.read()
+                return_values[n.uuid]={"image":i,"task":n}
 
                 outs.pop(n.uuid)
             else:
@@ -153,6 +153,9 @@ class ReqHandler(BaseHTTPRequestHandler):
         elif self.path.startswith("/imggrid"):
             self.send_response(OK)
             self.send_header("cache-control","no-store")
+        elif self.path.startswith("/image"):
+            self.send_response(OK)
+            self.send_header("content-type","image/png")
         else:
             self.send_response(NOT_FOUND)
  
@@ -168,6 +171,24 @@ class ReqHandler(BaseHTTPRequestHandler):
             self.run_delete() 
         elif self.path.startswith('/imggrid'):
             self.run_grid()
+        elif self.path.startswith("/image"):
+            self.run_image()
+    def run_image(self):
+        l=list(return_values.values())
+        i=Image.open("./current.png")
+        for n in l:
+            x=n["task"].x
+            y=n["task"].y
+            print(x,y)
+            i.paste(n["image"],(x,y))
+        i.save("./current2.png")
+        i.close()
+        i2=Image.open("./current2.png")
+        i2.save("./current.png")
+        with open("./current.png","rb") as f:
+            b=f.read()
+            self.wfile.write(b)
+            
     def run_grid(self):
         x=int(self.path.split("/")[2])
         y=int(self.path.split("/")[3])
@@ -248,6 +269,9 @@ class ReqHandler(BaseHTTPRequestHandler):
             r=requests.get(image)
             with open("./temp2."+image.split(".")[-1],"wb") as f:
                 f.write(r.content)
+            i=Image.open("./temp2."+image.split(".")[-1])
+            i.save("./current.png")
+            i.close()
             width=bodyjson["grid"]["w"]
             height=bodyjson["grid"]["h"]
             imagewidth=bodyjson['current']["w"]
@@ -284,12 +308,23 @@ class ReqHandler(BaseHTTPRequestHandler):
         #1. change both images to actual file paths.
         #2. accept user input on the prompt.
         #3. actually get the image back to the user.
+        
+        
+        
+        #IDEA
+        '''
+        After we generate and crop the image, we paste it on the existing one, and then somehow tell the frontend to refresh the image. (or just have it on a timer)
+        We can host the image localy on say /image
+        '''
         t=threading.Thread(target=do_image,args=("./mask_from_thing.png","./ni.png","forest",uuid_new))
+        
         t.start()
     
         ts=Task(t)
         ts.width=bodyjson["grid"]["w"]
         ts.height=bodyjson["grid"]["h"]
+        ts.x=bodyjson["pos_original"]["x"]
+        ts.y=bodyjson["pos_original"]["y"]
         ts.uuid=uuid_new
         threads.append(ts)
     
