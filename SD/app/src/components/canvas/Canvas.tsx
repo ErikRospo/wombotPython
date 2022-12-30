@@ -226,7 +226,7 @@ export default class Canvas extends React.Component {
     let endwidth = floor(this.width / this.imageGridSize.width);
     let endheight = floor(this.height / this.imageGridSize.height);
     let x_prop = (xi + ((offset?.x || 0) * this.imageGridSize.width)) / this.width;
-    let y_prop = (yi + ((offset?.x || 0) * this.imageGridSize.width)) / this.height;
+    let y_prop = (yi + ((offset?.y || 0) * this.imageGridSize.height)) / this.height;
 
     let gridx = endwidth * x_prop * this.imageGridSize.width;
     let gridy = endheight * y_prop * this.imageGridSize.height;

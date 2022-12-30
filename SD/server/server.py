@@ -4,14 +4,14 @@ import math
 import os #for getting the current file path
 import sys
 import threading
-from typing import List #multithreading and locking
+from typing import List, Union #multithreading and locking
 import uuid #identifying the tasks
 import requests # interacting with replicate servers
 import mimetypes # identifying files
 import time # waiting a certain amount of time
 import base64 #for decoding images sent back from the Canvas.
 from io import BytesIO #for b64 encoding operations.
-
+import numpy as np
 from PIL import Image # for image editing
 from http.client import NOT_FOUND, OK, BAD_REQUEST
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -28,15 +28,54 @@ outs={}
 outsLock=threading.Lock()
 imgwidth=0
 imgheight=0
+return_values={}
 # upload an image to replicate's server
+#utility Task class
+class Task:
+    uuid:str
+    thread:threading.Thread
+    width:Union[int,float] 
+    height:Union[int,float] 
+    def __init__(self,thread:threading.Thread):
+        self.uuid=uuid.uuid4().hex
+        self.thread=thread
+    def isactive(self):
+        return self.thread.is_alive()
+threads:List[Task]=[]
+myimages:List[List[bytes]]=[]
+def checkObjects():
+    global threads
+    while True:
+        newThreads=[]
+        for n in threads:
+            if not n.isactive():
+                with open("./outfile.png","wb") as f:
+                    unpr=outs.get(n.uuid)[0]
+                    
+                    f.write(requests.get(unpr).content)
+                    
+                i=Image.open("./outfile.png")
+                i.crop([n.width,n.height,n.width*2,n.height*2])
+                i.save("./outfile2.png")
+                with open("./outfile2.png","rb") as f:                
+    
+                    return_values[n.uuid]=f.read()
+
+                outs.pop(n.uuid)
+            else:
+                newThreads.append(n)
+        threads=newThreads
+    
+checkthread=threading.Thread(target=checkObjects)
+checkthread.start()
 def upload_image(path):
     cont=bytes()
     with open(path,"rb") as f:
         cont=f.read()
-        
+ 
     name=os.path.split(path)[1] #what the name of the file is
     content_type=mimetypes.guess_type(name)[0] #mime type
-        
+ 
     api_url = "https://replicate.com/api/upload/"+name.replace(" ","_") #get the api url
     res=requests.post(api_url,params={"content_type":content_type},headers=headers) #post the file type
     #returns a serving url, where the content is served, and a upload url, where you upload the image.
@@ -45,19 +84,19 @@ def upload_image(path):
     upload_url=res.json()["upload_url"]
     #upload the image
     requests.put(upload_url,data=cont,headers={"content-type":content_type})
- # type: ignore    
+ # type: ignore 
     return serving_url
-def do_image(mask_path,image_path,prompt,uuidp,num_outputs=1,guidence_scale=5,prompt_strength=0.8,num_inference_steps=50):        
+def do_image(mask_path,image_path,prompt,uuidp,num_outputs=1,guidence_scale=5,prompt_strength=0.8,num_inference_steps=50): 
     #upload both the mask and the image itself
     mask_url=upload_image(mask_path)
     image_url=upload_image(image_path)
-    #set up the data    
+    #set up the data 
     jsondata={"inputs":{"prompt":prompt,"num_outputs":num_outputs,"guidance_scale":guidence_scale,"prompt_strength":prompt_strength,"num_inference_steps":num_inference_steps,"image":image_url,"mask":mask_url}}
     #set up the prediction
     pred=requests.post("https://replicate.com/api/models/stability-ai/stable-diffusion-inpainting/versions/e5a34f913de0adc560d20e002c45ad43a80031b62caacc3d84010c6b6a64870c/predictions",headers=headers,json=jsondata)
     #get the task uuid
     task_uuid=pred.json()["uuid"]
-    
+ 
     while True:
         #get the status
         resp=requests.get("https://replicate.com/api/models/stability-ai/stable-diffusion-inpainting/versions/e5a34f913de0adc560d20e002c45ad43a80031b62caacc3d84010c6b6a64870c/predictions/"+task_uuid,headers=headers)
@@ -75,7 +114,7 @@ def do_image(mask_path,image_path,prompt,uuidp,num_outputs=1,guidence_scale=5,pr
         time.sleep(2)
 def transparency_to_white(img):
     #modified from
-    
+ 
     #https://stackoverflow.com/a/765829
 
     #get the pixel values
@@ -91,32 +130,23 @@ def transparency_to_white(img):
                 pixdata[x, y] = (255, 255, 255, 255)
 
     return img
-#utility Task class
-class Task:
-    
-    def __init__(self,thread:threading.Thread):
-        self.uuid=uuid.uuid4().hex
-        self.thread=thread
-    def isactive(self):
-        return self.thread.is_alive()
-threads:List[Task]=[]
-myimages:List[List[bytes]]=[]
+
 class ReqHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path.startswith("/lookup"):
             if self.path.split("/lookup/")[1] in taskPoolIDS:
-       
+ 
                 self.send_response(OK)
             else:
                 self.send_response_only(BAD_REQUEST)
         elif self.path=="/inprogress":
-       
+ 
             self.send_response(OK)
         elif self.path.startswith("/log"):
             self.send_response(OK)
         elif self.path.startswith("/delete/"):
             if self.path.split("/delete/")[1] in taskPoolIDS:
-           
+ 
                 self.send_response(OK)
             else:
                 self.send_response_only(BAD_REQUEST)
@@ -125,17 +155,17 @@ class ReqHandler(BaseHTTPRequestHandler):
             self.send_header("cache-control","no-store")
         else:
             self.send_response(NOT_FOUND)
-       
+ 
         self.send_header("Access-Control-Allow-Origin","*")
         self.end_headers()
-       
+ 
         if self.path.startswith("/lookup"):
             self.run_lookup()
-                    
+ 
         elif self.path=="/inprogress":
             self.wfile.write(bytes(json.dumps(outs),"utf-8"))
         elif self.path.startswith("/delete/"):
-            self.run_delete()    
+            self.run_delete() 
         elif self.path.startswith('/imggrid'):
             self.run_grid()
     def run_grid(self):
@@ -164,9 +194,9 @@ class ReqHandler(BaseHTTPRequestHandler):
                         self.wfile.write(b"TASK_IN_PROGRESS")
                     else:
                         dat=outs[uuid_in]
-                            
+ 
                         jd=bytes(json.dumps(dat),"utf-8")
-                            
+ 
                         self.wfile.write(jd)
                     break
     def do_POST(self):
@@ -187,18 +217,18 @@ class ReqHandler(BaseHTTPRequestHandler):
             self.send_header("content-type","text/plain")
         else:
             self.send_response(NOT_FOUND)
-            
+ 
         self.send_header("Access-Control-Allow-Origin","*")
         self.end_headers()
-        
+ 
         if self.path=="/new":
             self.run_new()
                 # self.wfile.write(returned_values[self.path.split("/lookup/")[1]].content)
-            
-        
-            # json.loads(self.rfile.read().decode("utf-8"))       
+ 
+ 
+            # json.loads(self.rfile.read().decode("utf-8")) 
         elif self.path.startswith("/log"):
-            self.run_log()             
+            self.run_log() 
         elif self.path=="/upload/mask":
             self.run_upload_mask()
         elif self.path=="/upload/image":
@@ -228,11 +258,43 @@ class ReqHandler(BaseHTTPRequestHandler):
                 y=bodyjson[n]["y"]
                 self.__grid_gen(width,height,x,y,imagewidth,imageheight,image.split(".")[-1],"./"+n+".png")
             ni=Image.new("RGBA",(width*3,height*3))
-            ni.paste(Image.open(names[0]+".png"),[width,0])              
-            ni.paste(Image.open(names[1]+".png"),[0,height])              
-            ni.paste(Image.open(names[2]+".png"),[2*width,height])              
-            ni.paste(Image.open(names[2]+".png"),[width,2*height])           
-            ni.save("./ni.png")   
+            ni.paste(Image.open(names[0]+".png"),[width,0])
+            ni.paste(Image.open(names[1]+".png"),[0,height]) 
+            ni.paste(Image.open(names[2]+".png"),[2*width,height]) 
+            ni.paste(Image.open(names[2]+".png"),[width,2*height])
+            ni.save("./ni.png") 
+            t=threading.Thread(target=self.do_mask,args=(bodyjson, ni)) 
+            t.start()
+    def do_mask(self, bodyjson, ni):
+        narray=np.array(ni)
+        mask=np.zeros_like(narray)
+        
+        for n in range(len(narray)):
+            for m in range(len(narray[n])):
+                if narray[n][m][3]==255:
+                    mask[n][m]=[0,0,0,255]
+                else:
+                    mask[n][m]=[255,255,255,255]
+        maskimage=Image.fromarray(mask)            
+        maskimage.save("mask_from_thing.png")
+        print("done")
+        uuid_new=uuid.uuid4().hex
+        bodyjson["uuidp"]=uuid_new
+        #todo 
+        #1. change both images to actual file paths.
+        #2. accept user input on the prompt.
+        #3. actually get the image back to the user.
+        t=threading.Thread(target=do_image,args=("./mask_from_thing.png","./ni.png","forest",uuid_new))
+        t.start()
+    
+        ts=Task(t)
+        ts.width=bodyjson["grid"]["w"]
+        ts.height=bodyjson["grid"]["h"]
+        ts.uuid=uuid_new
+        threads.append(ts)
+    
+        taskPoolIDS.append(ts.uuid)
+    
     def __grid_gen(self, w,h,x,y,imagewidth,imageheight,exten,path):
         i=Image.open("./temp2."+exten)
         cropped=i.resize([imagewidth,imageheight]).crop([x,y,x+w,y+h])
@@ -274,7 +336,7 @@ class ReqHandler(BaseHTTPRequestHandler):
             image=image.removeprefix(b"\"data:image:/png;base64,")
             image=image.removesuffix(b"'")
             imgbytes=base64.b64decode(image + b'==')
-        
+ 
             with open(fn,"wb") as f:
                 f.write(imgbytes)
             image=Image.open(fn)
@@ -283,19 +345,15 @@ class ReqHandler(BaseHTTPRequestHandler):
             temp=[]
             for y in range(endheight):
                 oldone=old[x][y]
-                # print((oldone["x"],oldone["y"],oldone["x"]+oldone["width"],oldone["y"]+oldone["height"]))
                 cropped=image.crop((oldone["x"],oldone["y"],oldone["x"]+oldone["width"],oldone["y"]+oldone["height"]))
                 im_file=BytesIO()
                 cropped.save(im_file,format="png")
                 im_bytes=im_file.getvalue()
-                # im_b64="data:image:/png;base64,"+base64.b64encode(im_bytes).decode("utf-8")
-                
+ 
                 temp.append(im_bytes)
             images.append(temp)
         myimages=images
-        # encoded=json.dumps(images).encode("utf-8")
-        # print(len(encoded))
-        # self.wfile.write(encoded)
+
         self.wfile.write(b"OK")
     def run_stats(self):
         global myimages
@@ -314,12 +372,12 @@ class ReqHandler(BaseHTTPRequestHandler):
         body=body.removeprefix(b"\"data:image/png;base64,")
         body=body.removesuffix(b'"')
         body_binary=base64.b64decode(body + b'==')
-        
+ 
         with open("./mask.png","wb") as f:
             f.write(body_binary)
         img=Image.open("./mask.png")
         img=transparency_to_white(img)
-        
+ 
         img=img.convert(mode="RGB")
         img.save("./mask.png")
         img.close()
@@ -340,11 +398,11 @@ class ReqHandler(BaseHTTPRequestHandler):
 
 
         # print(body)
-            
+ 
         bodyjson=json.loads(body)
         # print(bodyjson)
         prompt=bodyjson["prompt"]
-            
+ 
         l={"num_outputs":1,
                "guidence_scale":5,
                "prompt_strength":0.8,
@@ -369,17 +427,17 @@ class ReqHandler(BaseHTTPRequestHandler):
         bodyjson["uuidp"]=uuid_new
         t=threading.Thread(target=do_image,args=("./mask.png","./image.png",prompt,uuid_new),kwargs=l)
         t.start()
-                        
+ 
         ts=Task(t)
         ts.uuid=uuid_new
         threads.append(ts)
-            
+ 
         taskPoolIDS.append(ts.uuid)
-        
+ 
         self.wfile.write(bytes(ts.uuid,"utf-8"))
         # print(ts.uuid)
-                
-if __name__ == "__main__":        
+ 
+if __name__ == "__main__": 
     webServer = ThreadingHTTPServer((hostName, serverPort), ReqHandler)
     print("Server started http://%s:%s" % (hostName, serverPort))
     try:
