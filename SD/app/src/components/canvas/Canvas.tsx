@@ -218,7 +218,7 @@ export default class Canvas extends React.Component {
         postData(`${SERVER_URL}/crop`, jdata)
         setTimeout(()=>{
           setInterval(()=>{
-            this.setState({"image":SERVER_URL+"/image?"+Date.now().toString(10)})
+            this.setState({"image":`${SERVER_URL}/image.png?${Date.now().toString(10)}`})
           },1000)
           
         },20000)

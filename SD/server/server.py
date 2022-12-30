@@ -58,7 +58,7 @@ def checkObjects():
                     
                 i=Image.open("./outfile.png")
                 i.crop([n.width,n.height,n.width*2,n.height*2])
-    
+                i.save("./outfile2.png")
                 return_values[n.uuid]={"image":i,"task":n}
 
                 outs.pop(n.uuid)
@@ -175,16 +175,17 @@ class ReqHandler(BaseHTTPRequestHandler):
             self.run_image()
     def run_image(self):
         l=list(return_values.values())
-        i=Image.open("./current.png")
-        for n in l:
-            x=n["task"].x
-            y=n["task"].y
-            print(x,y)
-            i.paste(n["image"],(x,y))
-        i.save("./current2.png")
-        i.close()
-        i2=Image.open("./current2.png")
-        i2.save("./current.png")
+        if len(l)>0:
+            i=Image.open("./current.png")
+            for n in l:
+                x=n["task"].x
+                y=n["task"].y
+                print(x,y)
+                i.paste(n["image"],(x,y))
+            i.save("./current2.png")
+            i.close()
+            i2=Image.open("./current2.png")
+            i2.save("./current.png")
         with open("./current.png","rb") as f:
             b=f.read()
             self.wfile.write(b)
@@ -264,12 +265,12 @@ class ReqHandler(BaseHTTPRequestHandler):
     def run_crop(self):
         bodyjson=self.read_bodyjson()
         print(bodyjson)
-        image=bodyjson["image"]
-        if image.startswith("http"):
-            r=requests.get(image)
-            with open("./temp2."+image.split(".")[-1],"wb") as f:
+        imaget=bodyjson["image"]
+        if imaget.startswith("http"):
+            r=requests.get(imaget)
+            with open("./temp2."+imaget.split(".")[-1],"wb") as f:
                 f.write(r.content)
-            i=Image.open("./temp2."+image.split(".")[-1])
+            i=Image.open("./temp2."+imaget.split(".")[-1])
             i.save("./current.png")
             i.close()
             width=bodyjson["grid"]["w"]
@@ -280,7 +281,7 @@ class ReqHandler(BaseHTTPRequestHandler):
             for n in names:
                 x=bodyjson[n]["x"]
                 y=bodyjson[n]["y"]
-                self.__grid_gen(width,height,x,y,imagewidth,imageheight,image.split(".")[-1],"./"+n+".png")
+                self.__grid_gen(width,height,x,y,imagewidth,imageheight,imaget.split(".")[-1],"./"+n+".png")
             ni=Image.new("RGBA",(width*3,height*3))
             ni.paste(Image.open(names[0]+".png"),[width,0])
             ni.paste(Image.open(names[1]+".png"),[0,height]) 
