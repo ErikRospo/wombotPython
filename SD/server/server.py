@@ -21,8 +21,9 @@ if len(sys.argv)>1:
 else:
     serverPort=8080
 hostName = "localhost"
-#nessicary headers for working with the api
-headers={"x-csrftoken":"rfU9sNVa303QtGhGx9jq1AemDXfoTxpV","origin":"https://replicate.com","referer":"https://replicate.com/stability-ai/stable-diffusion-inpainting","cookie":"csrftoken=rfU9sNVa303QtGhGx9jq1AemDXfoTxpV; replicate_anonymous_id=c3ab5d5e-283f-4233-8518-0d36df9e572c"}
+this_url="http://%s:%s"%(hostName,serverPort)
+#requisite headers for working with the api
+headers={"x-csrftoken":"rfU9sNVa303QtGhGx9jq1AemDXfoTxpV","origin":"https://replicate.com","referer":"https://replicate.com/stability-ai/stable-diffusion-inpainting","cookie":"csrftoken=rfU9sNVa303QtGhGx9jq1AemDXfoTxpV; replicate_anonymous_id="+uuid.uuid4().hex}
 # output data
 outs={}
 outsLock=threading.Lock()
@@ -34,10 +35,10 @@ return_values={}
 class Task:
     uuid:str
     thread:threading.Thread
-    width:Union[int,float] 
-    height:Union[int,float] 
-    x:Union[int,float] 
-    y:Union[int,float] 
+    width:int
+    height:int
+    x:int
+    y:int
     def __init__(self,thread:threading.Thread):
         self.uuid=uuid.uuid4().hex
         self.thread=thread
@@ -57,10 +58,10 @@ def checkObjects():
                     f.write(requests.get(unpr).content)
                     
                 i=Image.open("./outfile.png")
-                i.crop([n.width,n.height,n.width*2,n.height*2])
-                i.save("./outfile2.png")
+                i.crop((n.width,n.height,n.width*2,n.height*2)).save("./outfile2.png")
+                print(n.uuid+" cropped and saved.")
                 return_values[n.uuid]={"image":i,"task":n}
-
+                
                 outs.pop(n.uuid)
             else:
                 newThreads.append(n)
@@ -68,7 +69,7 @@ def checkObjects():
     
 checkthread=threading.Thread(target=checkObjects)
 checkthread.start()
-def upload_image(path):
+def upload_file(path):
     cont=bytes()
     with open(path,"rb") as f:
         cont=f.read()
@@ -80,37 +81,38 @@ def upload_image(path):
     res=requests.post(api_url,params={"content_type":content_type},headers=headers) #post the file type
     #returns a serving url, where the content is served, and a upload url, where you upload the image.
 
-    serving_url=res.json()["serving_url"]  #get them
+    serving_url=res.json()["serving_url"]  
     upload_url=res.json()["upload_url"]
+
     #upload the image
+    #type: ignore
     requests.put(upload_url,data=cont,headers={"content-type":content_type})
- # type: ignore 
     return serving_url
 def do_image(mask_path,image_path,prompt,uuidp,num_outputs=1,guidence_scale=5,prompt_strength=0.8,num_inference_steps=50): 
     #upload both the mask and the image itself
-    mask_url=upload_image(mask_path)
-    image_url=upload_image(image_path)
+    mask_url=upload_file(mask_path)
+    image_url=upload_file(image_path)
     #set up the data 
     jsondata={"inputs":{"prompt":prompt,"num_outputs":num_outputs,"guidance_scale":guidence_scale,"prompt_strength":prompt_strength,"num_inference_steps":num_inference_steps,"image":image_url,"mask":mask_url}}
     #set up the prediction
     pred=requests.post("https://replicate.com/api/models/stability-ai/stable-diffusion-inpainting/versions/e5a34f913de0adc560d20e002c45ad43a80031b62caacc3d84010c6b6a64870c/predictions",headers=headers,json=jsondata)
     #get the task uuid
+    print(pred.status_code)
     task_uuid=pred.json()["uuid"]
  
     while True:
         #get the status
         resp=requests.get("https://replicate.com/api/models/stability-ai/stable-diffusion-inpainting/versions/e5a34f913de0adc560d20e002c45ad43a80031b62caacc3d84010c6b6a64870c/predictions/"+task_uuid,headers=headers)
-        #if the status is equal to 'succeeded',
+        #if the request succeded
         if resp.json()["prediction"]["status"]=="succeeded":
-            #acquire the lock
+            #acquire the lock (to avoid multithreading madness)
             outsLock.acquire()
             #set the output variables.
             outs[uuidp]=resp.json()["prediction"]["output"]
             #release the lock
             outsLock.release() 
-            #exit
             break
-        #otherwise, wait 2 seconds
+        #otherwise, wait 2 seconds, as to not overload the server.
         time.sleep(2)
 def transparency_to_white(img):
     #modified from
@@ -180,7 +182,6 @@ class ReqHandler(BaseHTTPRequestHandler):
             for n in l:
                 x=n["task"].x
                 y=n["task"].y
-                print(x,y)
                 i.paste(n["image"],(x,y))
             i.save("./current2.png")
             i.close()
@@ -268,9 +269,10 @@ class ReqHandler(BaseHTTPRequestHandler):
         imaget=bodyjson["image"]
         if imaget.startswith("http"):
             r=requests.get(imaget)
-            with open("./temp2."+imaget.split(".")[-1],"wb") as f:
+            exten = imaget.split(".")[-1].split("?")[0]
+            with open("./temp2."+exten,"wb") as f:
                 f.write(r.content)
-            i=Image.open("./temp2."+imaget.split(".")[-1])
+            i=Image.open("./temp2."+exten)
             i.save("./current.png")
             i.close()
             width=bodyjson["grid"]["w"]
@@ -281,12 +283,12 @@ class ReqHandler(BaseHTTPRequestHandler):
             for n in names:
                 x=bodyjson[n]["x"]
                 y=bodyjson[n]["y"]
-                self.__grid_gen(width,height,x,y,imagewidth,imageheight,imaget.split(".")[-1],"./"+n+".png")
+                self.__grid_gen(width,height,x,y,imagewidth,imageheight,exten,"./"+n+".png")
             ni=Image.new("RGBA",(width*3,height*3))
-            ni.paste(Image.open(names[0]+".png"),[width,0])
-            ni.paste(Image.open(names[1]+".png"),[0,height]) 
-            ni.paste(Image.open(names[2]+".png"),[2*width,height]) 
-            ni.paste(Image.open(names[2]+".png"),[width,2*height])
+            ni.paste(Image.open(names[0]+".png"),(width,0))
+            ni.paste(Image.open(names[1]+".png"),(0,height)) 
+            ni.paste(Image.open(names[2]+".png"),(2*width,height)) 
+            ni.paste(Image.open(names[2]+".png"),(width,2*height))
             ni.save("./ni.png") 
             t=threading.Thread(target=self.do_mask,args=(bodyjson, ni)) 
             t.start()
@@ -330,10 +332,10 @@ class ReqHandler(BaseHTTPRequestHandler):
         threads.append(ts)
     
         taskPoolIDS.append(ts.uuid)
-    
+        
     def __grid_gen(self, w,h,x,y,imagewidth,imageheight,exten,path):
         i=Image.open("./temp2."+exten)
-        cropped=i.resize([imagewidth,imageheight]).crop([x,y,x+w,y+h])
+        cropped=i.resize((imagewidth,imageheight)).crop((x,y,x+w,y+h)).resize((i.width/w*imagewidth,i.height/h*imageheight))
         cropped.save(path)
         # with open(path,"rb") as f:
             # b=f.read()
@@ -483,3 +485,4 @@ if __name__ == "__main__":
 
     webServer.server_close()
     print("Server stopped.")
+        

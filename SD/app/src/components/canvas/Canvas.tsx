@@ -56,7 +56,7 @@ export default class Canvas extends React.Component {
     //todo: when clicking, get the current image grid, and do stuff with it.
     this.state = {
       radius: 15,
-      tool: 1,
+      tool: Tools.GENERATE,
       toolboxClosed: false,
       val: "EMPTY",
       image: "https://i.imgur.com/NuUoA9Z.jpeg",
@@ -215,13 +215,16 @@ export default class Canvas extends React.Component {
             h: this.imageGridSize.height
           }
         }
-        postData(`${SERVER_URL}/crop`, jdata)
-        setTimeout(()=>{
-          setInterval(()=>{
-            this.setState({"image":`${SERVER_URL}/image.png?${Date.now().toString(10)}`})
-          },1000)
-          
-        },20000)
+        postData(`${SERVER_URL}/crop`, jdata).then(() => {
+          clearInterval(this.imageTimer)
+          setTimeout(() => {
+            this.imageTimer=setInterval(() => {
+              this.setState({ "image": `${SERVER_URL}/image.png?${Date.now().toString(10)}` })
+            }, 5000)
+
+          }, 20000)
+
+        })
 
       }
     }
