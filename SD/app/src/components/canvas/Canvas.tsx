@@ -37,6 +37,7 @@ export default class Canvas extends React.Component {
   mousedown: boolean;
   imageGridSize: { width: number, height: number }
   imageGrid: ImageRectangle[][]
+  imageTimer?: number | string | NodeJS.Timeout;
   constructor(props: any) {
     super(props);
     this.props = props;
@@ -215,8 +216,8 @@ export default class Canvas extends React.Component {
             h: this.imageGridSize.height
           }
         }
+        clearInterval(this.imageTimer)
         postData(`${SERVER_URL}/crop`, jdata).then(() => {
-          clearInterval(this.imageTimer)
           setTimeout(() => {
             this.imageTimer=setInterval(() => {
               this.setState({ "image": `${SERVER_URL}/image.png?${Date.now().toString(10)}` })

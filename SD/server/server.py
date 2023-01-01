@@ -333,9 +333,9 @@ class ReqHandler(BaseHTTPRequestHandler):
     
         taskPoolIDS.append(ts.uuid)
         
-    def __grid_gen(self, w,h,x,y,imagewidth,imageheight,exten,path):
+    def __grid_gen(self, w:int,h:int,x:int,y:int,imagewidth:int,imageheight:int,exten:str,path:str):
         i=Image.open("./temp2."+exten)
-        cropped=i.resize((imagewidth,imageheight)).crop((x,y,x+w,y+h)).resize((i.width/w*imagewidth,i.height/h*imageheight))
+        cropped=i.resize((imagewidth,imageheight)).crop((x,y,x+w,y+h)).resize((round(i.width/w*imagewidth),round(i.height/h*imageheight)))
         cropped.save(path)
         # with open(path,"rb") as f:
             # b=f.read()
