@@ -61,13 +61,15 @@ def checkObjects():
                 i.crop((n.width,n.height,n.width*2,n.height*2)).save("./outfile2.png")
                 print(n.uuid+" cropped and saved.")
                 return_values[n.uuid]={"image":i,"task":n}
+                i.close()
                 
                 outs.pop(n.uuid)
             else:
                 newThreads.append(n)
+        
         threads=newThreads
     
-checkthread=threading.Thread(target=checkObjects)
+checkthread=threading.Thread(target=checkObjects,name="CheckObjects")
 checkthread.start()
 def upload_file(path):
     cont=bytes()
@@ -280,17 +282,21 @@ class ReqHandler(BaseHTTPRequestHandler):
             imagewidth=bodyjson['current']["w"]
             imageheight=bodyjson['current']["h"]
             names = ["pos_original","pos_px","pos_py","pos_nx","pos_ny"]
+            coords=[(width,0),(0,height),(2*width,height),(width,2*height)]
+            
             for n in names:
                 x=bodyjson[n]["x"]
                 y=bodyjson[n]["y"]
                 self.__grid_gen(width,height,x,y,imagewidth,imageheight,exten,"./"+n+".png")
             ni=Image.new("RGBA",(width*3,height*3))
-            ni.paste(Image.open(names[0]+".png"),(width,0))
-            ni.paste(Image.open(names[1]+".png"),(0,height)) 
-            ni.paste(Image.open(names[2]+".png"),(2*width,height)) 
-            ni.paste(Image.open(names[2]+".png"),(width,2*height))
+            for n in range(1,5):
+                i_tmp=Image.open(names[n]+".png")
+                ni.paste(i_tmp,coords[n-1])
+                i_tmp.close()
             ni.save("./ni.png") 
-            t=threading.Thread(target=self.do_mask,args=(bodyjson, ni)) 
+            
+            t=threading.Thread(target=self.do_mask,args=(bodyjson, ni),name="DoMask") 
+            
             t.start()
     def do_mask(self, bodyjson, ni):
         narray=np.array(ni)
@@ -319,7 +325,7 @@ class ReqHandler(BaseHTTPRequestHandler):
         After we generate and crop the image, we paste it on the existing one, and then somehow tell the frontend to refresh the image. (or just have it on a timer)
         We can host the image localy on say /image
         '''
-        t=threading.Thread(target=do_image,args=("./mask_from_thing.png","./ni.png","forest",uuid_new))
+        t=threading.Thread(target=do_image,args=("./mask_from_thing.png","./ni.png","forest",uuid_new),name="do_image_mask")
         
         t.start()
     
@@ -337,6 +343,7 @@ class ReqHandler(BaseHTTPRequestHandler):
         i=Image.open("./temp2."+exten)
         cropped=i.resize((imagewidth,imageheight)).crop((x,y,x+w,y+h)).resize((round(i.width/w*imagewidth),round(i.height/h*imageheight)))
         cropped.save(path)
+        cropped.close()
         # with open(path,"rb") as f:
             # b=f.read()
             # self.wfile.write(b)
@@ -463,7 +470,7 @@ class ReqHandler(BaseHTTPRequestHandler):
             pass
         uuid_new=uuid.uuid4().hex
         bodyjson["uuidp"]=uuid_new
-        t=threading.Thread(target=do_image,args=("./mask.png","./image.png",prompt,uuid_new),kwargs=l)
+        t=threading.Thread(target=do_image,args=("./mask.png","./image.png",prompt,uuid_new),kwargs=l,name="do_image")
         t.start()
  
         ts=Task(t)
@@ -481,8 +488,10 @@ if __name__ == "__main__":
     try:
         webServer.serve_forever()
     except KeyboardInterrupt:
+        
         pass
-
+    for n in threading.enumerate():
+        print(n.native_id)
     webServer.server_close()
     print("Server stopped.")
         
