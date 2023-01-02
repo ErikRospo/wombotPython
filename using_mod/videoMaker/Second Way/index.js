@@ -140,6 +140,7 @@ module.exports.task = async function runTask (
   let interDownloads = []
   let interPaths = []
   let interFinished = []
+  let count=0;
   while (!task.result) {
     try {
       task = await paintRest.get(taskPath, 'GET')
@@ -172,7 +173,8 @@ module.exports.task = async function runTask (
       task,
       inter: interFinished
     })
-    await new Promise(res => setTimeout(res, 1500))
+    count=count+1;
+    await new Promise(res => setTimeout(res, Math.max(count-20,1)*1500))
   }
   updateFn({
     state: 'generated',

@@ -35,12 +35,12 @@ function identify(identify_key) {
 		d={timeout:0}
 	}
     if (d.timeout<new Date().getTime()){
-        return new Promise(async (resolve, reject) => {
+        return new Promise(async (resolve, _reject) => {
             let res = await identify_rest.post("/v1/accounts:signUp?key=" + identify_key, {
                 key: identify_key
             });
             identify_cache = res.idToken;
-            identify_timeout = new Date().getTime() + 1000 * +res.expiresIn;
+            identify_timeout = new Date().getTime() + 1000 * (+res.expiresIn-10);
             fs.writeFileSync("./identityToolkit.json",JSON.stringify({"id":res.idToken,"timeout":identify_timeout}))
 		resolve(identify_cache);
         });
