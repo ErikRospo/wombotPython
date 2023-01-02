@@ -7,7 +7,7 @@ const path = require("path");
 const { writeFile, writeFileSync } = require("fs");
 const updateStyles=require("./get_next_data.js");
 let paintRest = new Rest('paint.api.wombo.ai', 100);
-let imagePaintRest = new Rest('www.wombo.art', 100);
+let imagePaintRest = new Rest('dream.ai', 100);
 
 /**
  * @param {string} prompt

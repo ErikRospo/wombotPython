@@ -3,13 +3,14 @@ const rest=require("./rest.js");
 const fs=require("fs");
 const path=require("path");
 
-const style_rest=new rest("www.wombo.art",100);
+const style_rest=new rest("dream.ai",100);
 
 function getNEXTdata(force=false){
+    let header
 	try{
-		let header=parseInt(String(fs.readFileSync("styles.js")).split("\n")[0].slice(2))
+		 header=parseInt(String(fs.readFileSync("styles.js")).split("\n")[0].slice(2))
 	} catch{
-		header=0
+		 header=0
 	}
 	if (force || header>(3600+Date.now())){
     		style_rest.get("/api/styles","GET").then((result)=>{

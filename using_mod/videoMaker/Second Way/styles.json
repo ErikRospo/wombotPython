@@ -40,8 +40,8 @@
 		"name": "Mystical"
 	},
 	{
-		"id": 13,
-		"name": "Baroque"
+		"id": 12,
+		"name": "Festive"
 	},
 	{
 		"id": 14,
@@ -58,10 +58,6 @@
 	{
 		"id": 18,
 		"name": "Rose Gold"
-	},
-	{
-		"id": 20,
-		"name": "Blacklight"
 	},
 	{
 		"id": 21,
@@ -100,12 +96,20 @@
 		"name": "Daydream"
 	},
 	{
+		"id": 37,
+		"name": "Surreal"
+	},
+	{
 		"id": 39,
 		"name": "Pandora"
 	},
 	{
 		"id": 40,
 		"name": "Malevolent"
+	},
+	{
+		"id": 41,
+		"name": "Street Art"
 	},
 	{
 		"id": 44,
@@ -154,5 +158,29 @@
 	{
 		"id": 58,
 		"name": "Cartoonist"
+	},
+	{
+		"id": 63,
+		"name": "Spectral"
+	},
+	{
+		"id": 65,
+		"name": "Diorama"
+	},
+	{
+		"id": 68,
+		"name": "Flora"
+	},
+	{
+		"id": 72,
+		"name": "Winter"
+	},
+	{
+		"id": 73,
+		"name": "Festive"
+	},
+	{
+		"id": 74,
+		"name": "Splatter"
 	}
 ]
