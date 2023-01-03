@@ -14,7 +14,7 @@
             [x] erases to transparency
                 [-] a kinda bad idea would be to send the mask to the server, have the server erase it, and send it back.
         [x] clear
-[ ] send commands to backend.
+[x] send commands to backend.
 [x] allow loading images as a starting point.
 [ ] allow just generating images with the SD api, without the inpainting/outpainting.
 [ ] allow for customizing options for stable diffusion.
@@ -79,3 +79,4 @@
     [ ] if it is initialy a url, GET it, and download it to local machine,
     [ ] then, whenever we get a request to say `/getimage`, we would get the image
     [ ] however, once generated, we could replace parts of the image with a new section.
+[ ] find out why the image isn't being rendered fully.

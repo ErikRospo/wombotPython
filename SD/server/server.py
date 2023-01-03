@@ -61,7 +61,6 @@ def checkObjects():
                 i.crop((n.width,n.height,n.width*2,n.height*2)).save("./outfile2.png")
                 print(n.uuid+" cropped and saved.")
                 return_values[n.uuid]={"image":i,"task":n}
-                i.close()
                 
                 outs.pop(n.uuid)
             else:
@@ -186,7 +185,6 @@ class ReqHandler(BaseHTTPRequestHandler):
                 y=n["task"].y
                 i.paste(n["image"],(x,y))
             i.save("./current2.png")
-            i.close()
             i2=Image.open("./current2.png")
             i2.save("./current.png")
         with open("./current.png","rb") as f:
@@ -276,12 +274,11 @@ class ReqHandler(BaseHTTPRequestHandler):
                 f.write(r.content)
             i=Image.open("./temp2."+exten)
             i.save("./current.png")
-            i.close()
             width=bodyjson["grid"]["w"]
             height=bodyjson["grid"]["h"]
             imagewidth=bodyjson['current']["w"]
             imageheight=bodyjson['current']["h"]
-            names = ["pos_original","pos_px","pos_py","pos_nx","pos_ny"]
+            names = ["pos_original","pos_nx","pos_ny","pos_px","pos_py"]
             coords=[(width,0),(0,height),(2*width,height),(width,2*height)]
             
             for n in names:
@@ -292,6 +289,7 @@ class ReqHandler(BaseHTTPRequestHandler):
             for n in range(1,5):
                 i_tmp=Image.open(names[n]+".png")
                 ni.paste(i_tmp,coords[n-1])
+                print(names[n],coords[n-1])
                 i_tmp.close()
             ni.save("./ni.png") 
             
@@ -347,7 +345,6 @@ class ReqHandler(BaseHTTPRequestHandler):
         # with open(path,"rb") as f:
             # b=f.read()
             # self.wfile.write(b)
-        i.close()
     def read_bodyjson(self):
         content_length=int(self.headers["content-length"])
         body=self.rfile.read(content_length)
