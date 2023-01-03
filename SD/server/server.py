@@ -341,7 +341,7 @@ class ReqHandler(BaseHTTPRequestHandler):
         
     def __grid_gen(self, w:int,h:int,x:int,y:int,imagewidth:int,imageheight:int,exten:str,path:str):
         i=Image.open("./temp2."+exten)
-        cropped=i.resize((imagewidth,imageheight)).crop((x,y,x+w,y+h)).resize((round(i.width/w*imagewidth),round(i.height/h*imageheight)))
+        cropped=i.resize((imagewidth,imageheight)).crop((x,y,x+w,y+h))
         cropped.save(path)
         cropped.close()
         # with open(path,"rb") as f:
