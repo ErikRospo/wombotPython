@@ -80,3 +80,7 @@
     [ ] then, whenever we get a request to say `/getimage`, we would get the image
     [ ] however, once generated, we could replace parts of the image with a new section.
 [ ] find out why the image isn't being rendered fully.
+    [ ] The image is being cropped to the size of the canvas on the user's screen.
+        [ ] This wouldn't explain why the cutoff is variable.
+    [ ] this is the cause of both the generated image not being put in the proper location, and the wrong masking.
+    

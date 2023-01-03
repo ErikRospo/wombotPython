@@ -221,7 +221,7 @@ export default class Canvas extends React.Component {
           setTimeout(() => {
             this.imageTimer = setInterval(() => {
               this.setState({ "image": `${SERVER_URL}/image.png?${Date.now().toString(10)}` })
-            }, 5000)
+            }, 10000)
 
           }, 20000)
 

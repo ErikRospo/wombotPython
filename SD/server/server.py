@@ -12,10 +12,11 @@ import time # waiting a certain amount of time
 import base64 #for decoding images sent back from the Canvas.
 from io import BytesIO #for b64 encoding operations.
 import numpy as np
-from PIL import Image # for image editing
+from PIL import Image,ImageFile # for image editing
 from http.client import NOT_FOUND, OK, BAD_REQUEST
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 taskPoolIDS=[]
+ImageFile.LOAD_TRUNCATED_IMAGES = True # this is a bandaid solution, we need to know why the images are being truncated in the first place.
 if len(sys.argv)>1:
     serverPort=int(sys.argv[1])
 else:
@@ -30,7 +31,7 @@ outsLock=threading.Lock()
 imgwidth=0
 imgheight=0
 return_values={}
-# upload an image to replicate's server
+rvlock=threading.Lock()
 #utility Task class
 class Task:
     uuid:str
@@ -60,8 +61,9 @@ def checkObjects():
                 i=Image.open("./outfile.png")
                 i.crop((n.width,n.height,n.width*2,n.height*2)).save("./outfile2.png")
                 print(n.uuid+" cropped and saved.")
+                rvlock.acquire()
                 return_values[n.uuid]={"image":i,"task":n}
-                
+                rvlock.release()
                 outs.pop(n.uuid)
             else:
                 newThreads.append(n)
@@ -98,9 +100,8 @@ def do_image(mask_path,image_path,prompt,uuidp,num_outputs=1,guidence_scale=5,pr
     #set up the prediction
     pred=requests.post("https://replicate.com/api/models/stability-ai/stable-diffusion-inpainting/versions/e5a34f913de0adc560d20e002c45ad43a80031b62caacc3d84010c6b6a64870c/predictions",headers=headers,json=jsondata)
     #get the task uuid
-    print(pred.status_code)
     task_uuid=pred.json()["uuid"]
- 
+    #print(pred.json()) 
     while True:
         #get the status
         resp=requests.get("https://replicate.com/api/models/stability-ai/stable-diffusion-inpainting/versions/e5a34f913de0adc560d20e002c45ad43a80031b62caacc3d84010c6b6a64870c/predictions/"+task_uuid,headers=headers)
@@ -177,19 +178,29 @@ class ReqHandler(BaseHTTPRequestHandler):
         elif self.path.startswith("/image"):
             self.run_image()
     def run_image(self):
-        l=list(return_values.values())
-        if len(l)>0:
-            i=Image.open("./current.png")
-            for n in l:
-                x=n["task"].x
-                y=n["task"].y
-                i.paste(n["image"],(x,y))
-            i.save("./current2.png")
-            i2=Image.open("./current2.png")
-            i2.save("./current.png")
+        global rv
+        global return_values
+        print("starting modifications")
+        i=Image.open("./current.png")
+        rvlock.acquire()
+        for k,v in return_values.items():
+            print(k,v)
+            x=v["task"].x
+            y=v["task"].y
+            print(x,y)
+            i.paste(v["image"],(x,y))
+        return_values={}
+        rvlock.release()
+        i.save("./current2.png")
+        i2=Image.open("./current2.png")
+        i2.save("./current.png")
+        i.close()
+        i2.close()
+        print("modifications done")
         with open("./current.png","rb") as f:
             b=f.read()
             self.wfile.write(b)
+        print("response done")
             
     def run_grid(self):
         x=int(self.path.split("/")[2])
@@ -274,6 +285,7 @@ class ReqHandler(BaseHTTPRequestHandler):
                 f.write(r.content)
             i=Image.open("./temp2."+exten)
             i.save("./current.png")
+            #corruption happens after this.
             width=bodyjson["grid"]["w"]
             height=bodyjson["grid"]["h"]
             imagewidth=bodyjson['current']["w"]
@@ -292,7 +304,7 @@ class ReqHandler(BaseHTTPRequestHandler):
                 print(names[n],coords[n-1])
                 i_tmp.close()
             ni.save("./ni.png") 
-            
+            # the mask and image are created correctly.
             t=threading.Thread(target=self.do_mask,args=(bodyjson, ni),name="DoMask") 
             
             t.start()
@@ -326,16 +338,17 @@ class ReqHandler(BaseHTTPRequestHandler):
         t=threading.Thread(target=do_image,args=("./mask_from_thing.png","./ni.png","forest",uuid_new),name="do_image_mask")
         
         t.start()
-    
+        
         ts=Task(t)
         ts.width=bodyjson["grid"]["w"]
         ts.height=bodyjson["grid"]["h"]
         ts.x=bodyjson["pos_original"]["x"]
         ts.y=bodyjson["pos_original"]["y"]
         ts.uuid=uuid_new
+
         threads.append(ts)
     
-        taskPoolIDS.append(ts.uuid)
+        taskPoolIDS.append(uuid_new)
         
     def __grid_gen(self, w:int,h:int,x:int,y:int,imagewidth:int,imageheight:int,exten:str,path:str):
         i=Image.open("./temp2."+exten)
