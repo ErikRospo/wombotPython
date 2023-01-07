@@ -496,7 +496,7 @@ export default class Canvas extends React.Component {
               if (this.state.tool === Tools.ERASER) {
                 this.white2transparency()
 
-              } else {
+              } else if (this.state.tool === Tools.PEN) {
                 this.postMask(event);
               }
             }
