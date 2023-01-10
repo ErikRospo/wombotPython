@@ -49,27 +49,30 @@ threads:List[Task]=[]
 myimages:List[List[bytes]]=[]
 def checkObjects():
     global threads
-    while True:
-        newThreads=[]
-        for n in threads:
-            if not n.isactive():
-                with open("./outfile.png","wb") as f:
-                    unpr=outs.get(n.uuid)[0]
-                    
-                    f.write(requests.get(unpr).content)
-                    
-                i=Image.open("./outfile.png")
-                i.crop((n.width,n.height,n.width*2,n.height*2)).save("./outfile2.png")
-                print(n.uuid+" cropped and saved.")
-                rvlock.acquire()
-                return_values[n.uuid]={"image":i,"task":n}
-                rvlock.release()
-                outs.pop(n.uuid)
-            else:
-                newThreads.append(n)
-        
-        threads=newThreads
-    
+    try:
+        while True:
+            newThreads=[]
+            for n in threads:
+                if not n.isactive():
+                    with open("./outfile.png","wb") as f:
+                        unpr=outs.get(n.uuid)[0]
+                        
+                        f.write(requests.get(unpr).content)
+                        
+                    i=Image.open("./outfile.png").resize((n.width*3,n.height*3))
+                    i.crop((n.width,n.height,n.width*2,n.height*2)).save("./outfile2.png")
+                    print(n.uuid+" cropped and saved.")
+                    rvlock.acquire()
+                    return_values[n.uuid]={"image":i,"task":n}
+                    rvlock.release()
+                    outs.pop(n.uuid)
+                else:
+                    newThreads.append(n)
+            
+            
+            threads=newThreads
+    except KeyboardInterrupt:
+        pass       
 checkthread=threading.Thread(target=checkObjects,name="CheckObjects")
 checkthread.start()
 def upload_file(path):

@@ -36,7 +36,7 @@ module.exports.task = async function runTask (
   } = inputImageArg
   let id
   let prefix = _prefix;
-  if (final || inter) mkdirp(downloadDir);
+  // if (final || inter) mkdirp(downloadDir);
   try {
     id = await identify()
   } catch (err) {
@@ -174,7 +174,10 @@ module.exports.task = async function runTask (
       inter: interFinished
     })
     count=count+1;
-    await new Promise(res => setTimeout(res, Math.max(count-20,1)*1500))
+    await new Promise(res => setTimeout(res,1500))
+    if (count>25){
+      return runTask(prompt,style,updateFn,settings,inputImageArg,_prefix)
+    }
   }
   updateFn({
     state: 'generated',
