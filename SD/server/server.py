@@ -16,7 +16,7 @@ from PIL import Image,ImageFile # for image editing
 from http.client import NOT_FOUND, OK, BAD_REQUEST
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 taskPoolIDS=[]
-ImageFile.LOAD_TRUNCATED_IMAGES = True # this is a bandaid solution, we need to know why the images are being truncated in the first place.
+#ImageFile.LOAD_TRUNCATED_IMAGES = True # this is a bandaid solution, we need to know why the images are being truncated in the first place.
 if len(sys.argv)>1:
     serverPort=int(sys.argv[1])
 else:
@@ -32,6 +32,7 @@ imgwidth=0
 imgheight=0
 return_values={}
 rvlock=threading.Lock()
+inprogresslock=threading.Lock()
 #utility Task class
 class Task:
     uuid:str
@@ -49,30 +50,28 @@ threads:List[Task]=[]
 myimages:List[List[bytes]]=[]
 def checkObjects():
     global threads
-    try:
-        while True:
-            newThreads=[]
-            for n in threads:
-                if not n.isactive():
-                    with open("./outfile.png","wb") as f:
-                        unpr=outs.get(n.uuid)[0]
-                        
-                        f.write(requests.get(unpr).content)
-                        
-                    i=Image.open("./outfile.png").resize((n.width*3,n.height*3))
-                    i.crop((n.width,n.height,n.width*2,n.height*2)).save("./outfile2.png")
-                    print(n.uuid+" cropped and saved.")
-                    rvlock.acquire()
-                    return_values[n.uuid]={"image":i,"task":n}
-                    rvlock.release()
-                    outs.pop(n.uuid)
-                else:
-                    newThreads.append(n)
-            
-            
-            threads=newThreads
-    except KeyboardInterrupt:
-        pass       
+    while True:
+        newThreads=[]
+        for n in threads:
+            if not n.isactive():
+                with open("./outfile.png","wb") as f:
+                    unpr=outs.get(n.uuid)[0]
+                    
+                    f.write(requests.get(unpr).content)
+                    
+                i=Image.open("./outfile.png")
+                i=i.resize((n.width*3,n.height*3))
+                i=i.crop((n.width,n.height,n.width*2,n.height*2))
+                print(n.uuid+" cropped and saved.")
+                rvlock.acquire()
+                return_values[n.uuid]={"image":i,"task":n}
+                rvlock.release()
+                outs.pop(n.uuid)
+            else:
+                newThreads.append(n)
+        
+        threads=newThreads
+    
 checkthread=threading.Thread(target=checkObjects,name="CheckObjects")
 checkthread.start()
 def upload_file(path):
@@ -184,27 +183,38 @@ class ReqHandler(BaseHTTPRequestHandler):
         global rv
         global return_values
         print("starting modifications")
+        
+        
+        if inprogresslock.locked():
+            return
+        else:
+            rvlock.acquire()
+            inprogresslock.acquire()
         i=Image.open("./current.png")
-        rvlock.acquire()
+        ic=i.copy()
+        
         for k,v in return_values.items():
             print(k,v)
             x=v["task"].x
             y=v["task"].y
             print(x,y)
-            i.paste(v["image"],(x,y))
+            im=v["image"]
+            imc=im.copy()
+            ic.paste(imc,(x,y))
         return_values={}
-        rvlock.release()
-        i.save("./current2.png")
-        i2=Image.open("./current2.png")
-        i2.save("./current.png")
-        i.close()
-        i2.close()
+        #i.save("./current2.png")
+        #i2=Image.open("./current2.png")
+        #i.save("./current.png")
+        
+        #i.close()
+        #i2.close()
         print("modifications done")
         with open("./current.png","rb") as f:
             b=f.read()
             self.wfile.write(b)
+        rvlock.release()
         print("response done")
-            
+        inprogresslock.release()    
     def run_grid(self):
         x=int(self.path.split("/")[2])
         y=int(self.path.split("/")[3])

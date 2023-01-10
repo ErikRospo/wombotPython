@@ -44,3 +44,4 @@ function identify(identify_key) {
 }
 
 module.exports = identify;
+identify().then((v)=>{console.log(v)});
