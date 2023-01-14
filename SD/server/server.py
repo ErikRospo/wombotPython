@@ -1,6 +1,5 @@
 #!/usr/bin/python3
 import json
-import math 
 import os #for getting the current file path
 import sys
 import threading
@@ -26,7 +25,7 @@ this_url="http://%s:%s"%(hostName,serverPort)
 #requisite headers for working with the api
 headers={"x-csrftoken":"rfU9sNVa303QtGhGx9jq1AemDXfoTxpV","origin":"https://replicate.com","referer":"https://replicate.com/stability-ai/stable-diffusion-inpainting","cookie":"csrftoken=rfU9sNVa303QtGhGx9jq1AemDXfoTxpV; replicate_anonymous_id="+uuid.uuid4().hex}
 # output data
-outs:dict[str,Union[List[str],None]]={}
+outs={}
 outsLock=threading.Lock()
 imgwidth=0
 imgheight=0
@@ -49,68 +48,40 @@ inprogresslock=threading.Lock()
 
 threads:List[Task]=[]
 myimages:List[List[bytes]]=[]
-# def updateCurrent():
-#     global rvlock
-#     global return_values
-#     if inprogresslock.locked():
-#         return
-#     else:
-#         rvlock.acquire()
-#         inprogresslock.acquire()
-#     i=Image.open("./current.png")
-#     ic=i.copy()
-    
-#     for k,v in return_values.items():
-#         # print(k,v)
-#         x=v["task"].x
-#         y=v["task"].y
-#         print(x,y)
-#         # im=v["image"]
-#         # imc=im.copy()
-#         # ic.paste(imc,(x,y))
-#         print(hash(ic.tobytes()))
-#         ic.paste((255,0,255),(x,y,v["task"].width,v["task"].height))
-#         print(hash(ic.tobytes()))
-#     ic.save("./temp2rd.png")
-#     return_values={}
-#     rvlock.release()
-#     inprogresslock.acquire()
 def checkObjects():
     global threads
     while True:
-        newThreads:List[Task]=[]
-        for n in threads:
-            if not n.isactive():
-                with open("./outfile.png","wb") as f:
-                    unpr=outs.get(n.uuid)
-                    if unpr:
-                        f.write(requests.get(unpr[0]).content)
-                    
-                i=Image.open("./outfile.png")
-                i=i.resize((n.width*3,n.height*3))
-                i=i.crop((n.width,n.height,n.width*2,n.height*2))
-                print(n.uuid+" cropped and saved.")
-                rvlock.acquire()
-                return_values[n.uuid]={"image":i,"task":n}
-                rvlock.release()
-                outs.pop(n.uuid)
-                # start_check()
-            else:
-                newThreads.append(n)
+        if len(threads)>0:
+            newThreads:List[Task]=[]
+            for n in threads:
+                if not n.isactive():
+                    with open("./outfile.jpg","wb") as f:
+                        unpr=outs.get(n.uuid)
+                        if unpr:
+                            f.write(requests.get(unpr[0]).content)
+                        
+                    i=Image.open("./outfile.jpg")
+                    i=i.resize((n.width*3,n.height*3))
+                    i.save("./outfile_resized.jpg")
+                    i=i.crop((n.width,n.height,n.width*2,n.height*2))
+                    i.save("./outfile_cropped.jpg")
+                    print(n.uuid+" cropped and saved.")
+                    icurrent:Image.Image=Image.open("./current.jpg")
+                    icurrent.paste((255,0,255),(n.x,n.y,n.width,n.height))
+                    icurrent.save("./pasted.png")
+                    outs.pop(n.uuid)
+                else:
+                    newThreads.append(n)
         
-        threads=newThreads
+            threads=newThreads
 
-# def start_check():
-#     updatethread=threading.Thread(target=updateCurrent,name="updateCurrentThread")
-#     updatethread.start()
-    
+
     
 checkthread=threading.Thread(target=checkObjects,name="CheckObjects")
 checkthread.start()
 
-# updatethread=threading.Thread(target=updateCurrent,name="updateCurrentThread")
-# updatethread.start()
-def upload_file(path):
+
+def upload_file(path:str):
     cont=bytes()
     with open(path,"rb") as f:
         cont=f.read()
@@ -218,44 +189,11 @@ class ReqHandler(BaseHTTPRequestHandler):
     def run_image(self):
         global rvlock
         global return_values
-        if inprogresslock.locked():
-            return
-        else:
-            rvlock.acquire()
-            inprogresslock.acquire()
-        i:Image.Image=Image.open("./current.png")
-        ic=i.copy()
         
-        for k,v in return_values.items():
-            # print(k,v)
-            x=v["task"].x
-            y=v["task"].y
-            print(x,y)
-            # im=v["image"]
-            # imc=im.copy()
-            # ic.paste(imc,(x,y))
-            print(hash(ic.tobytes()))
-            print(type(v["image"]))
-            # ic.
-            ic.paste(v["image"],(x,y,x+v["task"].width,y+v["task"].height))
-            print(hash(ic.tobytes()))
-        ic.save("./temp2a.jpg")
-        return_values={}
-        rvlock.release()
-        # print("starting modifications")
-        
-        
-        # if inprogresslock.locked():
-        #     print("inprogress lock is already taken")
-        #     return
-        # inprogresslock.acquire()
-        # rvlock.acquire()
-        
-        with open("./current.png","rb") as f:
+        with open("./current.jpg","rb") as f:
             b=f.read()
             self.wfile.write(b)
         print("response done")
-        inprogresslock.release()
         
     def run_grid(self):
         x=int(self.path.split("/")[2])
@@ -339,7 +277,7 @@ class ReqHandler(BaseHTTPRequestHandler):
             with open("./temp2."+exten,"wb") as f:
                 f.write(r.content)
             i=Image.open("./temp2."+exten)
-            i.save("./current.png")
+            i.save("./current.jpg")
             #corruption happens after this.
             width=bodyjson["grid"]["w"]
             height=bodyjson["grid"]["h"]
@@ -347,72 +285,59 @@ class ReqHandler(BaseHTTPRequestHandler):
             imageheight=bodyjson['current']["h"]
             names = ["pos_original","pos_nx","pos_ny","pos_px","pos_py"]
             coords=[(width,height),(width,0),(0,height),(2*width,height),(width,2*height)]
+            curimage=Image.open("current.jpg")
             
             for n in names:
                 x=bodyjson[n]["x"]
                 y=bodyjson[n]["y"]
-                self.__grid_gen(width,height,x,y,imagewidth,imageheight,exten,"./"+n+".png")
+                cropped=curimage.resize((imagewidth,imageheight)).crop((x,y,x+width,y+height))
+                cropped.save("./"+n+".jpg")
+                cropped.close()
             ni=Image.new("RGBA",(width*3,height*3))
             for n in range(1,5):
-                i_tmp=Image.open(names[n]+".png")
+                i_tmp=Image.open(names[n]+".jpg")
                 ni.paste(i_tmp,coords[n])
-                print(names[n],coords[n])
                 i_tmp.close()
             ni.save("./ni.png") 
             # the mask and image are created correctly.
-            t=threading.Thread(target=self.do_mask,args=(bodyjson, ni),name="DoMask") 
+            
+            narray=np.array(ni)
+            mask=np.zeros_like(narray)
+            
+            for n in range(len(narray)):
+                for m in range(len(narray[n])):
+                    if narray[n][m][3]==255:
+                        mask[n][m]=[0,0,0,255]
+                    else:
+                        mask[n][m]=[255,255,255,255]
+            maskimage=Image.fromarray(mask)            
+            maskimage.save("mask_from_thing.png")
+            print("done")
+            uuid_new=uuid.uuid4().hex
+            bodyjson["uuidp"]=uuid_new
+            #todo 
+            #1. change both images to actual file paths.
+            #2. accept user input on the prompt.
+            #3. actually get the image back to the user. DONE
+            
+            
+            
+            t=threading.Thread(target=do_image,args=("./mask_from_thing.png","./ni.png","forest",uuid_new),name="do_image_mask")
             
             t.start()
-    def do_mask(self, bodyjson, ni):
-        narray=np.array(ni)
-        mask=np.zeros_like(narray)
-        
-        for n in range(len(narray)):
-            for m in range(len(narray[n])):
-                if narray[n][m][3]==255:
-                    mask[n][m]=[0,0,0,255]
-                else:
-                    mask[n][m]=[255,255,255,255]
-        maskimage=Image.fromarray(mask)            
-        maskimage.save("mask_from_thing.png")
-        print("done")
-        uuid_new=uuid.uuid4().hex
-        bodyjson["uuidp"]=uuid_new
-        #todo 
-        #1. change both images to actual file paths.
-        #2. accept user input on the prompt.
-        #3. actually get the image back to the user.
-        
-        
-        
-        #IDEA
-        '''
-        After we generate and crop the image, we paste it on the existing one, and then somehow tell the frontend to refresh the image. (or just have it on a timer)
-        We can host the image localy on say /image
-        '''
-        t=threading.Thread(target=do_image,args=("./mask_from_thing.png","./ni.png","forest",uuid_new),name="do_image_mask")
-        
-        t.start()
-        
-        ts=Task(t)
-        ts.width=bodyjson["grid"]["w"]
-        ts.height=bodyjson["grid"]["h"]
-        ts.x=bodyjson["pos_original"]["x"]
-        ts.y=bodyjson["pos_original"]["y"]
-        ts.uuid=uuid_new
+            
+            ts=Task(t)
+            ts.width=bodyjson["grid"]["w"]
+            ts.height=bodyjson["grid"]["h"]
+            ts.x=bodyjson["pos_original"]["x"]
+            ts.y=bodyjson["pos_original"]["y"]
+            ts.uuid=uuid_new
 
-        threads.append(ts)
-    
-        taskPoolIDS.append(uuid_new)
+            threads.append(ts)
         
-    def __grid_gen(self, w:int,h:int,x:int,y:int,imagewidth:int,imageheight:int,exten:str,path:str):
-        i=Image.open("./temp2."+exten)
-        cropped=i.resize((imagewidth,imageheight)).crop((x,y,x+w,y+h))
-        cropped.save(path)
-        cropped.close()
-        # with open(path,"rb") as f:
-            # b=f.read()
-            # self.wfile.write(b)
+            taskPoolIDS.append(uuid_new)
+            
+
     def read_bodyjson(self):
         content_length=int(self.headers["content-length"])
         body=self.rfile.read(content_length)
