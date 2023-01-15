@@ -13,8 +13,8 @@ with open("./tests/new.jpg","wb") as f:
     f.write(resp2.content)
 bf=Image.open("./tests/orig.jpg")
 af=Image.open("./tests/new.jpg")
-before_array=np.asarray(bf,dtype=np.int8)
-after_array=np.asarray(af,dtype=np.int8)
+before_array=np.asarray(bf,dtype=np.uint8)
+after_array=np.asarray(af,dtype=np.uint8)
 diff_array=abs(before_array-after_array)
 
 Image.fromarray(diff_array.astype(np.uint8),mode="RGB").save("./tests/diff.jpg")
