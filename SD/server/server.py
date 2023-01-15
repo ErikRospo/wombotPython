@@ -55,6 +55,7 @@ def checkObjects():
             newThreads:List[Task]=[]
             for n in threads:
                 if not n.isactive():
+                    inprogresslock.acquire()
                     with open("./outfile.jpg","wb") as f:
                         unpr=outs.get(n.uuid)
                         if unpr:
@@ -67,9 +68,12 @@ def checkObjects():
                     i.save("./outfile_cropped.jpg")
                     print(n.uuid+" cropped and saved.")
                     icurrent:Image.Image=Image.open("./current.jpg")
-                    icurrent.paste((255,0,255),(n.x,n.y,n.width,n.height))
-                    icurrent.save("./pasted.png")
+                    print(hash(icurrent.tobytes()))
+                    icurrent.paste(i,(n.x,n.y))
+                    print(hash(icurrent.tobytes()))
+                    icurrent.save("./current.jpg")
                     outs.pop(n.uuid)
+                    inprogresslock.release()
                 else:
                     newThreads.append(n)
         
@@ -91,9 +95,9 @@ def upload_file(path:str):
  
     api_url = "https://replicate.com/api/upload/"+name.replace(" ","_") #get the api url
     res=requests.post(api_url,params={"content_type":content_type},headers=headers) #post the file type
-    #returns a serving url, where the content is served, and a upload url, where you upload the image.
-
+    #returns a serving url, where the content is served (after being uploaded),
     serving_url=res.json()["serving_url"]  
+    #and a upload url, where you upload the image.
     upload_url=res.json()["upload_url"]
 
     #upload the image
@@ -168,7 +172,7 @@ class ReqHandler(BaseHTTPRequestHandler):
             self.send_header("cache-control","no-store")
         elif self.path.startswith("/image"):
             self.send_response(OK)
-            self.send_header("content-type","image/png")
+            self.send_header("content-type","image/jpg")
         else:
             self.send_response(NOT_FOUND)
  
@@ -189,10 +193,11 @@ class ReqHandler(BaseHTTPRequestHandler):
     def run_image(self):
         global rvlock
         global return_values
-        
+        inprogresslock.acquire()
         with open("./current.jpg","rb") as f:
             b=f.read()
             self.wfile.write(b)
+        inprogresslock.release()
         print("response done")
         
     def run_grid(self):
