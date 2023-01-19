@@ -44,42 +44,52 @@ class Task:
 return_values={}
 rvlock=threading.Lock()
 inprogresslock=threading.Lock()
+
 #utility Task class
 
 threads:List[Task]=[]
+threadslock=threading.Lock()
+
 myimages:List[List[bytes]]=[]
+def updateImage():
+    newThreads:List[Task]=[]
+    threadslock.acquire()
+    global threads
+
+    for n in threads:
+        if not n.isactive():
+            inprogresslock.acquire()
+            with open("./outfile.jpg","wb") as f:
+                unpr=outs.get(n.uuid)
+                if unpr:
+                    f.write(requests.get(unpr[0]).content)
+                
+            i=Image.open("./outfile.jpg")
+            i=i.resize((n.width*3,n.height*3))
+            i.save("./outfile_resized.jpg")
+            i=i.crop((n.width,n.height,n.width*2,n.height*2))
+            i.save("./outfile_cropped.jpg")
+            print(n.uuid+" cropped and saved.")
+            icurrent:Image.Image=Image.open("./current.jpg")
+            print(hash(icurrent.tobytes()))
+            icurrent.paste(i,(n.x,n.y))
+            print(hash(icurrent.tobytes()))
+            icurrent.save("./current.jpg")
+            outs.pop(n.uuid)
+            print(n.uuid+" done")
+            inprogresslock.release()
+        else:
+            newThreads.append(n)
+
+    threads=newThreads
+    threadslock.release()
+    
 def checkObjects():
     global threads
     while True:
         if len(threads)>0:
-            newThreads:List[Task]=[]
-            for n in threads:
-                if not n.isactive():
-                    inprogresslock.acquire()
-                    with open("./outfile.jpg","wb") as f:
-                        unpr=outs.get(n.uuid)
-                        if unpr:
-                            f.write(requests.get(unpr[0]).content)
-                        
-                    i=Image.open("./outfile.jpg")
-                    i=i.resize((n.width*3,n.height*3))
-                    i.save("./outfile_resized.jpg")
-                    i=i.crop((n.width,n.height,n.width*2,n.height*2))
-                    i.save("./outfile_cropped.jpg")
-                    print(n.uuid+" cropped and saved.")
-                    icurrent:Image.Image=Image.open("./current.jpg")
-                    print(hash(icurrent.tobytes()))
-                    icurrent.paste(i,(n.x,n.y))
-                    print(hash(icurrent.tobytes()))
-                    icurrent.save("./current.jpg")
-                    outs.pop(n.uuid)
-                    inprogresslock.release()
-                else:
-                    newThreads.append(n)
-        
-            threads=newThreads
-
-
+            updateImage()        
+        time.sleep(4)
     
 checkthread=threading.Thread(target=checkObjects,name="CheckObjects")
 checkthread.start()
@@ -193,13 +203,15 @@ class ReqHandler(BaseHTTPRequestHandler):
     def run_image(self):
         global rvlock
         global return_values
+        updateImage()
         inprogresslock.acquire()
         with open("./current.jpg","rb") as f:
             b=f.read()
             self.wfile.write(b)
         inprogresslock.release()
         print("response done")
-        
+       
+
     def run_grid(self):
         x=int(self.path.split("/")[2])
         y=int(self.path.split("/")[3])
@@ -327,7 +339,7 @@ class ReqHandler(BaseHTTPRequestHandler):
             
             
             
-            t=threading.Thread(target=do_image,args=("./mask_from_thing.png","./ni.png","forest",uuid_new),name="do_image_mask")
+            t=threading.Thread(target=do_image,args=("./mask_from_thing.png","./ni.png","Bright pink and green checkerboard pattern",uuid_new),name="do_image_mask")
             
             t.start()
             
