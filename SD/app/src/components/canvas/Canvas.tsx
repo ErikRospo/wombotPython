@@ -216,12 +216,12 @@ export default class Canvas extends React.Component {
             h: this.imageGridSize.height
           }
         }
-	this.imageTimer=false;
+        this.imageTimer = false;
         postData(`${SERVER_URL}/crop`, jdata).then(() => {
           setTimeout(() => {
-		this.imageTimer=true; 
-		  
-		this.setState({ "image": `${SERVER_URL}/image.png?${Date.now().toString(10)}` })
+            this.imageTimer = true;
+
+            this.setState({ "image": `${SERVER_URL}/image.png?${Date.now().toString(10)}` })
 
           }, 20000)
 
@@ -244,14 +244,15 @@ export default class Canvas extends React.Component {
     let y = roundto(gridy, this.imageGridSize.height);
     return { x, y };
   }
-	reloadImage():void{
-		if (this.imageTimer){
-			this.imageTimer=false
-			setTimeout(()=>{
-				this.imageTimer=true
-			this.setState({"image":`${SERVER_URL}/image.png?${Date.now().toString(10)}`})
-		},10000)}
-	}
+  reloadImage(): void {
+    if (this.imageTimer) {
+      this.imageTimer = false
+      setTimeout(() => {
+        this.imageTimer = true
+        this.setState({ "image": `${SERVER_URL}/image.png?${Date.now().toString(10)}` })
+      }, 10000)
+    }
+  }
   white2transparency(): void {
     if (this.ctx) {
       let index = 0
@@ -479,9 +480,10 @@ export default class Canvas extends React.Component {
           width={this.width}
           height={this.height}
           id="clickable-image"
-  	onLoad={()=>{
-	this.reloadImage()}}
-  />
+          onLoad={() => {
+            this.reloadImage()
+          }}
+        />
 
         <canvas
 
