@@ -1,6 +1,5 @@
 import React, { KeyboardEvent, MouseEvent } from "react";
 import "./canvas.css";
-import { postData } from "../../utils";
 import { getDataUrlFromArr } from "../../utilities/array-to-image";
 import { SERVER_URL, Tools } from "../../constants";
 import { BsEraserFill, BsPenFill } from 'react-icons/bs'
@@ -8,7 +7,7 @@ import { TfiClose, TfiMenu } from 'react-icons/tfi'
 import { GrClearOption } from 'react-icons/gr'
 import { FaMagic } from 'react-icons/fa'
 import { Rectangle, ImageRectangle, createImageTile } from '../../utilities/imagetile'
-import { grid, roundto } from "../../utilities/general";
+import { grid, roundto, sleep, postData } from "../../utilities/general";
 const floor = Math.floor
 export default class Canvas extends React.Component {
   maskstate: Uint8ClampedArray;
@@ -217,13 +216,26 @@ export default class Canvas extends React.Component {
           }
         }
         this.imageTimer = false;
-        postData(`${SERVER_URL}/crop`, jdata).then(() => {
-          setTimeout(() => {
-            this.imageTimer = true;
 
+        postData(`${SERVER_URL}/crop`, jdata).then((response) => {
+          response.text().then(async (uu): Promise<void> => {
+            console.log(uu);
+            if (uu.length===0){
+              throw Error("uuid length must be greater than zero.")
+            }
+            let responseString = "T"
+            while (responseString !== "F") {
+              
+              await sleep(4000)
+              let pr = await fetch(`${SERVER_URL}/isactive?uuid=${uu}`)
+              responseString = await pr.text()
+            }
+            this.imageTimer = true;
             this.setState({ "image": `${SERVER_URL}/image.png?${Date.now().toString(10)}` })
 
-          }, 20000)
+          }).catch((e) => {
+            console.log("ERROR: " + e)
+          })
 
         })
 

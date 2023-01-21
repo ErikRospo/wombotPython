@@ -69,14 +69,14 @@ def updateImage():
             i.save("./outfile_resized.jpg")
             i=i.crop((n.width,n.height,n.width*2,n.height*2))
             i.save("./outfile_cropped.jpg")
-            # print(n.uuid+" cropped and saved.")
+            print(n.uuid+" cropped and saved.")
             icurrent:Image.Image=Image.open("./current.jpg")
             # print(hash(icurrent.tobytes()))
             icurrent.paste(i,(n.x,n.y))
             # print(hash(icurrent.tobytes()))
             icurrent.save("./current.jpg")
             outs.pop(n.uuid)
-            # print(n.uuid+" done")
+            print(n.uuid+" done")
             inprogresslock.release()
         else:
             newThreads.append(n)
@@ -102,7 +102,8 @@ def upload_file(path:str):
  
     name=os.path.split(path)[1] #what the name of the file is
     content_type=mimetypes.guess_type(name)[0] #mime type
- 
+    if type(content_type)==type(None):
+        content_type="image/png"
     api_url = "https://replicate.com/api/upload/"+name.replace(" ","_") #get the api url
     res=requests.post(api_url,params={"content_type":content_type},headers=headers) #post the file type
     #returns a serving url, where the content is served (after being uploaded),
@@ -112,7 +113,6 @@ def upload_file(path:str):
 
     #upload the image
     requests.put(upload_url,data=cont,headers={"content-type":content_type})
-    
     return serving_url
 def do_image(mask_path,image_path,prompt,uuidp,num_outputs=1,guidence_scale=5,prompt_strength=0.8,num_inference_steps=50): 
     #upload both the mask and the image itself
@@ -192,7 +192,6 @@ class ReqHandler(BaseHTTPRequestHandler):
     
             self.send_response(NOT_FOUND)
  
-        self.send_header("Access-Control-Allow-Origin","*")
         self.end_headers()
  
         if self.path.startswith("/lookup"):
@@ -285,10 +284,10 @@ class ReqHandler(BaseHTTPRequestHandler):
         elif self.path.startswith("/crop"):
             self.send_response(OK)
             self.send_header("content-type","text/plain")
+            self.send_header("content-length","32")
         else:
             self.send_response(NOT_FOUND)
  
-        self.send_header("Access-Control-Allow-Origin","*")
         self.end_headers()
  
         if self.path=="/new":
@@ -357,16 +356,14 @@ class ReqHandler(BaseHTTPRequestHandler):
             maskimage.save("mask_from_thing.png")
             print("done")
             uuid_new=uuid.uuid4().hex
+            
             bodyjson["uuidp"]=uuid_new
             #todo 
             #1. change both images to actual file paths.
             #2. accept user input on the prompt.
             #3. actually get the image back to the user. DONE
             
-            
-            #the thread resolves *after* the `/image` GET. 
-            # This means that the server only updates the image *after* the user has already gotten it, and so never recives the image.
-            # we could do this on the main thread, but the `/crop` POST already takes long enough.
+
             t=threading.Thread(target=do_image,args=("./mask_from_thing.png","./ni.png","Bright pink and green checkerboard pattern",uuid_new),name="do_image_mask")
             
             t.start()
@@ -515,7 +512,15 @@ class ReqHandler(BaseHTTPRequestHandler):
  
         self.wfile.write(bytes(ts.uuid,"utf-8"))
         # print(ts.uuid)
- 
+    def do_OPTIONS(self):
+        self.send_response(OK)
+        self.end_headers()
+
+    def end_headers(self) -> None:
+        self.send_header("Access-Control-Allow-Origin","*")
+        self.send_header("Access-Control-Allow-Methods","POST")
+        self.send_header("Access-Control-Allow-Methods","GET")
+        return super().end_headers()        
 if __name__ == "__main__": 
     webServer = ThreadingHTTPServer((hostName, serverPort), ReqHandler)
     print("Server started http://%s:%s" % (hostName, serverPort))
