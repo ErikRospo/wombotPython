@@ -69,14 +69,14 @@ def updateImage():
             i.save("./outfile_resized.jpg")
             i=i.crop((n.width,n.height,n.width*2,n.height*2))
             i.save("./outfile_cropped.jpg")
-            print(n.uuid+" cropped and saved.")
+            # print(n.uuid+" cropped and saved.")
             icurrent:Image.Image=Image.open("./current.jpg")
-            print(hash(icurrent.tobytes()))
+            # print(hash(icurrent.tobytes()))
             icurrent.paste(i,(n.x,n.y))
-            print(hash(icurrent.tobytes()))
+            # print(hash(icurrent.tobytes()))
             icurrent.save("./current.jpg")
             outs.pop(n.uuid)
-            print(n.uuid+" done")
+            # print(n.uuid+" done")
             inprogresslock.release()
         else:
             newThreads.append(n)
@@ -220,18 +220,14 @@ class ReqHandler(BaseHTTPRequestHandler):
         print("response done")
        
     def run_isactive(self):
-        url,qs=self.path.split("?")
-        qsn,qsb=qs.split("=")
-        print(qsn)
-        print(qsb)
+        _,qs=self.path.split("?")
+        _,qsb=qs.split("=")
         image_uuid=qsb            
         threadslock.acquire()
         found_flag=False
         for n in threads:
             if n.uuid==image_uuid:
                 isactive = n.isactive()
-                # print(isactive)
-                # self.wfile.write(isactive)    
                 if isactive:
                     self.wfile.write(b"T")
                 else:
