@@ -13,6 +13,9 @@ export default class Canvas extends React.Component {
   maskstate: Uint8ClampedArray;
   props: { width: number; height: number };
   state: {
+    scale: number;
+    strength: number;
+    steps: number;
     val: string;
     image: string;
     tool: number;
@@ -62,7 +65,10 @@ export default class Canvas extends React.Component {
       image: "https://i.imgur.com/NuUoA9Z.jpeg",
       imageGenRect: { x: 0, y: 0, width: this.imageGridSize.width, height: this.imageGridSize.height },
 
-      gridOffset: { x: 0, y: 0 }
+      gridOffset: { x: 0, y: 0 },
+      steps: 50,
+      strength: 0.8,
+      scale: 5,
 
 
       // grey and white 2x2 checkerboard image.
@@ -72,6 +78,9 @@ export default class Canvas extends React.Component {
     this.maskstate = new Uint8ClampedArray(props.width * props.height * 4);
   }
 
+  public get shouldShowRadius(): boolean {
+    return !(this.state.tool === Tools.ERASER || this.state.tool === Tools.PEN);
+  }
   public get width(): number {
     return this.props.width;
   }
@@ -220,12 +229,12 @@ export default class Canvas extends React.Component {
         postData(`${SERVER_URL}/crop`, jdata).then((response) => {
           response.text().then(async (uu): Promise<void> => {
             console.log(uu);
-            if (uu.length===0){
+            if (uu.length === 0) {
               throw Error("uuid length must be greater than zero.")
             }
             let responseString = "T"
             while (responseString !== "F") {
-              
+
               await sleep(4000)
               let pr = await fetch(`${SERVER_URL}/isactive?uuid=${uu}`)
               responseString = await pr.text()
@@ -582,13 +591,13 @@ export default class Canvas extends React.Component {
                 </div>
                 <hr />
                 <section>
-                  <div id="Radius" hidden={!(this.state.tool === Tools.ERASER || this.state.tool === Tools.PEN)} >
+                  <div id="Radius" hidden={this.shouldShowRadius} >
                     <label htmlFor="RadiusInput">Radius: </label>
                     <input type="number" name="Radius" id="RadiusInput" onChange={(ev) => { this.setRadius(ev); }} defaultValue={this.state.radius} />
                   </div>
                   <br />
                 </section>
-                <hr />
+                <hr hidden={this.shouldShowRadius} />
                 <section>
                   <div id="clear">
                     <button id="clearButton" onClick={() => { this.clearCanvas(); this.postMask() }}> Clear <GrClearOption></GrClearOption></button>
@@ -600,6 +609,34 @@ export default class Canvas extends React.Component {
                 <section>
                   <button onClick={() => { this.postStats() }}>this.postStats()</button>
                 </section>
+              </div>
+              <hr style={{ "opacity": (this.state.toolboxClosed ? "0%" : "100%") }} />
+              <div id="OptionsMenu" style={{ "opacity": (this.state.toolboxClosed ? "0%" : "100%") }}>
+                <div className="slidecontainer">
+                  <label htmlFor="ScaleInput">
+                    Guidence Scale: {this.state.scale}
+                  </label>
+                  <input type="range" name="Scale" id="ScaleInput" className="slider" min={0} max={10} step={0.1} defaultValue={this.state.scale} onChange={(ev) => {
+                    this.setState({ scale: ev.target.valueAsNumber })
+                  }} />
+                </div>
+                <div className="slidecontainer">
+                  <label htmlFor="StrengthInput">
+                    Prompt Strength: {this.state.strength}
+                  </label>
+                  <input type="range" name="Strength" id="StrengthInput" className="slider" max={1} min={0} step={0.05} defaultValue={this.state.strength} onChange={(ev) => {
+                    this.setState({ strength: ev.target.valueAsNumber })
+
+                  }} />
+                </div>
+                <div className="slidecontainer">
+                  <label htmlFor="StepsInput">
+                    Steps: {this.state.steps}
+                  </label>
+                  <input type="range" name="Steps" id="StepsInput" className="slider" min={0} max={500} step={10} defaultValue={this.state.steps} onChange={(ev) => {
+                    this.setState({ steps: ev.target.valueAsNumber })
+                  }} />
+                </div>
               </div>
             </div>
           </div>
@@ -643,6 +680,9 @@ export default class Canvas extends React.Component {
           >
             Generate
           </button>
+
+
+
         </div>
 
       </div>

@@ -4,6 +4,7 @@
     left: 0;
     z-index: -1;
 }
+
 #mask-canvas {
     position: absolute;
     top: 0;
@@ -18,11 +19,13 @@
     left: 0;
 
 }
-.image-grid-element{
+
+.image-grid-element {
     z-index: -2;
     position: absolute;
     overflow: hidden;
 }
+
 #canvas-container {
     background-color: grey;
     z-index: 2;
@@ -47,6 +50,7 @@
     z-index: 1000;
 
 }
+
 #toolbar-base {
     position: absolute;
     left: 0;
@@ -81,6 +85,78 @@
 .toolSelectorButton {
     user-select: none;
 }
-#RadiusInput{
-    width:5em;
+
+#RadiusInput {
+    width: 5em;
+}
+
+#OptionsMenu {
+    transition: ease-out 500ms 0ms opacity;
+
+}
+
+#OptionsMenu {
+    transition: ease-out 500ms 0ms opacity;
+
+}
+
+.slidecontainer {
+    width: 90%;
+    /* Width of the outside container */
+}
+
+/* The slider itself */
+.slider {
+    -webkit-appearance: none;
+    /* Override default CSS styles */
+    appearance: none;
+    width: 100%;
+    height: 15px;
+    border-radius: 5px; 
+    /* Full-width */
+    height: 25px;
+    /* Specified height */
+    background: #d3d3d3;
+    /* Grey background */
+    outline: none;
+    /* Remove outline */
+    opacity: 0.7;
+    /* Set transparency (for mouse-over effects on hover) */
+    -webkit-transition: .2s;
+    /* 0.2 seconds transition on hover */
+    transition: opacity .2s;
+}
+
+/* Mouse-over effects */
+.slider:hover {
+    opacity: 1;
+    /* Fully shown on mouse-over */
+}
+
+/* The slider handle (use -webkit- (Chrome, Opera, Safari, Edge) and -moz- (Firefox) to override default look) */
+.slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    /* Override default look */
+    appearance: none;
+    width: 25px;
+    height: 25px;
+    border-radius: 50%; 
+    /* Set a specific slider handle width */
+    /* Slider handle height */
+    background: #222222;
+    /* Green background */
+    cursor: pointer;
+    /* Cursor on hover */
+}
+
+.slider::-moz-range-thumb {
+    width: 25px;
+    /* Set a specific slider handle width */
+    height: 25px;
+    border-radius: 50%;
+    /* Slider handle height */
+    background: #222222;
+    /* Green background */
+    cursor: pointer;
+    /* Cursor on hover */
 }

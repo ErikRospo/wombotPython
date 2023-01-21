@@ -473,12 +473,12 @@ class ReqHandler(BaseHTTPRequestHandler):
         body=self.rfile.read(content_length).decode("utf-8")
 
 
-        # print(body)
- 
+            # print(body)
+        #this is most of the code I'd need to get the options able to be customized.
         bodyjson=json.loads(body)
         # print(bodyjson)
         prompt=bodyjson["prompt"]
- 
+    
         l={"num_outputs":1,
                "guidence_scale":5,
                "prompt_strength":0.8,
