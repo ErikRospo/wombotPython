@@ -6,8 +6,21 @@ print("posting to "+url+"/crop")
 o="https://i.imgur.com/NuUoA9Z.jpeg"
 resp=requests.post(url+"/crop",json={'image': o, 'pos_original': {'x': 400, 'y': 250}, 'pos_px': {'x': 450, 'y': 250}, 'pos_nx': {'x': 350, 'y': 250}, 'pos_py': {'x': 400, 'y': 300}, 'pos_ny': {'x': 400, 'y': 200}, 'current': {'w': 1536, 'h': 763}, 'grid': {'w': 50, 'h': 50}})
 print("posted to "+url+"/crop")
-print("waiting a bit")
-time.sleep(0.5)
+print("waiting until image is done")
+uuid=resp.text
+restext="T"
+while restext=="T":
+    time.sleep(2)
+    r=requests.get(url+"/isactive",params={"uuid":uuid})
+    restext=r.text
+    if (restext=="T"):
+        print("Not done yet, waiting 2 seconds")
+    elif (restext=="F"):
+        print("Done")
+    elif (restext=="N"):
+        print("Image task is somehow not found")
+    else:
+        print("This shouldn't happen")
 print("done")
 print("getting "+url+"/image")
 resp2=requests.get(url+"/image")

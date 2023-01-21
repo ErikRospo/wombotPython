@@ -2,8 +2,8 @@
 import json
 import os #for getting the current file path
 import sys
-import threading
-from typing import List, Union #multithreading and locking
+import threading #multithreading and locking
+from typing import List, Union
 import uuid #identifying the tasks
 import requests # interacting with replicate servers
 import mimetypes # identifying files
@@ -12,6 +12,7 @@ import base64 #for decoding images sent back from the Canvas.
 from io import BytesIO #for b64 encoding operations.
 import numpy as np
 from PIL import Image # for image editing
+from urllib import parse
 from http.client import NOT_FOUND, OK, BAD_REQUEST
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 taskPoolIDS=[]
@@ -45,7 +46,6 @@ return_values={}
 rvlock=threading.Lock()
 inprogresslock=threading.Lock()
 
-#utility Task class
 
 threads:List[Task]=[]
 threadslock=threading.Lock()
@@ -133,6 +133,7 @@ def do_image(mask_path,image_path,prompt,uuidp,num_outputs=1,guidence_scale=5,pr
             #acquire the lock (to avoid multithreading madness)
             outsLock.acquire()
             #set the output variables.
+            
             outs[uuidp]=resp.json()["prediction"]["output"]
             #release the lock
             outsLock.release() 
@@ -183,7 +184,12 @@ class ReqHandler(BaseHTTPRequestHandler):
         elif self.path.startswith("/image"):
             self.send_response(OK)
             self.send_header("content-type","image/jpg")
+        elif self.path.startswith("/isactive"):
+            self.send_response(OK)
+            
+            
         else:
+    
             self.send_response(NOT_FOUND)
  
         self.send_header("Access-Control-Allow-Origin","*")
@@ -200,6 +206,8 @@ class ReqHandler(BaseHTTPRequestHandler):
             self.run_grid()
         elif self.path.startswith("/image"):
             self.run_image()
+        elif self.path.startswith("/isactive"):
+            self.run_isactive()
     def run_image(self):
         global rvlock
         global return_values
@@ -211,7 +219,29 @@ class ReqHandler(BaseHTTPRequestHandler):
         inprogresslock.release()
         print("response done")
        
-
+    def run_isactive(self):
+        url,qs=self.path.split("?")
+        qsn,qsb=qs.split("=")
+        print(qsn)
+        print(qsb)
+        image_uuid=qsb            
+        threadslock.acquire()
+        found_flag=False
+        for n in threads:
+            if n.uuid==image_uuid:
+                isactive = n.isactive()
+                # print(isactive)
+                # self.wfile.write(isactive)    
+                if isactive:
+                    self.wfile.write(b"T")
+                else:
+                    self.wfile.write(b"F")
+                found_flag=True
+                break
+            
+        threadslock.release()
+        if (not found_flag):
+            self.wfile.write(b"N")
     def run_grid(self):
         x=int(self.path.split("/")[2])
         y=int(self.path.split("/")[3])
@@ -338,7 +368,9 @@ class ReqHandler(BaseHTTPRequestHandler):
             #3. actually get the image back to the user. DONE
             
             
-            
+            #the thread resolves *after* the `/image` GET. 
+            # This means that the server only updates the image *after* the user has already gotten it, and so never recives the image.
+            # we could do this on the main thread, but the `/crop` POST already takes long enough.
             t=threading.Thread(target=do_image,args=("./mask_from_thing.png","./ni.png","Bright pink and green checkerboard pattern",uuid_new),name="do_image_mask")
             
             t.start()
@@ -353,8 +385,7 @@ class ReqHandler(BaseHTTPRequestHandler):
             threads.append(ts)
         
             taskPoolIDS.append(uuid_new)
-            
-
+            self.wfile.write(ts.uuid.encode("utf-8"))
     def read_bodyjson(self):
         content_length=int(self.headers["content-length"])
         body=self.rfile.read(content_length)
