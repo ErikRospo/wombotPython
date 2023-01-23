@@ -7,7 +7,7 @@ import { TfiClose, TfiMenu } from 'react-icons/tfi'
 import { GrClearOption } from 'react-icons/gr'
 import { FaMagic } from 'react-icons/fa'
 import { Rectangle, ImageRectangle, createImageTile } from '../../utilities/imagetile'
-import { grid, roundto, sleep, postData } from "../../utilities/general";
+import { grid, floorto, sleep, postData } from "../../utilities/general";
 const floor = Math.floor
 export default class Canvas extends React.Component {
   maskstate: Uint8ClampedArray;
@@ -40,6 +40,8 @@ export default class Canvas extends React.Component {
   imageGridSize: { width: number, height: number }
   imageGrid: ImageRectangle[][]
   imageTimer?: boolean;
+  active: number;
+  maxActive: number;
   constructor(props: any) {
     super(props);
     this.props = props;
@@ -55,8 +57,8 @@ export default class Canvas extends React.Component {
     };
     let tempgrid: string[][] = grid(this.width / this.imageGridSize.width, this.height / this.imageGridSize.height, "https://i.imgur.com/NuUoA9Z.jpeg");
     this.imageGrid = createImageTile(this.imageGridSize.width, this.imageGridSize.height, tempgrid)
-    //todo: actually display the image grid.
-    //todo: when clicking, get the current image grid, and do stuff with it.
+    this.active=0;
+    this.maxActive=4;
     this.state = {
       radius: 15,
       tool: Tools.GENERATE,
@@ -200,54 +202,64 @@ export default class Canvas extends React.Component {
     }
   }
   generate(x: number, y: number) {
-
     if (this.ctx2) {
-      this.ctx2.strokeStyle = "black"
-      this.ctx2.lineWidth = 2
-      this.ctx2.clearRect(0, 0, this.w, this.h)
-      let { x: aagridx, y: aagridy } = this.toLocalCoordinates(x, y)
-      this.ctx2.strokeRect(aagridx, aagridy, this.imageGridSize.width, this.imageGridSize.height)
-      if (this.ctx) {
-        let jdata = {
-          image: this.state.image,
-          pos_original: this.toLocalCoordinates(x, y),
-          pos_px: this.toLocalCoordinates(x, y, { "x": 1 }),
-          pos_nx: this.toLocalCoordinates(x, y, { "x": -1 }),
-          pos_py: this.toLocalCoordinates(x, y, { "y": 1 }),
-          pos_ny: this.toLocalCoordinates(x, y, { "y": -1 }),
-          current: {
-            w: this.width,
-            h: this.height
-          },
-          grid: {
-            w: this.imageGridSize.width,
-            h: this.imageGridSize.height
+      if (this.active<this.maxActive) {
+        
+        this.active+=1
+        
+        this.ctx2.strokeStyle = "black"
+        this.ctx2.lineWidth = 2
+        this.ctx2.clearRect(0, 0, this.w, this.h)
+        let { x: aagridx, y: aagridy } = this.toLocalCoordinates(x, y)
+        this.ctx2.strokeRect(aagridx, aagridy, this.imageGridSize.width, this.imageGridSize.height)
+        if (this.ctx) {
+          let jdata = {
+            image: this.state.image,
+            pos_original: this.toLocalCoordinates(x, y),
+            pos_px: this.toLocalCoordinates(x, y, { "x": 1 }),
+            pos_nx: this.toLocalCoordinates(x, y, { "x": -1 }),
+            pos_py: this.toLocalCoordinates(x, y, { "y": 1 }),
+            pos_ny: this.toLocalCoordinates(x, y, { "y": -1 }),
+            current: {
+              w: this.width,
+              h: this.height
+            },
+            grid: {
+              w: this.imageGridSize.width,
+              h: this.imageGridSize.height
+            }
           }
-        }
-        this.imageTimer = false;
-
-        postData(`${SERVER_URL}/crop`, jdata).then((response) => {
-          response.text().then(async (uu): Promise<void> => {
-            console.log(uu);
-            if (uu.length === 0) {
-              throw Error("uuid length must be greater than zero.")
-            }
-            let responseString = "T"
-            while (responseString === "T") {
-
-              await sleep(4000)
-              let pr = await fetch(`${SERVER_URL}/isactive?uuid=${uu}`)
-              responseString = await pr.text()
-            }
-            this.imageTimer = true;
-            this.reloadImage();            
-            
-          }).catch((e) => {
-            console.log("ERROR: " + e)
+          this.imageTimer = false;
+  
+          postData(`${SERVER_URL}/crop`, jdata).then((response) => {
+            response.text().then(async (uu): Promise<void> => {
+              console.log(uu);
+              if (uu.length === 0) {
+                throw Error("uuid length must be greater than zero.")
+              }
+              let responseString = "T"
+              while (responseString === "T") {
+  
+                await sleep(4000)
+                let pr = await fetch(`${SERVER_URL}/isactive?uuid=${uu}`)
+                responseString = await pr.text()
+              }
+              this.imageTimer = true;
+              this.reloadImage();            
+              this.active-=1;
+            }).catch((e) => {
+              console.log("ERROR: " + e)
+            })
+  
           })
-
-        })
-
+  
+        }
+      }else{
+        this.ctx2.strokeStyle = "red"
+        this.ctx2.lineWidth = 3
+        this.ctx2.clearRect(0, 0, this.w, this.h)
+        let { x: aagridx, y: aagridy } = this.toLocalCoordinates(x, y)
+        this.ctx2.strokeRect(aagridx, aagridy, this.imageGridSize.width, this.imageGridSize.height)
       }
     }
 
@@ -261,8 +273,9 @@ export default class Canvas extends React.Component {
 
     let gridx = endwidth * x_prop * this.imageGridSize.width;
     let gridy = endheight * y_prop * this.imageGridSize.height;
-    let x = roundto(gridx, this.imageGridSize.width);
-    let y = roundto(gridy, this.imageGridSize.height);
+    let x = floorto(gridx, this.imageGridSize.width);
+    let y = floorto(gridy, this.imageGridSize.height);
+    
     return { x, y };
   }
   reloadImage(): void {
@@ -608,7 +621,7 @@ export default class Canvas extends React.Component {
                 </section>
               </div>
               <hr style={{ "opacity": (this.state.toolboxClosed ? "0%" : "100%") }} />
-              <div id="OptionsMenu" style={{ "opacity": (this.state.toolboxClosed ? "0%" : "100%") }}>
+              <div id="OptionsMenu" style={{ "opacity": (this.state.toolboxClosed ? "0%" : "100%") }} hidden={this.state.tool!==Tools.GENERATE}>
                 <div className="slidecontainer">
                   <label htmlFor="ScaleInput">
                     Guidence Scale: {this.state.scale}

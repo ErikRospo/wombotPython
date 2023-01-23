@@ -25,6 +25,17 @@ export function nullGrid(width: number, height: number): null[][] {
 export function roundto(value: number, base: number): number {
     return Math.round(value / base) * base
 }
+
+export function floorto(value:number,base:number):number{
+	return Math.floor(value/base)*base;
+}
+export function ceilto(value:number,base:number):number{
+	return Math.ceil(value/base)*base;
+}
+
+
+
+
 export function round(value: number, places: number): number {
     return roundto(value, 10 ** places)
 }
