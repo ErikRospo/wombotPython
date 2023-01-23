@@ -233,15 +233,15 @@ export default class Canvas extends React.Component {
               throw Error("uuid length must be greater than zero.")
             }
             let responseString = "T"
-            while (responseString !== "F") {
+            while (responseString === "T") {
 
               await sleep(4000)
               let pr = await fetch(`${SERVER_URL}/isactive?uuid=${uu}`)
               responseString = await pr.text()
             }
             this.imageTimer = true;
-            this.setState({ "image": `${SERVER_URL}/image.png?${Date.now().toString(10)}` })
-
+            this.reloadImage();            
+            
           }).catch((e) => {
             console.log("ERROR: " + e)
           })
@@ -268,10 +268,7 @@ export default class Canvas extends React.Component {
   reloadImage(): void {
     if (this.imageTimer) {
       this.imageTimer = false
-      setTimeout(() => {
-        this.imageTimer = true
         this.setState({ "image": `${SERVER_URL}/image.png?${Date.now().toString(10)}` })
-      }, 10000)
     }
   }
   white2transparency(): void {

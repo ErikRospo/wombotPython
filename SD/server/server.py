@@ -44,6 +44,7 @@ class Task:
         self.thread=thread
     def isactive(self):
         return self.thread.is_alive()
+croplock=threading.Lock()
 return_values={}
 rvlock=threading.Lock()
 inprogresslock=threading.Lock()
@@ -320,6 +321,8 @@ class ReqHandler(BaseHTTPRequestHandler):
         if imaget.startswith("http"):
             r=requests.get(imaget)
             exten = imaget.split(".")[-1].split("?")[0]
+            croplock.acquire()
+
             with open("./temp2."+exten,"wb") as f:
                 f.write(r.content)
             i=Image.open("./temp2."+exten)
@@ -358,6 +361,7 @@ class ReqHandler(BaseHTTPRequestHandler):
                         mask[n][m]=[255,255,255,255]
             maskimage=Image.fromarray(mask)            
             maskimage.save("mask_from_thing.png")
+            croplock.release()
             print("done")
             uuid_new=uuid.uuid4().hex
             
@@ -368,7 +372,7 @@ class ReqHandler(BaseHTTPRequestHandler):
             #3. actually get the image back to the user. DONE
             
 
-            t=threading.Thread(target=do_image,args=("./mask_from_thing.png","./ni.png","Bright pink and green checkerboard pattern",uuid_new),name="do_image_mask")
+            t=threading.Thread(target=do_image,args=("./mask_from_thing.png","./ni.png","Forest",uuid_new),name="do_image_mask")
             
             t.start()
             
