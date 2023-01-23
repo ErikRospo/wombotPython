@@ -35,6 +35,8 @@ class Task:
     thread:threading.Thread
     width:int
     height:int
+    iwidth:int
+    iheight:int
     x:int
     y:int
     def __init__(self,thread:threading.Thread):
@@ -65,6 +67,7 @@ def updateImage():
                     f.write(requests.get(unpr[0]).content)
                 
             i=Image.open("./outfile.jpg")
+            
             i=i.resize((n.width*3,n.height*3))
             i.save("./outfile_resized.jpg")
             i=i.crop((n.width,n.height,n.width*2,n.height*2))
@@ -72,10 +75,11 @@ def updateImage():
             print(n.uuid+" cropped and saved.")
             icurrent:Image.Image=Image.open("./current.jpg")
             # print(hash(icurrent.tobytes()))
+            icurrent=icurrent.resize((n.iwidth,n.iheight))
             icurrent.paste(i,(n.x,n.y))
             # print(hash(icurrent.tobytes()))
             icurrent.save("./current.jpg")
-            outs.pop(n.uuid)
+            # outs.pop(n.uuid)
             print(n.uuid+" done")
             inprogresslock.release()
         else:
@@ -225,7 +229,7 @@ class ReqHandler(BaseHTTPRequestHandler):
         threadslock.acquire()
         found_flag=False
         for n in threads:
-            if n.uuid==image_uuid:
+            if n.uuid ==image_uuid:
                 isactive = n.isactive()
                 if isactive:
                     self.wfile.write(b"T")
@@ -369,10 +373,12 @@ class ReqHandler(BaseHTTPRequestHandler):
             t.start()
             
             ts=Task(t)
-            ts.width=bodyjson["grid"]["w"]
-            ts.height=bodyjson["grid"]["h"]
+            ts.width=width
+            ts.height=height
             ts.x=bodyjson["pos_original"]["x"]
             ts.y=bodyjson["pos_original"]["y"]
+            ts.iwidth=imagewidth
+            ts.iheight=imageheight
             ts.uuid=uuid_new
 
             threads.append(ts)
