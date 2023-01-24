@@ -66,13 +66,13 @@ def updateImage():
                 unpr=outs.get(n.uuid)
                 if unpr:
                     f.write(requests.get(unpr[0]).content)
-                
+            
             i=Image.open("./outfile.jpg")
             
             i=i.resize((n.width*3,n.height*3))
-            i.save("./outfile_resized.jpg")
+            # i.save("./outfile_resized.jpg")
             i=i.crop((n.width,n.height,n.width*2,n.height*2))
-            i.save("./outfile_cropped.jpg")
+            # i.save("./outfile_cropped.jpg")
             print(n.uuid+" cropped and saved.")
             icurrent:Image.Image=Image.open("./current.jpg")
             # print(hash(icurrent.tobytes()))
@@ -128,8 +128,8 @@ def do_image(mask_path,image_path,prompt,uuidp,num_outputs=1,guidence_scale=5,pr
     #set up the prediction
     pred=requests.post("https://replicate.com/api/models/stability-ai/stable-diffusion-inpainting/versions/e5a34f913de0adc560d20e002c45ad43a80031b62caacc3d84010c6b6a64870c/predictions",headers=headers,json=jsondata)
     #get the task uuid
+    print(pred.json()) 
     task_uuid=pred.json()["uuid"]
-    #print(pred.json()) 
     while True:
         #get the status
         resp=requests.get("https://replicate.com/api/models/stability-ai/stable-diffusion-inpainting/versions/e5a34f913de0adc560d20e002c45ad43a80031b62caacc3d84010c6b6a64870c/predictions/"+task_uuid,headers=headers)

@@ -46,7 +46,7 @@ export default class Canvas extends React.Component {
     super(props);
     this.props = props;
     this.ids = [];
-    this.imageGridSize = { width: 50, height: 50 }
+    this.imageGridSize = { width: 100, height: 100 }
     this.canvasState = {
       mouseDown: 0,
       hasGenerated: false,
@@ -58,7 +58,7 @@ export default class Canvas extends React.Component {
     let tempgrid: string[][] = grid(this.width / this.imageGridSize.width, this.height / this.imageGridSize.height, "https://i.imgur.com/NuUoA9Z.jpeg");
     this.imageGrid = createImageTile(this.imageGridSize.width, this.imageGridSize.height, tempgrid)
     this.active=0;
-    this.maxActive=4;
+    this.maxActive=1;
     this.state = {
       radius: 15,
       tool: Tools.GENERATE,
@@ -232,6 +232,8 @@ export default class Canvas extends React.Component {
           this.imageTimer = false;
   
           postData(`${SERVER_URL}/crop`, jdata).then((response) => {
+            this.active-=1;
+            
             response.text().then(async (uu): Promise<void> => {
               console.log(uu);
               if (uu.length === 0) {
@@ -246,7 +248,6 @@ export default class Canvas extends React.Component {
               }
               this.imageTimer = true;
               this.reloadImage();            
-              this.active-=1;
             }).catch((e) => {
               console.log("ERROR: " + e)
             })
