@@ -27,7 +27,7 @@
     "videoshow": "^0.1.12"
   },
   "devDependencies": {
-    "yargs": "^17.6.2"
+    "yargs": "^17.7.0"
   },
   "readme": "./README.md"
 }
