@@ -24,6 +24,6 @@
   },
   "devDependencies": {
     "eris": "^0.17.1",
-    "yargs": "^17.6.2"
+    "yargs": "^17.7.0"
   }
 }
