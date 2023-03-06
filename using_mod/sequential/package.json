@@ -20,7 +20,7 @@
   },
   "homepage": "https://github.com/adri326/wombot#readme",
   "dependencies": {
-    "mkdirp": "^2.1.3",
+    "mkdirp": "^2.1.5",
     "node-fetch": "^3.3.0"
   },
   "devDependencies": {
