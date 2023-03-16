@@ -128,7 +128,6 @@ def do_image(mask_path,image_path,prompt,uuidp,num_outputs=1,guidence_scale=5,pr
     #set up the prediction
     pred=requests.post("https://replicate.com/api/models/stability-ai/stable-diffusion-inpainting/versions/e5a34f913de0adc560d20e002c45ad43a80031b62caacc3d84010c6b6a64870c/predictions",headers=headers,json=jsondata)
     #get the task uuid
-    print(pred.json()) 
     task_uuid=pred.json()["uuid"]
     while True:
         #get the status
@@ -539,28 +538,35 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         
         pass
-    for n in threading.enumerate():
-        print(n.native_id)
+    print("closing server")
     webServer.server_close()
+    print("server closed")
     try:
         croplock.release()
-    except:
-        pass
-    try:
+        print("croplock released")
+    except Exception as e:
+        print("releasing croplock resulted in error: "+str(e))
+    try:    
         outsLock.release()
-    except:
-        pass
+        print("outsLock released")
+    except Exception as e:
+        print("releasing outsLock resulted in error: "+str(e))
+        
     try:
         rvlock.release()
-    except:
-        pass
+        print("rvlock released")
+    except Exception as e:
+        print("releasing rvlock resulted in error: "+str(e))
     try:
         inprogresslock.release()
-    except:
-        pass
+        print("inprogresslock released")
+    except Exception as e:
+        print("releasing inprogresslock resulted in error: "+str(e))
     try:
         threadslock.release()
-    except:
-        pass
+        print("threadslock released")
+    except Exception as e:
+        print("releasing threadslock resulted in error: "+str(e))
+
     print("Server stopped.")
-        
+    exit(0)
