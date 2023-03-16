@@ -542,5 +542,25 @@ if __name__ == "__main__":
     for n in threading.enumerate():
         print(n.native_id)
     webServer.server_close()
+    try:
+        croplock.release()
+    except:
+        pass
+    try:
+        outsLock.release()
+    except:
+        pass
+    try:
+        rvlock.release()
+    except:
+        pass
+    try:
+        inprogresslock.release()
+    except:
+        pass
+    try:
+        threadslock.release()
+    except:
+        pass
     print("Server stopped.")
         
