@@ -331,8 +331,8 @@ class ReqHandler(BaseHTTPRequestHandler):
             height=bodyjson["grid"]["h"]
             imagewidth=bodyjson['current']["w"]
             imageheight=bodyjson['current']["h"]
-            names = ["pos_original","pos_nx","pos_ny","pos_px","pos_py"]
-            coords=[(width,height),(width,0),(0,height),(2*width,height),(width,2*height)]
+            names = ["pos_original","pos_nx","pos_ny","pos_px","pos_py","pos_pxpy","pos_pxny","pos_nxpy","pos_nxny"]
+            coords=[(width,height),(0,height),(width,0),(2*width,height),(width,2*height),(width*2,height*2),(width*2,0),(0,height*2),(0,0)]
             curimage=Image.open("current.jpg")
             
             for n in names:
@@ -342,9 +342,13 @@ class ReqHandler(BaseHTTPRequestHandler):
                 cropped.save("./"+n+".jpg")
                 cropped.close()
             ni=Image.new("RGBA",(width*3,height*3))
-            for n in range(1,5):
+            
+            #from PIL import ImageDraw
+            #I1=ImageDraw.Draw(ni)
+            for n in range(1,len(names)):
                 i_tmp=Image.open(names[n]+".jpg")
                 ni.paste(i_tmp,coords[n])
+                #I1.text(coords[n],names[n],fill=(255,0,255))
                 i_tmp.close()
             ni.save("./ni.png") 
             # the mask and image are created correctly.

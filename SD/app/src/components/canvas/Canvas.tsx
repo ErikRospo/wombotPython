@@ -220,6 +220,10 @@ export default class Canvas extends React.Component {
             pos_nx: this.toLocalCoordinates(x, y, { "x": -1 }),
             pos_py: this.toLocalCoordinates(x, y, { "y": 1 }),
             pos_ny: this.toLocalCoordinates(x, y, { "y": -1 }),
+            pos_pxpy: this.toLocalCoordinates(x, y, { "x": 1, "y":  1 }),
+            pos_pxny: this.toLocalCoordinates(x, y, { "x": 1, "y": -1 }),
+            pos_nxpy: this.toLocalCoordinates(x, y, { "x":-1, "y":  1 }),
+            pos_nxny: this.toLocalCoordinates(x, y, { "x":-1, "y": -1 }),
             current: {
               w: this.width,
               h: this.height

@@ -1,7 +1,7 @@
 # todo
 
 ## frontend
-[ ] display current image.
+[x] display current image.
 
 [ ] have a working masking tool
     [ ] Implement basic image editing tools.
@@ -28,6 +28,7 @@
 [x] When we click the image with the `generate` tool, send something to the server to tell it to calculate the position, and generate the new one.
 [ ] Be able to drag the toolbox around.
     [ ] onclick of the header, we set a transformation property on it, and update it based on the mouse position.
+
 ## backend
 [x] recive commands.
 [x] interact with filesystem
@@ -75,12 +76,12 @@
     [-] multipart form
         [-] prevent redirect/refresh, but continue request.
     [x] json object in request
-[ ] replace image on frontend with new one after generating
-    [ ] if it is initialy a url, GET it, and download it to local machine,
-    [ ] then, whenever we get a request to say `/getimage`, we would get the image
-    [ ] however, once generated, we could replace parts of the image with a new section.
-[ ] find out why the image isn't being rendered fully.
-    [ ] The image is being cropped to the size of the canvas on the user's screen.
-        [ ] This wouldn't explain why the cutoff is variable.
-    [ ] this is the cause of both the generated image not being put in the proper location, and the wrong masking.
-    
+[x] replace image on frontend with new one after generating
+    [x] if it is initialy a url, GET it, and download it to local machine,
+    [x] then, whenever we get a request to say `/getimage`, we would get the image
+    [x] however, once generated, we could replace parts of the image with a new section.
+[x] find out why the image isn't being rendered fully.
+    [x] The image is being cropped to the size of the canvas on the user's screen.
+        [x] This wouldn't explain why the cutoff is variable.
+    [x] this is the cause of both the generated image not being put in the proper location, and the wrong masking.
+[ ] when queing multiple images, if they are next to each other, prevent race conditions.
