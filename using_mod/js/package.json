@@ -24,6 +24,6 @@
     "mkdirp": "^2.1.5"
   },
   "devDependencies": {
-    "yargs": "^17.7.0"
+    "yargs": "^17.7.1"
   }
 }
