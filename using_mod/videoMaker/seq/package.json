@@ -23,7 +23,7 @@
     "image-output": "^2.4.2",
     "image-pixels": "^2.2.2",
     "node-fetch": "^3.3.1",
-    "mkdirp": "^2.1.5",
+    "mkdirp": "^2.1.6",
     "videoshow": "^0.1.12"
   },
   "devDependencies": {
