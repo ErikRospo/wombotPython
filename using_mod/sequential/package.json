@@ -21,7 +21,7 @@
   "homepage": "https://github.com/adri326/wombot#readme",
   "dependencies": {
     "node-fetch": "^3.3.1",
-    "mkdirp": "^2.1.5"
+    "mkdirp": "^2.1.6"
   },
   "devDependencies": {
     "yargs": "^17.7.1"
