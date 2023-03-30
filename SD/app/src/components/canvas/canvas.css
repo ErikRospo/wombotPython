@@ -9,7 +9,7 @@
     position: absolute;
     top: 0;
     left: 0;
-    z-index: 2;
+    z-index: 1;
 }
 
 #clickable-image {
@@ -39,16 +39,18 @@
 
 #genmore {
     z-index: 1000;
-
+    cursor:pointer;
+    position:relative;
 }
 
 #Prompt {
     z-index: 1000;
+    cursor:pointer;
+    position:relative;
 }
 
 #ImageFile {
     z-index: 1000;
-
 }
 
 #toolbar-base {
@@ -61,6 +63,7 @@
     border: 2px grey groove;
     z-index: 15;
     transition: ease-out 500ms 0ms height;
+    cursor:pointer;
 
 }
 

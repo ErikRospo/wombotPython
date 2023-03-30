@@ -1,4 +1,4 @@
-import React, { KeyboardEvent, MouseEvent } from "react";
+import React, { ChangeEvent, KeyboardEvent, MouseEvent } from "react";
 import "./canvas.css";
 import { getDataUrlFromArr } from "../../utilities/array-to-image";
 import { SERVER_URL, Tools } from "../../constants";
@@ -25,6 +25,7 @@ export default class Canvas extends React.Component {
     gridOffset: { x: number, y: number }
   };
   canvasState: {
+    prompt: string;
     hasGenerated: boolean;
     toclear: boolean;
     ids_in_progress: Array<string>;
@@ -53,12 +54,13 @@ export default class Canvas extends React.Component {
       keysdown: new Map<string, boolean>(),
       ids_in_progress: new Array<string>(),
       preventEvents: false,
-      toclear: true
+      toclear: true,
+      prompt: ""
     };
     let tempgrid: string[][] = grid(this.width / this.imageGridSize.width, this.height / this.imageGridSize.height, "https://i.imgur.com/NuUoA9Z.jpeg");
     this.imageGrid = createImageTile(this.imageGridSize.width, this.imageGridSize.height, tempgrid)
-    this.active=0;
-    this.maxActive=1;
+    this.active = 0;
+    this.maxActive = 1;
     this.state = {
       radius: 15,
       tool: Tools.GENERATE,
@@ -203,10 +205,10 @@ export default class Canvas extends React.Component {
   }
   generate(x: number, y: number) {
     if (this.ctx2) {
-      if (this.active<this.maxActive) {
-        
-        this.active+=1
-        
+      if (this.active < this.maxActive) {
+
+        this.active += 1
+
         this.ctx2.strokeStyle = "black"
         this.ctx2.lineWidth = 2
         this.ctx2.clearRect(0, 0, this.w, this.h)
@@ -220,10 +222,10 @@ export default class Canvas extends React.Component {
             pos_nx: this.toLocalCoordinates(x, y, { "x": -1 }),
             pos_py: this.toLocalCoordinates(x, y, { "y": 1 }),
             pos_ny: this.toLocalCoordinates(x, y, { "y": -1 }),
-            pos_pxpy: this.toLocalCoordinates(x, y, { "x": 1, "y":  1 }),
+            pos_pxpy: this.toLocalCoordinates(x, y, { "x": 1, "y": 1 }),
             pos_pxny: this.toLocalCoordinates(x, y, { "x": 1, "y": -1 }),
-            pos_nxpy: this.toLocalCoordinates(x, y, { "x":-1, "y":  1 }),
-            pos_nxny: this.toLocalCoordinates(x, y, { "x":-1, "y": -1 }),
+            pos_nxpy: this.toLocalCoordinates(x, y, { "x": -1, "y": 1 }),
+            pos_nxny: this.toLocalCoordinates(x, y, { "x": -1, "y": -1 }),
             current: {
               w: this.width,
               h: this.height
@@ -231,13 +233,14 @@ export default class Canvas extends React.Component {
             grid: {
               w: this.imageGridSize.width,
               h: this.imageGridSize.height
-            }
+            },
+            prompt: this.canvasState.prompt
           }
           this.imageTimer = false;
-  
+
           postData(`${SERVER_URL}/crop`, jdata).then((response) => {
-            this.active-=1;
-            
+            this.active -= 1;
+
             response.text().then(async (uu): Promise<void> => {
               console.log(uu);
               if (uu.length === 0) {
@@ -245,21 +248,21 @@ export default class Canvas extends React.Component {
               }
               let responseString = "T"
               while (responseString === "T") {
-  
+
                 await sleep(4000)
                 let pr = await fetch(`${SERVER_URL}/isactive?uuid=${uu}`)
                 responseString = await pr.text()
               }
               this.imageTimer = true;
-              this.reloadImage();            
+              this.reloadImage();
             }).catch((e) => {
               console.log("ERROR: " + e)
             })
-  
+
           })
-  
+
         }
-      }else{
+      } else {
         this.ctx2.strokeStyle = "red"
         this.ctx2.lineWidth = 3
         this.ctx2.clearRect(0, 0, this.w, this.h)
@@ -280,13 +283,13 @@ export default class Canvas extends React.Component {
     let gridy = endheight * y_prop * this.imageGridSize.height;
     let x = floorto(gridx, this.imageGridSize.width);
     let y = floorto(gridy, this.imageGridSize.height);
-    
+
     return { x, y };
   }
   reloadImage(): void {
     if (this.imageTimer) {
       this.imageTimer = false
-        this.setState({ "image": `${SERVER_URL}/image.png?${Date.now().toString(10)}` })
+      this.setState({ "image": `${SERVER_URL}/image.png?${Date.now().toString(10)}` })
     }
   }
   white2transparency(): void {
@@ -307,7 +310,7 @@ export default class Canvas extends React.Component {
           }
         }
       }
-      this.ctx.putImageData(imgd, 0, 0);//put image data back
+      this.ctx.putImageData(imgd, 0, 0); //put image data back
       console.log("done modifying canvas, " + n.toString() + " Modifications")
     }
   }
@@ -316,6 +319,7 @@ export default class Canvas extends React.Component {
     console.log(event.key);
     switch (event.key) {
       case "q":
+      
         this.setState({ tool: Math.max(this.state.tool - 1, 0) })
         break;
       case "e":
@@ -571,94 +575,100 @@ export default class Canvas extends React.Component {
           height={this.height}
           id="grid-canvas"
         ></canvas>
-        <p id="inprogress">In progress: {this.state.val}</p>
-        <div >
-          <div id="toolbar-base" style={{ "height": (this.state.toolboxClosed ? "3em" : "400px") }}>
-            <div >
-              <div className="toggleButton" hidden={!this.state.toolboxClosed} onClick={(_ev) => this.toggleClose()}>
-                <TfiClose></TfiClose>
+        <div id="toolbar-base" style={{ "height": (this.state.toolboxClosed ? "3em" : "400px") }}>
+          <div >
+            <div className="toggleButton" hidden={!this.state.toolboxClosed} onClick={(_ev) => this.toggleClose()}>
+              <TfiClose></TfiClose>
+            </div>
+            <div className="toggleButton" hidden={this.state.toolboxClosed} onClick={(_ev) => this.toggleClose()}>
+              <TfiMenu></TfiMenu>
+            </div>
+            <br />
+            <div id="selector" style={{ "opacity": (this.state.toolboxClosed ? "0%" : "100%") }}>
+
+              <div >
+                <label>
+                  <input type="radio" name="Tool" className="toolSelectorButton" onChange={() => this.setTool(Tools.ERASER)} onClick={() => this.setTool(Tools.ERASER)} checked={this.state.tool === Tools.ERASER} />
+                  Eraser <BsEraserFill></BsEraserFill>
+                </label>
+                <br />
+                <label>
+                  <input type="radio" name="Tool" className="toolSelectorButton" onChange={() => this.setTool(Tools.PEN)} onClick={() => this.setTool(Tools.PEN)} checked={this.state.tool === Tools.PEN} />
+
+                  Pen <BsPenFill></BsPenFill>
+                </label>
+                <br />
+                <label>
+                  <input type="radio" name="Tool" className="toolSelectorButton" onChange={() => this.setTool(Tools.GENERATE)} onClick={() => this.setTool(Tools.GENERATE)} checked={this.state.tool === Tools.GENERATE} />
+
+                  Generate <FaMagic></FaMagic>
+                </label>
+                <br />
+
               </div>
-              <div className="toggleButton" hidden={this.state.toolboxClosed} onClick={(_ev) => this.toggleClose()}>
-                <TfiMenu></TfiMenu>
+              <hr />
+              <section>
+                <div id="Radius" hidden={this.shouldShowRadius} >
+                  <label htmlFor="RadiusInput">Radius: </label>
+                  <input type="number" name="Radius" id="RadiusInput" onChange={(ev) => { this.setRadius(ev); }} defaultValue={this.state.radius} />
+                </div>
+                <br />
+              </section>
+              <hr hidden={this.shouldShowRadius} />
+              <section>
+                <div id="clear">
+                  <button id="clearButton" onClick={() => { this.clearCanvas(); this.postMask() }}> Clear <GrClearOption></GrClearOption></button>
+                </div>
+              </section>
+              <section>
+                <button onClick={() => { this.getNewImage() }}>this.getNewImage()</button>
+              </section>
+              <section>
+                <button onClick={() => { this.postStats() }}>this.postStats()</button>
+              </section>
+            </div>
+            <hr style={{ "opacity": (this.state.toolboxClosed ? "0%" : "100%") }} />
+            <div id="OptionsMenu" style={{ "opacity": (this.state.toolboxClosed ? "0%" : "100%") }} hidden={this.state.tool !== Tools.GENERATE}>
+              <div className="slidecontainer">
+                <label htmlFor="ScaleInput">
+                  Guidence Scale: {this.state.scale}
+                </label>
+                <input type="range" name="Scale" id="ScaleInput" className="slider" min={0} max={10} step={0.1} defaultValue={this.state.scale} onChange={(ev) => {
+                  this.setState({ scale: ev.target.valueAsNumber })
+                }} />
               </div>
-              <br />
-              <div id="selector" style={{ "opacity": (this.state.toolboxClosed ? "0%" : "100%") }}>
+              <div className="slidecontainer">
+                <label htmlFor="StrengthInput">
+                  Prompt Strength: {this.state.strength}
+                </label>
+                <input type="range" name="Strength" id="StrengthInput" className="slider" max={1} min={0} step={0.05} defaultValue={this.state.strength} onChange={(ev) => {
+                  this.setState({ strength: ev.target.valueAsNumber })
 
-                <div >
-                  <label>
-                    <input type="radio" name="Tool" className="toolSelectorButton" onChange={() => this.setTool(Tools.ERASER)} onClick={() => this.setTool(Tools.ERASER)} checked={this.state.tool === Tools.ERASER} />
-                    Eraser <BsEraserFill></BsEraserFill>
-                  </label>
-                  <br />
-                  <label>
-                    <input type="radio" name="Tool" className="toolSelectorButton" onChange={() => this.setTool(Tools.PEN)} onClick={() => this.setTool(Tools.PEN)} checked={this.state.tool === Tools.PEN} />
-
-                    Pen <BsPenFill></BsPenFill>
-                  </label>
-                  <br />
-                  <label>
-                    <input type="radio" name="Tool" className="toolSelectorButton" onChange={() => this.setTool(Tools.GENERATE)} onClick={() => this.setTool(Tools.GENERATE)} checked={this.state.tool === Tools.GENERATE} />
-
-                    Generate <FaMagic></FaMagic>
-                  </label>
-                  <br />
-
-                </div>
-                <hr />
-                <section>
-                  <div id="Radius" hidden={this.shouldShowRadius} >
-                    <label htmlFor="RadiusInput">Radius: </label>
-                    <input type="number" name="Radius" id="RadiusInput" onChange={(ev) => { this.setRadius(ev); }} defaultValue={this.state.radius} />
-                  </div>
-                  <br />
-                </section>
-                <hr hidden={this.shouldShowRadius} />
-                <section>
-                  <div id="clear">
-                    <button id="clearButton" onClick={() => { this.clearCanvas(); this.postMask() }}> Clear <GrClearOption></GrClearOption></button>
-                  </div>
-                </section>
-                <section>
-                  <button onClick={() => { this.getNewImage() }}>this.getNewImage()</button>
-                </section>
-                <section>
-                  <button onClick={() => { this.postStats() }}>this.postStats()</button>
-                </section>
+                }} />
               </div>
-              <hr style={{ "opacity": (this.state.toolboxClosed ? "0%" : "100%") }} />
-              <div id="OptionsMenu" style={{ "opacity": (this.state.toolboxClosed ? "0%" : "100%") }} hidden={this.state.tool!==Tools.GENERATE}>
-                <div className="slidecontainer">
-                  <label htmlFor="ScaleInput">
-                    Guidence Scale: {this.state.scale}
-                  </label>
-                  <input type="range" name="Scale" id="ScaleInput" className="slider" min={0} max={10} step={0.1} defaultValue={this.state.scale} onChange={(ev) => {
-                    this.setState({ scale: ev.target.valueAsNumber })
-                  }} />
-                </div>
-                <div className="slidecontainer">
-                  <label htmlFor="StrengthInput">
-                    Prompt Strength: {this.state.strength}
-                  </label>
-                  <input type="range" name="Strength" id="StrengthInput" className="slider" max={1} min={0} step={0.05} defaultValue={this.state.strength} onChange={(ev) => {
-                    this.setState({ strength: ev.target.valueAsNumber })
-
-                  }} />
-                </div>
-                <div className="slidecontainer">
-                  <label htmlFor="StepsInput">
-                    Steps: {this.state.steps}
-                  </label>
-                  <input type="range" name="Steps" id="StepsInput" className="slider" min={0} max={500} step={10} defaultValue={this.state.steps} onChange={(ev) => {
-                    this.setState({ steps: ev.target.valueAsNumber })
-                  }} />
-                </div>
+              <div className="slidecontainer">
+                <label htmlFor="StepsInput">
+                  Steps: {this.state.steps}
+                </label>
+                <input type="range" name="Steps" id="StepsInput" className="slider" min={0} max={500} step={10} defaultValue={this.state.steps} onChange={(ev) => {
+                  this.setState({ steps: ev.target.valueAsNumber })
+                }} />
               </div>
             </div>
           </div>
+        </div>
+        <div >
+          <p id="inprogress">In progress: {this.state.val}</p>
+
+
           <label htmlFor="Prompt">Prompt: </label>
           <input type="text" name="Prompt" id="Prompt"
-            onMouseOver={() => { this.canvasState.preventEvents = true }}
-            onMouseOut={() => { this.canvasState.preventEvents = false }} />
+            onInput={() => { this.canvasState.preventEvents = true }}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => {
+              this.canvasState.preventEvents = false;
+              this.canvasState.prompt = e.target.value;
+
+            }} />
           <br />
           <input type="file" name="ImageFile" accept="image/png" id="ImageFile"
             onDragEnter={(e) => { this.onDragEnter(e) }}

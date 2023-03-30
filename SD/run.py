@@ -56,7 +56,7 @@ try:
             t1.kill()
             t2.kill()
             break
-except KeyboardInterupt:
+except Exception:
     t1.kill()
     t2.kill()
 sys.exit()

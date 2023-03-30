@@ -371,11 +371,11 @@ class ReqHandler(BaseHTTPRequestHandler):
             bodyjson["uuidp"]=uuid_new
             #todo 
             #1. change both images to actual file paths.
-            #2. accept user input on the prompt.
+            #2. accept user input on the prompt. DONE
             #3. actually get the image back to the user. DONE
             
-
-            t=threading.Thread(target=do_image,args=("./mask_from_thing.png","./ni.png","Forest",uuid_new),name="do_image_mask")
+            prompt=bodyjson["prompt"]
+            t=threading.Thread(target=do_image,args=("./mask_from_thing.png","./ni.png",prompt,uuid_new),name="do_image_mask")
             
             t.start()
             
