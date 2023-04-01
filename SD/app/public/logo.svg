@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <circle cx="128" cy="128" r="108" fill="#61dafb" />
+  <circle cx="128" cy="128" r="72" fill="#3E4451" />
+  
+  <path d="M128 96v64M128 160h64M128 160h-64M48.5 128h64M48.5 128h-.5M108.3 75.7l45.3 45.3M108.3 180.3l45.3-45.3M99.4 99.4l45.3 45.3M99.4 156.6l45.3-45.3" stroke="#3E4451" stroke-width="16" stroke-linecap="round" />
+  <path stroke-width="3" stroke="#61dafb" fill="transparent" d="M35 35m64.512 78.336c-46.08-23.04-46.08 50.688 0 27.648m55.296-27.648c46.08-23.04 46.08 50.688 0 27.648m-55.296-27.648 55.296 27.648m-55.296 0 55.296-27.648"></path>
+</svg>

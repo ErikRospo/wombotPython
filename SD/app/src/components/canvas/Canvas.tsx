@@ -335,6 +335,7 @@ export default class Canvas extends React.Component {
         this.clearCanvas();
         break
       default:
+      
         break;
 
     }

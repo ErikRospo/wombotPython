@@ -1,8 +1,7 @@
-# Getting Started with Create React App
+# Stable diffusion UI
+![./public/logo.svg](./public/logo.svg)
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
-
-### notes
+### Notes
 Existing UI: [Replicate](https://replicate.com/stability-ai/stable-diffusion-inpainting)
 
 ## idea
