@@ -1,20 +1,26 @@
 #!/usr/bin/python3
+import base64  # for decoding images sent back from the Canvas.
 import json
-import os #for getting the current file path
+import mimetypes  # identifying files
+import os  # for getting the current file path
 import sys
-import threading #multithreading and locking
-from typing import List, Union
-import uuid #identifying the tasks
-import requests # interacting with replicate servers
-import mimetypes # identifying files
-import time # waiting a certain amount of time
-import base64 #for decoding images sent back from the Canvas.
-from io import BytesIO #for b64 encoding operations.
-import numpy as np
-from PIL import Image # for image editing
-from urllib import parse
-from http.client import NOT_FOUND, OK, BAD_REQUEST
+import io
+from urllib.request import urlopen
+
+import threading  # multithreading and locking
+import time  # waiting a certain amount of time
+import uuid  # identifying the tasks
+from http.client import BAD_REQUEST, NOT_FOUND, OK
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from io import BytesIO  # for b64 encoding operations.
+from typing import List, Union
+from urllib import parse
+from urllib.parse import parse_qs, urlparse
+
+import numpy as np
+import requests  # interacting with replicate servers
+from PIL import Image  # for image editing
+
 taskPoolIDS=[]
 #ImageFile.LOAD_TRUNCATED_IMAGES = True # this is a bandaid solution, we need to know why the images are being truncated in the first place.
 if len(sys.argv)>1:
@@ -47,9 +53,11 @@ class Task:
 croplock=threading.Lock()
 return_values={}
 rvlock=threading.Lock()
+canvaslock=threading.Lock()
 inprogresslock=threading.Lock()
-
-
+canvasWidth=5000
+canvasHeight=5000
+canvas=Image.new("RGBA",(canvasWidth,canvasHeight),(255,255,255,0))
 threads:List[Task]=[]
 threadslock=threading.Lock()
 
@@ -66,7 +74,6 @@ def updateImage():
                 unpr=outs.get(n.uuid)
                 if unpr:
                     f.write(requests.get(unpr[0]).content)
-            
             i=Image.open("./outfile.jpg")
             
             i=i.resize((n.width*3,n.height*3))
@@ -74,12 +81,17 @@ def updateImage():
             i=i.crop((n.width,n.height,n.width*2,n.height*2))
             # i.save("./outfile_cropped.jpg")
             print(n.uuid+" cropped and saved.")
-            icurrent:Image.Image=Image.open("./current.jpg")
+            canvaslock.acquire()
+            global canvas
+            icurrent:Image.Image=canvas
+            canvaslock.release()
             # print(hash(icurrent.tobytes()))
             icurrent=icurrent.resize((n.iwidth,n.iheight))
             icurrent.paste(i,(n.x,n.y))
+            canvaslock.acquire()
             # print(hash(icurrent.tobytes()))
-            icurrent.save("./current.jpg")
+            canvas=icurrent
+            canvaslock.release()
             # outs.pop(n.uuid)
             print(n.uuid+" done")
             inprogresslock.release()
@@ -211,6 +223,8 @@ class ReqHandler(BaseHTTPRequestHandler):
             self.run_image()
         elif self.path.startswith("/isactive"):
             self.run_isactive()
+        elif self.path.startswith("/pimage"):
+            self.run_image_params()
     def run_image(self):
         global rvlock
         global return_values
@@ -257,6 +271,18 @@ class ReqHandler(BaseHTTPRequestHandler):
                     taskPoolIDS.remove(uuid_in)
                     threads.remove(threads[n])
                     break
+    def run_image_params(self):
+        qc = parse_qs(urlparse(self.path).query)
+        t=int(qc["t"][0])
+        l=int(qc["l"][0])
+        b=int(qc["b"][0])
+        r=int(qc["r"][0])
+        im = canvas.crop((l,t,r,b))
+        b = io.BytesIO()
+        im.save(b, 'PNG')
+        image_bytes = b.getvalue()
+        self.wfile.write(image_bytes)
+        
     def run_lookup(self):
         if self.path.split("/lookup/")[1] in taskPoolIDS:
             uuid_in=self.path.split("/lookup/")[1]
@@ -318,13 +344,8 @@ class ReqHandler(BaseHTTPRequestHandler):
         print(bodyjson)
         imaget=bodyjson["image"]
         if imaget.startswith("http"):
-            r=requests.get(imaget)
-            exten = imaget.split(".")[-1].split("?")[0]
-            croplock.acquire()
 
-            with open("./temp2."+exten,"wb") as f:
-                f.write(r.content)
-            i=Image.open("./temp2."+exten)
+            i=Image.open(urlopen(imaget))
             i.save("./current.jpg")
             #corruption happens after this.
             width=bodyjson["grid"]["w"]
@@ -333,12 +354,14 @@ class ReqHandler(BaseHTTPRequestHandler):
             imageheight=bodyjson['current']["h"]
             names = ["pos_original","pos_nx","pos_ny","pos_px","pos_py","pos_pxpy","pos_pxny","pos_nxpy","pos_nxny"]
             coords=[(width,height),(0,height),(width,0),(2*width,height),(width,2*height),(width*2,height*2),(width*2,0),(0,height*2),(0,0)]
-            curimage=Image.open("current.jpg")
+            canvaslock.acquire()
+            curimage=canvas
+            canvaslock.release()
             
             for n in names:
                 x=bodyjson[n]["x"]
                 y=bodyjson[n]["y"]
-                cropped=curimage.resize((imagewidth,imageheight)).crop((x,y,x+width,y+height))
+                cropped=curimage.resize((imagewidth,imageheight)).crop((x,y,x+width,y+height)).convert("RGB")
                 cropped.save("./"+n+".jpg")
                 cropped.close()
             ni=Image.new("RGBA",(width*3,height*3))
@@ -571,6 +594,11 @@ if __name__ == "__main__":
         print("threadslock released")
     except Exception as e:
         print("releasing threadslock resulted in error: "+str(e))
+    try:
+        canvaslock.release()
+        print("canvaslock released")
+    except Exception as e:
+        print("releasing canvaslock resulted in error: "+str(e))
 
     print("Server stopped.")
     exit(0)

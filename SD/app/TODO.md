@@ -84,4 +84,4 @@
     [x] The image is being cropped to the size of the canvas on the user's screen.
         [x] This wouldn't explain why the cutoff is variable.
     [x] this is the cause of both the generated image not being put in the proper location, and the wrong masking.
-[ ] when queing multiple images, if they are next to each other, prevent race conditions.
+[x] when queing multiple images, if they are next to each other, prevent race conditions.

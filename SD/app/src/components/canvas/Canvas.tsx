@@ -22,7 +22,8 @@ export default class Canvas extends React.Component {
     toolboxClosed: boolean;
     radius: number;
     imageGenRect: Rectangle;
-    gridOffset: { x: number, y: number }
+    gridOffset: { x: number, y: number };
+    canvasOffset:Rectangle;
   };
   canvasState: {
     prompt: string;
@@ -73,6 +74,7 @@ export default class Canvas extends React.Component {
       steps: 50,
       strength: 0.8,
       scale: 5,
+      canvasOffset:{x:0,y:0,width:this.width,height:this.height}
 
 
       // grey and white 2x2 checkerboard image.
@@ -289,7 +291,7 @@ export default class Canvas extends React.Component {
   reloadImage(): void {
     if (this.imageTimer) {
       this.imageTimer = false
-      this.setState({ "image": `${SERVER_URL}/image.png?${Date.now().toString(10)}` })
+      this.getView()
     }
   }
   white2transparency(): void {
@@ -371,6 +373,14 @@ export default class Canvas extends React.Component {
       }
 
     });
+  }
+  getView(){
+    let t=this.state.canvasOffset.y
+    let l=this.state.canvasOffset.x
+    let b=this.state.canvasOffset.y+this.state.canvasOffset.height
+    let r=this.state.canvasOffset.x+this.state.canvasOffset.width
+    this.setState({"image":`${SERVER_URL}/pimage?t=${t}&l=${l}&b=${b}&r=${r}&timing=${Date.now().toString(10)}`})
+    // this.state.image
   }
   updateCtx(event: any) {
     if (!this.ctx) {

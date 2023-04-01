@@ -50,6 +50,7 @@ try:
             t1.start()
         elif a=="s":
             t2.kill()
+            
             t2=thread_with_trace(target=pythonserver)
             t2.start()
         elif a=="e":
