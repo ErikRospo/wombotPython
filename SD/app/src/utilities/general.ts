@@ -11,16 +11,7 @@ export function grid(width: number, height: number, value?: any): any[][] {
     return t
 }
 export function nullGrid(width: number, height: number): null[][] {
-    let t: any[][] = []
-    let v: any[]
-    for (let x = 0; x < width; x++) {
-        v = []
-        for (let y = 0; y < height; y++) {
-            v.push(null)
-        }
-        t.push(v)
-    }
-    return t
+return grid(width,height,null)
 }
 export function roundto(value: number, base: number): number {
     return Math.round(value / base) * base

@@ -1,8 +1,8 @@
 import React, { ChangeEvent, KeyboardEvent, MouseEvent } from "react";
 import "./canvas.css";
 import { getDataUrlFromArr } from "../../utilities/array-to-image";
-import { SERVER_URL, Tools } from "../../constants";
-import { BsEraserFill, BsPenFill } from 'react-icons/bs'
+import { SERVER_URL, Tools ,MouseButtons,MouseButton} from "../../constants";
+import { BsEraserFill, BsPenFill,BsArrowsMove } from 'react-icons/bs'
 import { TfiClose, TfiMenu } from 'react-icons/tfi'
 import { GrClearOption } from 'react-icons/gr'
 import { FaMagic } from 'react-icons/fa'
@@ -180,7 +180,9 @@ export default class Canvas extends React.Component {
   }
 
   draw(event: MouseEvent<HTMLCanvasElement>): void {
+        if (event.button===MouseButton.PRIMARY){
     if (this.ctx) {
+        
       switch (this.state.tool) {
         case Tools.ERASER:
           this.ctx.fillStyle = "#ffffffff"
@@ -200,10 +202,21 @@ export default class Canvas extends React.Component {
             this.canvasState.hasGenerated = true;
           }
           break
+         case Tools.PAN:
+            let currentx=this.state.canvasOffset.x
+            let currenty=this.state.canvasOffset.y
+            let newx=currentx+event.movementX;
+            let newy=currenty+event.movementY;
+            this.setState({"canvasOffset":{x:newx,y:newy,width:this.state.canvasOffset.width,height:this.state.canvasOffset.height}})
+            //todo: draw an arrow between the current point, and the starting point.
+            break
         default:
           break
       }
-    }
+      }
+    
+    }else{
+    console.log(event)}
   }
   generate(x: number, y: number) {
     if (this.ctx2) {
@@ -391,6 +404,7 @@ export default class Canvas extends React.Component {
       }
     }
   }
+  handleMouse(event:MouseEvent){}
   updateCtx2(event: any) {
     if (!this.ctx2) {
       let ctx: CanvasRenderingContext2D | null = (event.target as HTMLCanvasElement).getContext("2d");
@@ -540,8 +554,9 @@ export default class Canvas extends React.Component {
 
 
           onMouseDown={
-            (event: any) => {
+            (event: MouseEvent<HTMLCanvasElement>) => {
               this.canvasState.mouseDown = event.buttons;
+
               this.mousedown = true
               this.draw(event);
 
@@ -551,7 +566,7 @@ export default class Canvas extends React.Component {
             }
           }
           onMouseUp={
-            (event) => {
+            (event: MouseEvent<HTMLCanvasElement>) => {
               this.mousedown = false
               this.canvasState.mouseDown = event.buttons;
               this.canvasState.hasGenerated = false;
@@ -560,6 +575,8 @@ export default class Canvas extends React.Component {
 
               } else if (this.state.tool === Tools.PEN) {
                 this.postMask(event);
+              } else if (this.state.tool===Tools.PAN){
+              this.getView()
               }
             }
           }
@@ -615,7 +632,11 @@ export default class Canvas extends React.Component {
                   Generate <FaMagic></FaMagic>
                 </label>
                 <br />
-
+                <label>
+                  <input type="radio" name="Tool" className="toolSelectorButton" onChange={() => this.setTool(Tools.PAN)} onClick={() => this.setTool(Tools.PAN)} checked={this.state.tool === Tools.PAN} />
+                  Pan <BsArrowsMove></BsArrowsMove>
+                </label>
+                <br />
               </div>
               <hr />
               <section>
