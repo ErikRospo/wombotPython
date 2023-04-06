@@ -13,8 +13,7 @@ import uuid  # identifying the tasks
 from http.client import BAD_REQUEST, NOT_FOUND, OK
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from io import BytesIO  # for b64 encoding operations.
-from typing import List, Union
-from urllib import parse
+from typing import List
 from urllib.parse import parse_qs, urlparse
 
 import numpy as np
@@ -57,7 +56,8 @@ canvaslock=threading.Lock()
 inprogresslock=threading.Lock()
 canvasWidth=5000
 canvasHeight=5000
-canvas=Image.new("RGBA",(canvasWidth,canvasHeight),(255,255,255,0))
+canvas:Image.Image=Image.new("RGB",(canvasWidth-1,canvasHeight-1),(255,0,255,255))
+
 threads:List[Task]=[]
 threadslock=threading.Lock()
 
@@ -77,22 +77,19 @@ def updateImage():
             i=Image.open("./outfile.jpg")
             
             i=i.resize((n.width*3,n.height*3))
-            # i.save("./outfile_resized.jpg")
+            i.save("./outfile_resized.jpg")
             i=i.crop((n.width,n.height,n.width*2,n.height*2))
-            # i.save("./outfile_cropped.jpg")
+            i.save("./outfile_cropped.jpg")
             print(n.uuid+" cropped and saved.")
             canvaslock.acquire()
             global canvas
             icurrent:Image.Image=canvas
             canvaslock.release()
-            # print(hash(icurrent.tobytes()))
             icurrent=icurrent.resize((n.iwidth,n.iheight))
             icurrent.paste(i,(n.x,n.y))
             canvaslock.acquire()
-            # print(hash(icurrent.tobytes()))
             canvas=icurrent
             canvaslock.release()
-            # outs.pop(n.uuid)
             print(n.uuid+" done")
             inprogresslock.release()
         else:
@@ -129,7 +126,7 @@ def upload_file(path:str):
     upload_url=res.json()["upload_url"]
 
     #upload the image
-    requests.put(upload_url,data=cont,headers={"content-type":content_type})
+    requests.put(upload_url,data=cont,headers={"content-type":content_type}) # type: ignore
     return serving_url
 def do_image(mask_path,image_path,prompt,uuidp,num_outputs=1,guidence_scale=5,prompt_strength=0.8,num_inference_steps=50): 
     #upload both the mask and the image itself
@@ -201,6 +198,8 @@ class ReqHandler(BaseHTTPRequestHandler):
             self.send_response(OK)
             self.send_header("content-type","image/jpg")
         elif self.path.startswith("/isactive"):
+            self.send_response(OK)
+        elif self.path.startswith("/pimage"):
             self.send_response(OK)
             
             
@@ -346,6 +345,7 @@ class ReqHandler(BaseHTTPRequestHandler):
         if imaget.startswith("http"):
 
             i=Image.open(urlopen(imaget))
+            i.convert("RGB")
             i.save("./current.jpg")
             #corruption happens after this.
             width=bodyjson["grid"]["w"]
@@ -355,7 +355,15 @@ class ReqHandler(BaseHTTPRequestHandler):
             names = ["pos_original","pos_nx","pos_ny","pos_px","pos_py","pos_pxpy","pos_pxny","pos_nxpy","pos_nxny"]
             coords=[(width,height),(0,height),(width,0),(2*width,height),(width,2*height),(width*2,height*2),(width*2,0),(0,height*2),(0,0)]
             canvaslock.acquire()
-            curimage=canvas
+            global canvas
+            
+            if canvas.size!=(canvasWidth,canvasHeight):
+
+                curimage=canvas
+            else:
+                canvas=Image.new("RGBA",(canvasWidth,canvasHeight),(255,0,255,0))
+                canvas.paste(Image.open("./current.jpg"),(0,0))
+                curimage=canvas
             canvaslock.release()
             
             for n in names:
@@ -387,7 +395,6 @@ class ReqHandler(BaseHTTPRequestHandler):
                         mask[n][m]=[255,255,255,255]
             maskimage=Image.fromarray(mask)            
             maskimage.save("mask_from_thing.png")
-            croplock.release()
             print("done")
             uuid_new=uuid.uuid4().hex
             
@@ -568,37 +575,47 @@ if __name__ == "__main__":
     print("closing server")
     webServer.server_close()
     print("server closed")
-    try:
-        croplock.release()
-        print("croplock released")
-    except Exception as e:
-        print("releasing croplock resulted in error: "+str(e))
-    try:    
-        outsLock.release()
-        print("outsLock released")
-    except Exception as e:
-        print("releasing outsLock resulted in error: "+str(e))
-        
-    try:
-        rvlock.release()
-        print("rvlock released")
-    except Exception as e:
-        print("releasing rvlock resulted in error: "+str(e))
-    try:
-        inprogresslock.release()
-        print("inprogresslock released")
-    except Exception as e:
-        print("releasing inprogresslock resulted in error: "+str(e))
-    try:
-        threadslock.release()
-        print("threadslock released")
-    except Exception as e:
-        print("releasing threadslock resulted in error: "+str(e))
-    try:
-        canvaslock.release()
-        print("canvaslock released")
-    except Exception as e:
-        print("releasing canvaslock resulted in error: "+str(e))
+    if croplock.locked():
+        try:
+            croplock.release()
+            print("croplock released")
+        except Exception as e:
+            print("releasing croplock resulted in error: "+str(e))
+
+    if outsLock.locked():
+        try:    
+            outsLock.release()
+            print("outsLock released")
+        except Exception as e:
+            print("releasing outsLock resulted in error: "+str(e))
+
+    if rvlock.locked():
+        try:
+            rvlock.release()
+            print("rvlock released")
+        except Exception as e:
+            print("releasing rvlock resulted in error: "+str(e))
+
+    if inprogresslock.locked():
+        try:
+            inprogresslock.release()
+            print("inprogresslock released")
+        except Exception as e:
+            print("releasing inprogresslock resulted in error: "+str(e))
+
+    if threadslock.locked():
+        try:
+            threadslock.release()
+            print("threadslock released")
+        except Exception as e:
+            print("releasing threadslock resulted in error: "+str(e))
+
+    if canvaslock.locked():
+        try:
+            canvaslock.release()
+            print("canvaslock released")
+        except Exception as e:
+            print("releasing canvaslock resulted in error: "+str(e))
 
     print("Server stopped.")
     exit(0)

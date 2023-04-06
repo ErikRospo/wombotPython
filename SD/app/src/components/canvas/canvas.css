@@ -58,7 +58,7 @@
     left: 0;
     top: 0;
     width: 200px;
-    height: 400px;
+    height: 600px;
     background-color: slategray;
     border: 2px grey groove;
     z-index: 15;
@@ -92,6 +92,10 @@
 #RadiusInput {
     width: 5em;
 }
+#BoxP {
+    width: 5em;
+}
+
 
 #OptionsMenu {
     transition: ease-out 500ms 0ms opacity;

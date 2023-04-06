@@ -1,8 +1,9 @@
 import React, { ChangeEvent, KeyboardEvent, MouseEvent } from "react";
 import "./canvas.css";
+import Arrow from "../Arrow"
 import { getDataUrlFromArr } from "../../utilities/array-to-image";
-import { SERVER_URL, Tools ,MouseButtons,MouseButton} from "../../constants";
-import { BsEraserFill, BsPenFill,BsArrowsMove } from 'react-icons/bs'
+import { SERVER_URL, Tools, MouseButton } from "../../constants";
+import { BsEraserFill, BsPenFill, BsArrowsMove } from 'react-icons/bs'
 import { TfiClose, TfiMenu } from 'react-icons/tfi'
 import { GrClearOption } from 'react-icons/gr'
 import { FaMagic } from 'react-icons/fa'
@@ -23,7 +24,7 @@ export default class Canvas extends React.Component {
     radius: number;
     imageGenRect: Rectangle;
     gridOffset: { x: number, y: number };
-    canvasOffset:Rectangle;
+    canvasOffset: Rectangle;
   };
   canvasState: {
     prompt: string;
@@ -44,6 +45,7 @@ export default class Canvas extends React.Component {
   imageTimer?: boolean;
   active: number;
   maxActive: number;
+  mouseplace: { x: number; y: number; };
   constructor(props: any) {
     super(props);
     this.props = props;
@@ -58,6 +60,7 @@ export default class Canvas extends React.Component {
       toclear: true,
       prompt: ""
     };
+    this.mouseplace = { x: 0, y: 0 }
     let tempgrid: string[][] = grid(this.width / this.imageGridSize.width, this.height / this.imageGridSize.height, "https://i.imgur.com/NuUoA9Z.jpeg");
     this.imageGrid = createImageTile(this.imageGridSize.width, this.imageGridSize.height, tempgrid)
     this.active = 0;
@@ -74,7 +77,7 @@ export default class Canvas extends React.Component {
       steps: 50,
       strength: 0.8,
       scale: 5,
-      canvasOffset:{x:0,y:0,width:this.width,height:this.height}
+      canvasOffset: { x: 0, y: 0, width: this.width, height: this.height }
 
 
       // grey and white 2x2 checkerboard image.
@@ -180,43 +183,44 @@ export default class Canvas extends React.Component {
   }
 
   draw(event: MouseEvent<HTMLCanvasElement>): void {
-        if (event.button===MouseButton.PRIMARY){
-    if (this.ctx) {
-        
-      switch (this.state.tool) {
-        case Tools.ERASER:
-          this.ctx.fillStyle = "#ffffffff"
-          this.ctx.beginPath();
-          this.ctx.arc(event.clientX, event.clientY, this.state.radius, 0, 360);
-          this.ctx.fill();
-          break
-        case Tools.PEN:
-          this.ctx.fillStyle = "#000000ff"
-          this.ctx.beginPath();
-          this.ctx.arc(event.clientX, event.clientY, this.state.radius, 0, 360);
-          this.ctx.fill();
-          break
-        case Tools.GENERATE:
-          if (!this.canvasState.hasGenerated) {
-            this.generate(event.clientX, event.clientY)
-            this.canvasState.hasGenerated = true;
-          }
-          break
-         case Tools.PAN:
-            let currentx=this.state.canvasOffset.x
-            let currenty=this.state.canvasOffset.y
-            let newx=currentx+event.movementX;
-            let newy=currenty+event.movementY;
-            this.setState({"canvasOffset":{x:newx,y:newy,width:this.state.canvasOffset.width,height:this.state.canvasOffset.height}})
+    if (event.button === MouseButton.PRIMARY) {
+      if (this.ctx) {
+
+        switch (this.state.tool) {
+          case Tools.ERASER:
+            this.ctx.fillStyle = "#ffffffff"
+            this.ctx.beginPath();
+            this.ctx.arc(event.clientX, event.clientY, this.state.radius, 0, 360);
+            this.ctx.fill();
+            break
+          case Tools.PEN:
+            this.ctx.fillStyle = "#000000ff"
+            this.ctx.beginPath();
+            this.ctx.arc(event.clientX, event.clientY, this.state.radius, 0, 360);
+            this.ctx.fill();
+            break
+          case Tools.GENERATE:
+            if (!this.canvasState.hasGenerated) {
+              this.generate(event.clientX, event.clientY)
+              this.canvasState.hasGenerated = true;
+            }
+            break
+          case Tools.PAN:
+            let currentx = this.state.canvasOffset.x
+            let currenty = this.state.canvasOffset.y
+            let newx = currentx - event.movementX;
+            let newy = currenty - event.movementY;
+            this.setState({ "canvasOffset": { x: newx, y: newy, width: this.state.canvasOffset.width, height: this.state.canvasOffset.height } })
             //todo: draw an arrow between the current point, and the starting point.
             break
-        default:
-          break
+          default:
+            break
+        }
       }
-      }
-    
-    }else{
-    console.log(event)}
+
+    } else {
+      console.log(event)
+    }
   }
   generate(x: number, y: number) {
     if (this.ctx2) {
@@ -334,7 +338,6 @@ export default class Canvas extends React.Component {
     console.log(event.key);
     switch (event.key) {
       case "q":
-      
         this.setState({ tool: Math.max(this.state.tool - 1, 0) })
         break;
       case "e":
@@ -350,7 +353,7 @@ export default class Canvas extends React.Component {
         this.clearCanvas();
         break
       default:
-      
+
         break;
 
     }
@@ -387,13 +390,12 @@ export default class Canvas extends React.Component {
 
     });
   }
-  getView(){
-    let t=this.state.canvasOffset.y
-    let l=this.state.canvasOffset.x
-    let b=this.state.canvasOffset.y+this.state.canvasOffset.height
-    let r=this.state.canvasOffset.x+this.state.canvasOffset.width
-    this.setState({"image":`${SERVER_URL}/pimage?t=${t}&l=${l}&b=${b}&r=${r}&timing=${Date.now().toString(10)}`})
-    // this.state.image
+  getView() {
+    let t = this.state.canvasOffset.y
+    let l = this.state.canvasOffset.x
+    let b = this.state.canvasOffset.y + this.state.canvasOffset.height
+    let r = this.state.canvasOffset.x + this.state.canvasOffset.width
+    this.setState({ "image": `${SERVER_URL}/pimage?t=${t}&l=${l}&b=${b}&r=${r}&timing=${Date.now().toString(10)}` })
   }
   updateCtx(event: any) {
     if (!this.ctx) {
@@ -404,7 +406,6 @@ export default class Canvas extends React.Component {
       }
     }
   }
-  handleMouse(event:MouseEvent){}
   updateCtx2(event: any) {
     if (!this.ctx2) {
       let ctx: CanvasRenderingContext2D | null = (event.target as HTMLCanvasElement).getContext("2d");
@@ -556,10 +557,9 @@ export default class Canvas extends React.Component {
           onMouseDown={
             (event: MouseEvent<HTMLCanvasElement>) => {
               this.canvasState.mouseDown = event.buttons;
-
+              this.mouseplace = { x: event.clientX, y: event.clientY }
               this.mousedown = true
               this.draw(event);
-
               this.updateCtx(event)
               this.ctx?.beginPath()
 
@@ -575,8 +575,8 @@ export default class Canvas extends React.Component {
 
               } else if (this.state.tool === Tools.PEN) {
                 this.postMask(event);
-              } else if (this.state.tool===Tools.PAN){
-              this.getView()
+              } else if (this.state.tool === Tools.PAN) {
+                this.getView()
               }
             }
           }
@@ -645,8 +645,12 @@ export default class Canvas extends React.Component {
                   <input type="number" name="Radius" id="RadiusInput" onChange={(ev) => { this.setRadius(ev); }} defaultValue={this.state.radius} />
                 </div>
                 <br />
+                <div id="BoxState" hidden={this.state.tool !== Tools.PAN} >
+                  <p id="BoxP">Offset: {JSON.stringify(this.state.canvasOffset)}</p>
+                </div>
+                <br />
               </section>
-              <hr hidden={this.shouldShowRadius} />
+              <hr hidden={this.shouldShowRadius || this.state.tool !== Tools.PAN} />
               <section>
                 <div id="clear">
                   <button id="clearButton" onClick={() => { this.clearCanvas(); this.postMask() }}> Clear <GrClearOption></GrClearOption></button>
@@ -741,7 +745,14 @@ export default class Canvas extends React.Component {
 
 
         </div>
+        <div hidden={false&&!(this.mousedown && this.state.tool === Tools.PAN)}>
+          <Arrow
+            fromX={this.mouseplace.x}
+            fromY={this.mouseplace.y}
+            toX={this.mouseplace.x + this.state.canvasOffset.x}
+            toY={this.mouseplace.y + this.state.canvasOffset.y} ></Arrow>
 
+        </div>
       </div>
     );
   }
