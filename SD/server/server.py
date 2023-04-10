@@ -10,7 +10,7 @@ from urllib.request import urlopen
 import threading  # multithreading and locking
 import time  # waiting a certain amount of time
 import uuid  # identifying the tasks
-from http.client import BAD_REQUEST, NOT_FOUND, OK
+from http.client import BAD_REQUEST, CREATED, NOT_FOUND, OK
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from io import BytesIO  # for b64 encoding operations.
 from typing import List
@@ -56,7 +56,7 @@ canvaslock=threading.Lock()
 inprogresslock=threading.Lock()
 canvasWidth=5000
 canvasHeight=5000
-canvas:Image.Image=Image.new("RGB",(canvasWidth-1,canvasHeight-1),(255,0,255,255))
+canvas:Image.Image=Image.new("RGB",(canvasWidth-1,canvasHeight-1),(0,0,0,0))
 
 threads:List[Task]=[]
 threadslock=threading.Lock()
@@ -314,6 +314,22 @@ class ReqHandler(BaseHTTPRequestHandler):
             self.send_response(OK)
             self.send_header("content-type","text/plain")
             self.send_header("content-length","32")
+        elif self.path.startswith("/sendimage"):
+            body=self.read_bodyjson()
+            image=body["data"]
+            global canvas
+            canvaslock.acquire()
+            
+            if canvas.size!=(canvasWidth,canvasHeight):
+
+                i=Image.open(urlopen(image))
+                i.convert("RGB")
+                canvas=Image.new("RGBA",(canvasWidth,canvasHeight),(0,0,0,0))
+                canvas.paste(i,(0,0))
+                self.send_response(CREATED)
+            else:
+                self.send_response(OK)
+            canvaslock.release()
         else:
             self.send_response(NOT_FOUND)
  
@@ -345,8 +361,7 @@ class ReqHandler(BaseHTTPRequestHandler):
         if imaget.startswith("http"):
 
             i=Image.open(urlopen(imaget))
-            i.convert("RGB")
-            i.save("./current.jpg")
+            i.convert("RGB").save("./current.jpg")
             #corruption happens after this.
             width=bodyjson["grid"]["w"]
             height=bodyjson["grid"]["h"]

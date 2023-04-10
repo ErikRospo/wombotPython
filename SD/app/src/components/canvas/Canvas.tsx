@@ -35,6 +35,7 @@ export default class Canvas extends React.Component {
     keysdown: Map<string, boolean>;
     preventEvents: boolean;
   };
+  serverHasImage: boolean;
   ctx?: CanvasRenderingContext2D
   ctx2?: CanvasRenderingContext2D
   ids: String[];
@@ -60,6 +61,7 @@ export default class Canvas extends React.Component {
       toclear: true,
       prompt: ""
     };
+    this.serverHasImage = false;
     this.mouseplace = { x: 0, y: 0 }
     let tempgrid: string[][] = grid(this.width / this.imageGridSize.width, this.height / this.imageGridSize.height, "https://i.imgur.com/NuUoA9Z.jpeg");
     this.imageGrid = createImageTile(this.imageGridSize.width, this.imageGridSize.height, tempgrid)
@@ -258,6 +260,7 @@ export default class Canvas extends React.Component {
           this.imageTimer = false;
 
           postData(`${SERVER_URL}/crop`, jdata).then((response) => {
+            this.serverHasImage=true;
             this.active -= 1;
 
             response.text().then(async (uu): Promise<void> => {
@@ -395,7 +398,18 @@ export default class Canvas extends React.Component {
     let l = this.state.canvasOffset.x
     let b = this.state.canvasOffset.y + this.state.canvasOffset.height
     let r = this.state.canvasOffset.x + this.state.canvasOffset.width
-    this.setState({ "image": `${SERVER_URL}/pimage?t=${t}&l=${l}&b=${b}&r=${r}&timing=${Date.now().toString(10)}` })
+    if (!this.serverHasImage) {
+      postData(SERVER_URL + "/sendimage", { "data": this.state.image }).then((rq) => {
+        if (rq.status === 201||rq.status===200) {
+          this.serverHasImage = true
+          this.setState({ "image": `${SERVER_URL}/pimage?t=${t}&l=${l}&b=${b}&r=${r}&timing=${Date.now().toString(10)}` })
+        }
+      })
+
+    } else {
+      this.setState({ "image": `${SERVER_URL}/pimage?t=${t}&l=${l}&b=${b}&r=${r}&timing=${Date.now().toString(10)}` })
+
+    }
   }
   updateCtx(event: any) {
     if (!this.ctx) {
@@ -745,14 +759,7 @@ export default class Canvas extends React.Component {
 
 
         </div>
-        <div hidden={false&&!(this.mousedown && this.state.tool === Tools.PAN)}>
-          <Arrow
-            fromX={this.mouseplace.x}
-            fromY={this.mouseplace.y}
-            toX={this.mouseplace.x + this.state.canvasOffset.x}
-            toY={this.mouseplace.y + this.state.canvasOffset.y} ></Arrow>
 
-        </div>
       </div>
     );
   }

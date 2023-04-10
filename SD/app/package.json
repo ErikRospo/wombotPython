@@ -22,23 +22,17 @@
   "scripts": {
     "start": "CHOKIDAR_USEPOLLING=true react-scripts start",
     "dev": "CHOKIDAR_USEPOLLING=true react-scripts start",
+    "serve": "CHOKIDAR_USEPOLLING=true react-scripts start",
     "prod": "react-scripts build;npx run serve -s build/index.html",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
+    "extends": ["react-app", "react-app/jest"]
   },
   "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
+    "production": [">0.2%", "not dead", "not op_mini all"],
     "development": [
       "last 1 chrome version",
       "last 1 firefox version",
