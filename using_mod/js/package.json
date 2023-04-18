@@ -21,7 +21,7 @@
   "homepage": "https://github.com/adri326/wombot#readme",
   "dependencies": {
     "image-js": "^0.35.3",
-    "mkdirp": "^2.1.6"
+    "mkdirp": "^3.0.0"
   },
   "devDependencies": {
     "yargs": "^17.7.1"
