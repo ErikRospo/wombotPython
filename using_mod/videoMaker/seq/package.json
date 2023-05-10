@@ -23,11 +23,11 @@
     "image-output": "^2.4.2",
     "image-pixels": "^2.2.2",
     "node-fetch": "^3.3.1",
-    "mkdirp": "^3.0.0",
+    "mkdirp": "^3.0.1",
     "videoshow": "^0.1.12"
   },
   "devDependencies": {
-    "yargs": "^17.7.1"
+    "yargs": "^17.7.2"
   },
   "readme": "./README.md"
 }
